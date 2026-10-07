@@ -1,0 +1,288 @@
+<!doctype html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Available Cars</title>
+<meta name="apple-mobile-web-app-title" content="CariCarz Stock">
+<meta name="robots" content="noindex">
+<style>
+  :root{--bg:#f6f7fb;--card:#fff;--line:#e6e8ef;--ink:#111827;--mut:#6b7280;
+        --blue:#2563eb;--amber:#d97706;--red:#dc2626;--green:#059669;--purple:#7c3aed}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1440px;margin:0 auto;padding:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+  .head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 20px;margin-bottom:14px}
+  .title{display:flex;align-items:center;gap:12px;font-size:21px;font-weight:700}
+  .logo{width:36px;height:36px;border-radius:10px;background:var(--green);color:#fff;display:grid;place-items:center;font-size:17px}
+  .sub{color:var(--mut);font-size:12px}
+  input,select{font:inherit;color:inherit;border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:#fff}
+  .grid6{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:14px}
+  .kpi{padding:14px 16px;display:flex;flex-direction:column;gap:4px;cursor:pointer}
+  .kpi:hover{border-color:#c7d2fe}
+  .kpi .top{font-size:11px;font-weight:700;letter-spacing:.05em}
+  .kpi .num{font-size:30px;font-weight:800;line-height:1.1}
+  .kpi .lbl{font-weight:600;font-size:13px}
+  .kpi .foot{border-top:1px solid var(--line);padding-top:6px;margin-top:4px;font-size:12px;color:var(--mut)}
+  .c-ink{color:var(--ink)}.c-blue{color:var(--blue)}.c-amber{color:var(--amber)}.c-red{color:var(--red)}.c-green{color:var(--green)}.c-purple{color:var(--purple)}
+  .b-green{background:#d1fae5;color:#047857}.b-amber{background:#fef3c7;color:#92400e}.b-blue{background:#dbeafe;color:#1d4ed8}
+  .b-grey{background:#f3f4f6;color:#4b5563}.b-red{background:#fee2e2;color:#b91c1c}.b-purple{background:#ede9fe;color:#6d28d9}
+  .pill{font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap}
+  .three{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+  .panel{padding:14px 18px}
+  .panel h3{margin:0 0 8px;font-size:14px}
+  .row{display:grid;grid-template-columns:120px 1fr 34px;gap:8px;align-items:center;padding:4px 0;cursor:pointer;font-size:13px}
+  .row:hover .name{color:var(--blue)}
+  .row.on .name{color:var(--blue);font-weight:700}
+  .bar{height:9px;background:#eef0f6;border-radius:99px;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:99px}
+  .tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .tools input[type=search]{flex:1 1 100%;min-width:260px;font-size:15px;padding:9px 12px}
+  .count{padding:8px 14px;font-size:13px;color:var(--mut)}
+  table{width:100%;border-collapse:collapse}
+  th{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--mut);text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:1}
+  td{padding:9px 10px;border-bottom:1px solid #f0f1f6;vertical-align:top}
+  tr:hover td{background:#fafbff}
+  .plate{font-weight:700}.r{text-align:right}
+  .links a{display:inline-block;margin:0 4px 3px 0;padding:2px 8px;border-radius:6px;background:#eff6ff;color:var(--blue);font-size:12px;font-weight:600;text-decoration:none}
+  .links a:hover{background:#dbeafe}
+  .scroll{max-height:560px;overflow:auto}
+  .err{padding:30px;color:var(--red)}
+  tbody tr{cursor:pointer}
+  .ov{position:fixed;inset:0;background:rgba(17,24,39,.55);display:none;align-items:center;justify-content:center;padding:14px;z-index:9}
+  .ov.on{display:flex}
+  .dlg{background:#fff;border-radius:14px;max-width:460px;width:100%;max-height:92vh;overflow:auto;padding:18px 20px}
+  .dlg pre{white-space:pre-wrap;font:14px/1.6 inherit;font-family:inherit;margin:0 0 14px}
+  .dlg .btns{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 14px;font:inherit;font-weight:600;cursor:pointer}
+  .btn.pri{background:var(--blue);border-color:var(--blue);color:#fff}
+  mark{background:#fef08a;border-radius:3px}
+  @media(max-width:1100px){.grid6{grid-template-columns:repeat(2,1fr)}.three{grid-template-columns:1fr}}
+  @media(max-width:720px){
+    .wrap{padding:10px}.head{padding:12px 14px}.title{font-size:18px}.three{display:none}
+    .grid6{gap:8px}.kpi{padding:10px 12px}.kpi .num{font-size:26px}.kpi .lbl{font-size:12px}
+    .tools{padding:10px}.tools select{flex:1 1 45%}
+    .scroll{max-height:none;overflow:visible}
+    thead{display:none}
+    table,tbody,tr,td{display:block}
+    tr{padding:12px 14px;border-bottom:1px solid var(--line)}
+    td{border:0;padding:2px 0;display:inline-block;margin-right:10px;font-size:13px}
+    td:first-child{display:block;margin-bottom:4px;font-size:14px}
+    td.r{text-align:left;font-size:15px}
+    tr:hover td{background:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card head">
+    <div class="title"><div class="logo">&#128663;</div>Available Cars</div>
+    <span class="sub" id="refreshed"></span>
+  </div>
+
+  <div class="grid6" id="kpis"></div>
+
+  <div class="three">
+    <div class="card panel"><h3>Price band <span class="sub">(sellable cars)</span></h3><div id="pPrice"></div></div>
+    <div class="card panel"><h3>Body type <span class="sub">(sellable)</span></h3><div id="pBody"></div></div>
+    <div class="card panel"><h3>Top brands <span class="sub">(sellable)</span></h3><div id="pBrand"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="tools">
+      <input type="search" id="q" placeholder="Search anything: plate, model, brand, color, year, price, mileage, remark..." autofocus>
+      <select id="fStatus"></select>
+      <select id="fPrice"></select>
+      <select id="fBody"></select>
+      <select id="fBrand"></select>
+      <select id="fFuel"></select>
+      <select id="sort">
+        <option value="new">Sort: newest in</option>
+        <option value="pasc">Sort: price low to high</option>
+        <option value="pdesc">Sort: price high to low</option>
+        <option value="year">Sort: year, newest</option>
+      </select>
+    </div>
+    <div class="count" id="count"></div>
+    <div class="scroll">
+      <table>
+        <thead><tr>
+          <th>Car</th><th>Status</th><th class="r">Price (RM)</th><th>Year</th><th>Body</th><th>Fuel</th><th>Phase</th><th>Car in</th><th>Listings</th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="ov"><div class="dlg"><pre id="tg"></pre><div class="btns"><button class="btn pri" id="cp">Copy for Telegram</button><span id="links" class="links"></span><button class="btn" id="cl">Close</button></div></div></div>
+
+<script>
+// Data link used when this page is hosted outside Apps Script (GitHub Pages): your web app URL ending in /exec
+const API_URL = "https://script.google.com/macros/s/AKfycbxK3dH9IGl1elK3v13cEVAB3PWadJJalPtc76pj3KK0u2loSdpkgDMTrt4gDalGy9Ib/exec";
+
+// ---------- sample rows, used only when opened outside Apps Script (preview) ----------
+const SAMPLE = [
+  {plate:"VEG7318",model:"2019 BMW X1 2.0 sDrive20i Sport Line (A) SUV",remark:"",year:"2019",body:"SUV",color:"SILVER",fuel:"ICE",mileage:"88,100KM",phase:"",price:60800,brand:"BMW",info:{interchange:"NO",category:"Certified",spareKey:"Automall",voc:"Copy",warranty:"No",settlement:"N/A",curStatus:"N/A",sellingPoint:"N/A"},carIn:"2026-10-03",caricarz:"https://www.caricarz.com",carlist:"",mudah:"",fb:""},
+  {plate:"JYG9988",model:"2025 Perodua Bezza 1.3 X (A) Sedan",remark:"V.B.A.O",year:"2025",body:"Sedan",color:"BLACK",fuel:"ICE",mileage:"16,552KM",phase:"",price:39800,brand:"Perodua",carIn:"2026-10-03",caricarz:"https://www.caricarz.com",carlist:"https://www.carlist.my",mudah:"",fb:""},
+  {plate:"BPX2636",model:"2019 Perodua Bezza 1.3 X (A) Sedan",remark:"Booked w Lock Car",year:"2019",body:"Sedan",color:"SILVER",fuel:"ICE",mileage:"102,795KM",phase:"Aging Stock",price:23000,brand:"Perodua",carIn:"2025-02-25",caricarz:"https://www.caricarz.com",carlist:"",mudah:"",fb:""}
+];
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const parseIso = s => { if (!s) return null; const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d); };
+const fmtDate = s => { const d = parseIso(s); return d ? String(d.getDate()).padStart(2,"0") + "/" + String(d.getMonth()+1).padStart(2,"0") + "/" + d.getFullYear() : ""; };
+const rm = n => n ? Number(n).toLocaleString("en-US") : "";
+
+const BANDS = [["Under RM30k",0,30000],["RM30k - 50k",30000,50000],["RM50k - 80k",50000,80000],["RM80k - 120k",80000,120000],["RM120k - 200k",120000,200000],["RM200k and above",200000,1e12]];
+let CARS = [], cutoff = null;
+
+function classify(c) {
+  const r = (c.remark || "").trim().toLowerCase();
+  if (!r) { c.status = "Available"; c.rank = 0; c.cls = "green"; }
+  else if (/^v\.?b\.?a\.?o/.test(r)) { c.status = "By appointment"; c.rank = 1; c.cls = "amber"; }
+  else if (r.indexOf("booked") === 0) {
+    c.status = r.indexOf("w/o payment") >= 0 ? "Booked (no payment)" : r.indexOf("w/o lock") >= 0 ? "Booked (not locked)" : "Booked (locked)";
+    c.rank = 2; c.cls = "blue";
+  } else { c.status = c.remark; c.rank = 3; c.cls = "grey"; }
+  c.sellable = c.rank <= 1;
+  c.aging = /aging/i.test(c.phase || "");
+  c.fresh = !!c.carIn && parseIso(c.carIn) >= cutoff;
+  c.dt = parseIso(c.carIn);
+  c.band = (BANDS.find(b => c.price >= b[1] && c.price < b[2]) || [""])[0];
+  c.hay = [c.plate, c.model, c.brand, c.status, c.remark, c.year, c.body, c.color, c.fuel, c.mileage, c.phase, Object.values(c.info || {}).join(" "), c.price, rm(c.price), fmtDate(c.carIn), c.carIn].join(" ").toLowerCase();
+}
+
+function init(res) {
+  const t = new Date(); cutoff = new Date(t.getFullYear(), t.getMonth(), t.getDate() - 14);
+  CARS = res.cars; CARS.forEach(classify);
+  $("refreshed").textContent = res.refreshed ? "Data read " + res.refreshed : "Sample data (preview)";
+  fill("fStatus", [["__sell","Sellable (Available + V.B.A.O)"],["__all","All cars"],["ready","Available only"],["vbao","V.B.A.O only"],["booked","Booked"],["aging","Aging stock"],["fresh","New arrivals (14 days)"]]);
+  fill("fPrice", [["","All prices"]].concat(BANDS.map(b => [b[0], b[0]])));
+  fill("fBody", [["","All body types"]].concat(uniq("body").map(v => [v, v])));
+  fill("fBrand", [["","All brands"]].concat(uniq("brand").map(v => [v, v])));
+  fill("fFuel", [["","All fuel"]].concat(uniq("fuel").map(v => [v, v])));
+  $("fStatus").value = "__sell";
+  render();
+}
+function uniq(f) { return Array.from(new Set(CARS.map(c => c[f]).filter(Boolean))).sort(); }
+function fill(id, opts) { $(id).innerHTML = opts.map(o => `<option value="${esc(o[0])}">${esc(o[1])}</option>`).join(""); }
+
+function statusOk(c, s) {
+  return s === "__all" ? true : s === "__sell" ? c.sellable : s === "ready" ? c.rank === 0 : s === "vbao" ? c.rank === 1 :
+         s === "booked" ? c.rank === 2 : s === "aging" ? c.aging : s === "fresh" ? c.fresh : true;
+}
+
+function renderKpis() {
+  const n = f => CARS.filter(f).length, tot = CARS.length || 1;
+  const value = CARS.reduce((s, c) => s + (c.price || 0), 0);
+  const k = [
+    ["c-ink","IN INVENTORY",CARS.length,"Cars listed","Retail value RM" + (value/1e6).toFixed(1) + "M","__all"],
+    ["c-green","READY TO SELL",n(c => c.rank === 0),"Open for viewing",Math.round(n(c => c.rank === 0)/tot*100) + "% of inventory","ready"],
+    ["c-amber","V.B.A.O",n(c => c.rank === 1),"View by appointment only",Math.round(n(c => c.rank === 1)/tot*100) + "% of inventory","vbao"],
+    ["c-blue","BOOKED",n(c => c.rank === 2),"Booked, not delivered","Locked " + n(c => /w lock/i.test(c.remark)) + " &middot; Unpaid " + n(c => /w\/o payment/i.test(c.remark)),"booked"],
+    ["c-red","AGING STOCK",n(c => c.aging),"Push these first","Car Phase: Aging Stock","aging"],
+    ["c-purple","NEW ARRIVALS",n(c => c.fresh),"Car in, last 14 days","Since " + fmtDate(cutoff.getFullYear() + "-" + (cutoff.getMonth()+1) + "-" + cutoff.getDate()).slice(0,5),"fresh"]
+  ];
+  $("kpis").innerHTML = k.map(x => `<div class="card kpi" data-status="${x[5]}"><div class="top ${x[0]}">${x[1]}</div><div class="num ${x[0]}">${x[2]}</div><div class="lbl">${x[3]}</div><div class="foot">${x[4]}</div></div>`).join("");
+}
+
+function panel(id, rows, color, sel) {
+  const max = rows.length ? Math.max.apply(null, rows.map(r => r[1])) || 1 : 1, cur = $(sel).value;
+  $(id).innerHTML = rows.length ? rows.map(([name, n]) =>
+    `<div class="row ${cur === name ? "on" : ""}" data-sel="${sel}" data-val="${esc(name)}"><span class="name">${esc(name)}</span><div class="bar"><i style="width:${n/max*100}%;background:${color}"></i></div><b>${n}</b></div>`).join("") : '<div class="sub">None.</div>';
+}
+function renderPanels() {
+  const s = CARS.filter(c => c.sellable);
+  const top = key => { const m = {}; s.forEach(c => { const v = c[key] || "(blank)"; m[v] = (m[v] || 0) + 1; }); return Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, 6); };
+  panel("pPrice", BANDS.map(b => [b[0], s.filter(c => c.band === b[0]).length]), "var(--blue)", "fPrice");
+  panel("pBody", top("body"), "var(--green)", "fBody");
+  panel("pBrand", top("brand"), "var(--purple)", "fBrand");
+}
+
+function hi(text, terms) {
+  let h = esc(text);
+  terms.forEach(t => { if (t.length > 1) h = h.replace(new RegExp("(" + t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "ig"), "<mark>$1</mark>"); });
+  return h;
+}
+
+function renderTable() {
+  const terms = $("q").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const fs = $("fStatus").value, fp = $("fPrice").value, fb = $("fBody").value, fr = $("fBrand").value, ff = $("fFuel").value;
+  let rows = CARS.filter(c => statusOk(c, fs) && (!fp || c.band === fp) && (!fb || c.body === fb) && (!fr || c.brand === fr) && (!ff || c.fuel === ff) &&
+                              terms.every(t => c.hay.includes(t)));
+  const s = $("sort").value;
+  const byNew = (a, b) => (b.dt ? b.dt.getTime() : 0) - (a.dt ? a.dt.getTime() : 0);
+  rows.sort(s === "pasc" ? (a, b) => (a.price || 1e12) - (b.price || 1e12) : s === "pdesc" ? (a, b) => (b.price || 0) - (a.price || 0) :
+            s === "year" ? (a, b) => Number(b.year) - Number(a.year) || byNew(a, b) : (a, b) => a.rank - b.rank || byNew(a, b));
+  $("count").textContent = "Showing " + Math.min(rows.length, 400) + " of " + rows.length + " cars" + (terms.length ? " matching \"" + terms.join(" ") + "\"" : "");
+  $("rows").innerHTML = rows.slice(0, 400).map(c => {
+    const links = [["CariCarz", c.caricarz], ["Carlist", c.carlist], ["Mudah", c.mudah], ["FB", c.fb]].filter(l => l[1])
+      .map(l => `<a href="${esc(l[1])}" target="_blank" rel="noopener">${l[0]}</a>`).join("") || '<span class="sub">-</span>';
+    return `<tr data-plate="${esc(c.plate)}"><td><div class="plate">${hi(c.plate, terms)}</div><div>${hi(c.model, terms)}</div><div class="sub">${hi([c.color, c.mileage].filter(Boolean).join(" · "), terms)}</div></td>
+      <td><span class="pill b-${c.cls}">${hi(c.status, terms)}</span></td><td class="r"><b>${hi(rm(c.price), terms)}</b></td>
+      <td>${hi(c.year, terms)}</td><td>${hi(c.body, terms)}</td><td>${hi(c.fuel, terms)}</td>
+      <td>${c.phase ? `<span class="pill ${c.aging ? "b-red" : "b-grey"}">${hi(c.phase, terms)}</span>` : '<span class="sub">-</span>'}</td>
+      <td>${fmtDate(c.carIn)}</td><td class="links">${links}</td></tr>`;
+  }).join("");
+}
+
+function tgText(c) {
+  const i = c.info || {};
+  return ["\uD83D\uDE97 " + c.model, "Plate: " + c.plate, "Interchange: " + (i.interchange || "N/A"), "",
+    "Year: " + c.year + " | Color: " + c.color + " | Mileage: " + c.mileage, "Category: " + (i.category || "N/A"), "",
+    "\uD83D\uDCB0 RSP: " + (c.price ? "RM" + c.price : "N/A"),
+    "\uD83D\uDD11 Main key: \u2705 | Spare key: " + (i.spareKey || "N/A"),
+    "\uD83D\uDCC4 VOC: " + (i.voc || "N/A"),
+    "\uD83D\uDEE1\uFE0F Principal Warranty: " + (i.warranty || "N/A"),
+    "\uD83C\uDFE6 Under Loan / Settlement: " + (i.settlement || "N/A"),
+    "\uD83D\uDCDD Current Status: " + (i.curStatus || "N/A"),
+    "\uD83C\uDF1F Remark / Selling Point: " + (i.sellingPoint || "N/A")].join("\n");
+}
+function openCar(plate) {
+  const c = CARS.find(x => x.plate === plate); if (!c) return;
+  $("tg").textContent = tgText(c);
+  $("links").innerHTML = [["CariCarz", c.caricarz], ["Carlist", c.carlist], ["Mudah", c.mudah], ["FB", c.fb]].filter(l => l[1])
+    .map(l => `<a href="${esc(l[1])}" target="_blank" rel="noopener">${l[0]}</a>`).join("");
+  $("cp").textContent = "Copy for Telegram"; $("ov").classList.add("on");
+}
+$("cl").onclick = () => $("ov").classList.remove("on");
+document.addEventListener("keydown", e => { if (e.key === "Escape") $("ov").classList.remove("on"); });
+$("ov").addEventListener("click", e => { if (e.target === $("ov")) $("ov").classList.remove("on"); });
+$("cp").onclick = () => {
+  const t = $("tg").textContent, done = () => { $("cp").textContent = "Copied \u2713"; };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, () => fallback(t, done)); else fallback(t, done);
+};
+function fallback(t, done) { const a = document.createElement("textarea"); a.value = t; document.body.appendChild(a); a.select(); try { document.execCommand("copy"); done(); } catch (e) {} a.remove(); }
+
+function render() { renderKpis(); renderPanels(); renderTable(); }
+
+// ---------- events ----------
+document.addEventListener("click", e => {
+  if (e.target.closest("a")) return;
+  const tr = e.target.closest("tr[data-plate]"); if (tr) { openCar(tr.dataset.plate); return; }
+  const k = e.target.closest("[data-status]");
+  if (k) { $("fStatus").value = k.dataset.status; renderPanels(); renderTable(); $("count").scrollIntoView({behavior: "smooth", block: "start"}); return; }
+  const r = e.target.closest("[data-sel]");
+  if (r) { const el = $(r.dataset.sel); el.value = el.value === r.dataset.val ? "" : r.dataset.val; renderPanels(); renderTable(); }
+});
+["fStatus","fPrice","fBody","fBrand","fFuel","sort"].forEach(id => $(id).addEventListener("change", () => { renderPanels(); renderTable(); }));
+$("q").addEventListener("input", renderTable);
+
+const loadErr = e => { $("kpis").innerHTML = '<div class="card err">Could not load: ' + esc(e && e.message || e) + '. Pull down / refresh to try again.</div>'; };
+if (typeof google !== "undefined" && google.script && google.script.run) {
+  $("kpis").innerHTML = '<div class="card kpi">Loading cars...</div>';
+  google.script.run.withSuccessHandler(init).withFailureHandler(loadErr).getInventory();
+} else if (API_URL && location.protocol.indexOf("http") === 0) {
+  $("kpis").innerHTML = '<div class="card kpi">Loading cars...</div>';
+  fetch(API_URL + "?format=json", { credentials: "omit", cache: "no-store" })
+    .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    .then(init).catch(loadErr);
+} else {
+  init({cars: SAMPLE, refreshed: ""});
+}
+</script>
+</body>
+</html>
