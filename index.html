@@ -4,9 +4,16 @@
 <base target="_top">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Available Cars</title>
+<title>CariCarz AutoMall Stock</title>
 <meta name="apple-mobile-web-app-title" content="CariCarz Stock">
 <meta name="robots" content="noindex">
+<meta name="theme-color" content="#ffffff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
   :root{--bg:#f6f7fb;--card:#fff;--line:#e6e8ef;--ink:#111827;--mut:#6b7280;
         --blue:#2563eb;--amber:#d97706;--red:#dc2626;--green:#059669;--purple:#7c3aed}
@@ -16,6 +23,9 @@
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
   .head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 20px;margin-bottom:14px}
   .title{display:flex;align-items:center;gap:12px;font-size:21px;font-weight:700}
+  .brand{height:40px;width:auto;display:block}
+  .tsep{width:1px;height:28px;background:var(--line)}
+  @media(max-width:720px){.brand{height:32px}.title{font-size:16px;gap:10px}}
   .logo{width:36px;height:36px;border-radius:10px;background:var(--green);color:#fff;display:grid;place-items:center;font-size:17px}
   .sub{color:var(--mut);font-size:12px}
   input,select{font:inherit;color:inherit;border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:#fff}
@@ -58,6 +68,12 @@
   .dlg .btns{display:flex;gap:8px;flex-wrap:wrap}
   .btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 14px;font:inherit;font-weight:600;cursor:pointer}
   .btn.pri{background:var(--blue);border-color:var(--blue);color:#fff}
+  .btn.wa{background:#16a34a;border-color:#16a34a;color:#fff}
+  .days{font-size:11px;font-weight:700;color:var(--mut)}
+  .days.old{color:var(--red)}
+  .note{margin:0 0 14px;padding:10px 14px;border-radius:10px;background:#fef3c7;color:#92400e;font-size:13px;display:none}
+  .note.on{display:block}
+  .wrap{padding-top:max(18px, env(safe-area-inset-top))}
   mark{background:#fef08a;border-radius:3px}
   @media(max-width:1100px){.grid6{grid-template-columns:repeat(2,1fr)}.three{grid-template-columns:1fr}}
   @media(max-width:720px){
@@ -78,10 +94,11 @@
 <body>
 <div class="wrap">
   <div class="card head">
-    <div class="title"><div class="logo">&#128663;</div>Available Cars</div>
+    <div class="title"><img class="brand" src="https://cheehoe-web.github.io/stock/logo.png" alt="CariCarz AutoMall" onerror="this.style.display='none'"><span class="tsep"></span>Stock List</div>
     <span class="sub" id="refreshed"></span>
   </div>
 
+  <div class="note" id="note"></div>
   <div class="grid6" id="kpis"></div>
 
   <div class="three">
@@ -103,6 +120,7 @@
         <option value="pasc">Sort: price low to high</option>
         <option value="pdesc">Sort: price high to low</option>
         <option value="year">Sort: year, newest</option>
+        <option value="days">Sort: longest in stock</option>
       </select>
     </div>
     <div class="count" id="count"></div>
@@ -117,7 +135,7 @@
   </div>
 </div>
 
-<div class="ov" id="ov"><div class="dlg"><pre id="tg"></pre><div class="btns"><button class="btn pri" id="cp">Copy for Telegram</button><span id="links" class="links"></span><button class="btn" id="cl">Close</button></div></div></div>
+<div class="ov" id="ov"><div class="dlg"><pre id="tg"></pre><div class="btns"><button class="btn pri" id="cp">Copy for Telegram</button><button class="btn wa" id="wa">WhatsApp</button><button class="btn" id="sh" style="display:none">Share…</button><span id="links" class="links"></span><button class="btn" id="cl">Close</button></div></div></div>
 
 <script>
 // Data link used when this page is hosted outside Apps Script (GitHub Pages): your web app URL ending in /exec
@@ -137,7 +155,7 @@ const fmtDate = s => { const d = parseIso(s); return d ? String(d.getDate()).pad
 const rm = n => n ? Number(n).toLocaleString("en-US") : "";
 
 const BANDS = [["Under RM30k",0,30000],["RM30k - 50k",30000,50000],["RM50k - 80k",50000,80000],["RM80k - 120k",80000,120000],["RM120k - 200k",120000,200000],["RM200k and above",200000,1e12]];
-let CARS = [], cutoff = null;
+let CARS = [], cutoff = null, TODAY = null;
 
 function classify(c) {
   const r = (c.remark || "").trim().toLowerCase();
@@ -151,12 +169,14 @@ function classify(c) {
   c.aging = /aging/i.test(c.phase || "");
   c.fresh = !!c.carIn && parseIso(c.carIn) >= cutoff;
   c.dt = parseIso(c.carIn);
+  c.days = c.dt ? Math.max(0, Math.round((TODAY - c.dt) / 864e5)) : null;
   c.band = (BANDS.find(b => c.price >= b[1] && c.price < b[2]) || [""])[0];
   c.hay = [c.plate, c.model, c.brand, c.status, c.remark, c.year, c.body, c.color, c.fuel, c.mileage, c.phase, Object.values(c.info || {}).join(" "), c.price, rm(c.price), fmtDate(c.carIn), c.carIn].join(" ").toLowerCase();
 }
 
 function init(res) {
-  const t = new Date(); cutoff = new Date(t.getFullYear(), t.getMonth(), t.getDate() - 14);
+  const t = new Date(); cutoff = new Date(t.getFullYear(), t.getMonth(), t.getDate() - 14); TODAY = new Date(t.getFullYear(), t.getMonth(), t.getDate());
+  const keep = CARS.length ? ["fStatus","fPrice","fBody","fBrand","fFuel"].map(id => [id, $(id).value]) : null;
   CARS = res.cars; CARS.forEach(classify);
   $("refreshed").textContent = res.refreshed ? "Data read " + res.refreshed : "Sample data (preview)";
   fill("fStatus", [["__sell","Sellable (Available + V.B.A.O)"],["__all","All cars"],["ready","Available only"],["vbao","V.B.A.O only"],["booked","Booked"],["aging","Aging stock"],["fresh","New arrivals (14 days)"]]);
@@ -165,6 +185,7 @@ function init(res) {
   fill("fBrand", [["","All brands"]].concat(uniq("brand").map(v => [v, v])));
   fill("fFuel", [["","All fuel"]].concat(uniq("fuel").map(v => [v, v])));
   $("fStatus").value = "__sell";
+  if (keep) keep.forEach(([id, v]) => { if ([...$(id).options].some(o => o.value === v)) $(id).value = v; });
   render();
 }
 function uniq(f) { return Array.from(new Set(CARS.map(c => c[f]).filter(Boolean))).sort(); }
@@ -216,7 +237,8 @@ function renderTable() {
   const s = $("sort").value;
   const byNew = (a, b) => (b.dt ? b.dt.getTime() : 0) - (a.dt ? a.dt.getTime() : 0);
   rows.sort(s === "pasc" ? (a, b) => (a.price || 1e12) - (b.price || 1e12) : s === "pdesc" ? (a, b) => (b.price || 0) - (a.price || 0) :
-            s === "year" ? (a, b) => Number(b.year) - Number(a.year) || byNew(a, b) : (a, b) => a.rank - b.rank || byNew(a, b));
+            s === "year" ? (a, b) => Number(b.year) - Number(a.year) || byNew(a, b) :
+            s === "days" ? (a, b) => (b.days == null ? -1 : b.days) - (a.days == null ? -1 : a.days) : (a, b) => a.rank - b.rank || byNew(a, b));
   $("count").textContent = "Showing " + Math.min(rows.length, 400) + " of " + rows.length + " cars" + (terms.length ? " matching \"" + terms.join(" ") + "\"" : "");
   $("rows").innerHTML = rows.slice(0, 400).map(c => {
     const links = [["CariCarz", c.caricarz], ["Carlist", c.carlist], ["Mudah", c.mudah], ["FB", c.fb]].filter(l => l[1])
@@ -225,7 +247,7 @@ function renderTable() {
       <td><span class="pill b-${c.cls}">${hi(c.status, terms)}</span></td><td class="r"><b>${hi(rm(c.price), terms)}</b></td>
       <td>${hi(c.year, terms)}</td><td>${hi(c.body, terms)}</td><td>${hi(c.fuel, terms)}</td>
       <td>${c.phase ? `<span class="pill ${c.aging ? "b-red" : "b-grey"}">${hi(c.phase, terms)}</span>` : '<span class="sub">-</span>'}</td>
-      <td>${fmtDate(c.carIn)}</td><td class="links">${links}</td></tr>`;
+      <td>${fmtDate(c.carIn)}${c.days != null ? ` <span class="days ${c.days > 60 ? "old" : ""}">${c.days}d</span>` : ""}</td><td class="links">${links}</td></tr>`;
   }).join("");
 }
 
@@ -244,10 +266,15 @@ function tgText(c) {
 function openCar(plate) {
   const c = CARS.find(x => x.plate === plate); if (!c) return;
   $("tg").textContent = tgText(c);
+  CUR = c;
+  $("sh").style.display = navigator.share ? "" : "none";
   $("links").innerHTML = [["CariCarz", c.caricarz], ["Carlist", c.carlist], ["Mudah", c.mudah], ["FB", c.fb]].filter(l => l[1])
     .map(l => `<a href="${esc(l[1])}" target="_blank" rel="noopener">${l[0]}</a>`).join("");
   $("cp").textContent = "Copy for Telegram"; $("ov").classList.add("on");
 }
+let CUR = null;
+$("wa").onclick = () => { window.open("https://wa.me/?text=" + encodeURIComponent($("tg").textContent), "_blank"); };
+$("sh").onclick = () => { navigator.share({ text: $("tg").textContent }).catch(() => {}); };
 $("cl").onclick = () => $("ov").classList.remove("on");
 document.addEventListener("keydown", e => { if (e.key === "Escape") $("ov").classList.remove("on"); });
 $("ov").addEventListener("click", e => { if (e.target === $("ov")) $("ov").classList.remove("on"); });
@@ -271,15 +298,30 @@ document.addEventListener("click", e => {
 ["fStatus","fPrice","fBody","fBrand","fFuel","sort"].forEach(id => $(id).addEventListener("change", () => { renderPanels(); renderTable(); }));
 $("q").addEventListener("input", renderTable);
 
-const loadErr = e => { $("kpis").innerHTML = '<div class="card err">Could not load: ' + esc(e && e.message || e) + '. Pull down / refresh to try again.</div>'; };
+// ---------- loading: show the copy saved on this phone instantly, then refresh from the sheet ----------
+const LS_KEY = "caricarz_stock_v1";
+const lsGet = () => { try { const v = localStorage.getItem(LS_KEY); return v ? JSON.parse(v) : null; } catch (e) { return null; } };
+const lsSet = d => { try { localStorage.setItem(LS_KEY, JSON.stringify(d)); } catch (e) {} };
+const note = (msg) => { $("note").textContent = msg || ""; $("note").classList.toggle("on", !!msg); };
+let gotFresh = false;
+function fresh(res) { gotFresh = true; note(""); lsSet(res); init(res); }
+function failed(e) {
+  const old = lsGet();
+  if (old) { if (!CARS.length) init(old); note("Offline or slow connection: showing data from " + (old.refreshed || "earlier") + ". Pull down / refresh to retry."); }
+  else $("kpis").innerHTML = '<div class="card err">Could not load: ' + esc(e && e.message || e) + '. Refresh to try again.</div>';
+}
 if (typeof google !== "undefined" && google.script && google.script.run) {
   $("kpis").innerHTML = '<div class="card kpi">Loading cars...</div>';
-  google.script.run.withSuccessHandler(init).withFailureHandler(loadErr).getInventory();
+  google.script.run.withSuccessHandler(init).withFailureHandler(failed).getInventory();
 } else if (API_URL && location.protocol.indexOf("http") === 0) {
-  $("kpis").innerHTML = '<div class="card kpi">Loading cars...</div>';
-  fetch(API_URL, { credentials: "omit", cache: "no-store" })
+  const old = lsGet();
+  if (old) { init(old); note("Updating..."); } else $("kpis").innerHTML = '<div class="card kpi">Loading cars...</div>';
+  const ctl = typeof AbortController !== "undefined" ? new AbortController() : null;
+  const timer = setTimeout(() => { if (ctl) ctl.abort(); }, 25000);
+  fetch(API_URL, { credentials: "omit", cache: "no-store", signal: ctl ? ctl.signal : undefined })
     .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-    .then(init).catch(loadErr);
+    .then(d => { clearTimeout(timer); if (!d || !d.cars) throw new Error(d && d.error ? d.error : "bad data"); fresh(d); })
+    .catch(e => { clearTimeout(timer); failed(e); });
 } else {
   init({cars: SAMPLE, refreshed: ""});
 }
