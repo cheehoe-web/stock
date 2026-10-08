@@ -88,6 +88,9 @@
     td:first-child{display:block;margin-bottom:4px;font-size:14px}
     td.r{text-align:left;font-size:15px}
     tr:hover td{background:none}
+    input,select,.tools input[type=search]{font-size:16px}          /* stops iPhone zooming in when typing */
+    .links a{padding:7px 12px;margin:4px 6px 0 0;font-size:13px}   /* finger-sized buttons */
+    .btn{padding:10px 16px}
   }
 </style>
 </head>
@@ -270,14 +273,15 @@ function openCar(plate) {
   $("sh").style.display = navigator.share ? "" : "none";
   $("links").innerHTML = [["CariCarz", c.caricarz], ["Carlist", c.carlist], ["Mudah", c.mudah], ["FB", c.fb]].filter(l => l[1])
     .map(l => `<a href="${esc(l[1])}" target="_blank" rel="noopener">${l[0]}</a>`).join("");
-  $("cp").textContent = "Copy for Telegram"; $("ov").classList.add("on");
+  $("cp").textContent = "Copy for Telegram"; $("ov").classList.add("on"); document.body.style.overflow = "hidden";
 }
 let CUR = null;
 $("wa").onclick = () => { window.open("https://wa.me/?text=" + encodeURIComponent($("tg").textContent), "_blank"); };
 $("sh").onclick = () => { navigator.share({ text: $("tg").textContent }).catch(() => {}); };
-$("cl").onclick = () => $("ov").classList.remove("on");
-document.addEventListener("keydown", e => { if (e.key === "Escape") $("ov").classList.remove("on"); });
-$("ov").addEventListener("click", e => { if (e.target === $("ov")) $("ov").classList.remove("on"); });
+const closeCar = () => { $("ov").classList.remove("on"); document.body.style.overflow = ""; };
+$("cl").onclick = closeCar;
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeCar(); });
+$("ov").addEventListener("click", e => { if (e.target === $("ov")) closeCar(); });
 $("cp").onclick = () => {
   const t = $("tg").textContent, done = () => { $("cp").textContent = "Copied \u2713"; };
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, () => fallback(t, done)); else fallback(t, done);
