@@ -52,13 +52,13 @@
   .tools input[type=search]{flex:1 1 100%;min-width:260px;font-size:15px;padding:9px 12px}
   .count{padding:8px 14px;font-size:13px;color:var(--mut)}
   table{width:100%;border-collapse:collapse}
-  th{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--mut);text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:1}
+  th{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--mut);text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:2;box-shadow:0 1px 0 var(--line)}
   td{padding:9px 10px;border-bottom:1px solid #f0f1f6;vertical-align:top}
   tr:hover td{background:#fafbff}
   .plate{font-weight:700}.r{text-align:right}
   .links a{display:inline-block;margin:0 4px 3px 0;padding:2px 8px;border-radius:6px;background:#eff6ff;color:var(--blue);font-size:12px;font-weight:600;text-decoration:none}
   .links a:hover{background:#dbeafe}
-  .scroll{max-height:560px;overflow:auto}
+  .scroll{overflow:visible}   /* page scrolls; the table header sticks to the top of the window */
   .err{padding:30px;color:var(--red)}
   tbody tr{cursor:pointer}
   .ov{position:fixed;inset:0;background:rgba(17,24,39,.55);display:none;align-items:center;justify-content:center;padding:14px;z-index:9}
@@ -94,7 +94,7 @@
 <body>
 <div class="wrap">
   <div class="card head">
-    <div class="title"><img class="brand" src="https://cheehoe-web.github.io/stock/logo.png" alt="CariCarz AutoMall" onerror="this.style.display='none'"><span class="tsep"></span>Stock List</div>
+    <div class="title"><img class="brand" src="https://stock.caricarzautomall.com/logo.png" alt="CariCarz AutoMall" onerror="this.style.display='none'"><span class="tsep"></span>Stock List</div>
     <span class="sub" id="refreshed"></span>
   </div>
 
