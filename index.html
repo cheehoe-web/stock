@@ -138,7 +138,7 @@
   </div>
 </div>
 
-<div class="ov" id="ov"><div class="dlg"><pre id="tg"></pre><div class="btns"><button class="btn pri" id="cp">Copy for Telegram</button><button class="btn wa" id="wa">WhatsApp</button><button class="btn" id="sh" style="display:none">Share…</button><span id="links" class="links"></span><button class="btn" id="cl">Close</button></div></div></div>
+<div class="ov" id="ov"><div class="dlg"><pre id="tg"></pre><div class="btns"><button class="btn pri" id="cp">Copy</button><button class="btn wa" id="wa">WhatsApp</button><button class="btn" id="sh" style="display:none">Share…</button><span id="links" class="links"></span><button class="btn" id="cl">Close</button></div></div></div>
 
 <script>
 // Data link used when this page is hosted outside Apps Script (GitHub Pages): your web app URL ending in /exec
@@ -273,7 +273,7 @@ function openCar(plate) {
   $("sh").style.display = navigator.share ? "" : "none";
   $("links").innerHTML = [["CariCarz", c.caricarz], ["Carlist", c.carlist], ["Mudah", c.mudah], ["FB", c.fb]].filter(l => l[1])
     .map(l => `<a href="${esc(l[1])}" target="_blank" rel="noopener">${l[0]}</a>`).join("");
-  $("cp").textContent = "Copy for Telegram"; $("ov").classList.add("on"); document.body.style.overflow = "hidden";
+  $("cp").textContent = "Copy"; $("ov").classList.add("on"); document.body.style.overflow = "hidden";
 }
 let CUR = null;
 $("wa").onclick = () => { window.open("https://wa.me/?text=" + encodeURIComponent($("tg").textContent), "_blank"); };
