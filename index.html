@@ -160,7 +160,7 @@
     <div class="scroll">
       <table>
         <thead><tr>
-          <th>Car</th><th>Status</th><th class="r">Price (RM)</th><th>Year</th><th>Body</th><th>Fuel</th><th>Phase</th><th id="thDate">Listed</th><th>Listings</th>
+          <th>Car</th><th>Status</th><th class="r">Price (RM)</th><th>Year</th><th>Body</th><th>Fuel</th><th>Phase</th><th id="thDate">Car in</th><th>Listings</th>
         </tr></thead>
         <tbody id="rows"></tbody>
       </table>
@@ -211,7 +211,7 @@ function classify(c) {
   c.sellable = c.rank <= 1;
   c.aging = /aging/i.test(c.phase || "");
   c.fresh = !!c.carIn && parseIso(c.carIn) >= cutoff;
-  c.inDt = parseIso(c.listed || c.carIn); c.outDt = parseIso(c.outDate);       // days counted from first listing
+  c.inDt = parseIso(c.carIn); c.outDt = parseIso(c.outDate);       // days counted from first listing
   c.vexp = /vbao expired/i.test(c.phase || "");
   c.dt = MODE === "past" ? (c.outDt || c.inDt) : c.inDt;                  // "newest" = latest sold/returned in past view
   const end = MODE === "past" ? c.outDt : TODAY;
@@ -233,7 +233,7 @@ function init(res) {
   fill("fStatus", past ? [["__all","All sold / returned / other"],["sold","Sold"],["returned","Returned"],["other","Other (e.g. Severe)"],["soldm","Sold this month"],["retm","Returned this month"]]
                        : [["__sell","Sellable (Available + V.B.A.O)"],["__all","All cars"],["ready","Available only"],["vbao","V.B.A.O only"],["vexp","V.B.A.O expired (60+ days)"],["booked","Booked"],["aging","Aging stock"],["fresh","New arrivals (14 days)"]]);
   document.querySelectorAll(".psub").forEach(x => x.textContent = past ? "(sold & returned)" : "(sellable)");
-  $("thDate").textContent = past ? "Sold / returned" : "Listed";
+  $("thDate").textContent = past ? "Sold / returned" : "Car in";
   $("sortNew").textContent = past ? "Sort: latest sold / returned" : "Sort: newest in";
   fill("fPrice", [["","All prices"]].concat(BANDS.map(b => [b[0], b[0]])));
   fill("fBody", [["","All body types"]].concat(uniq("body").map(v => [v, v])));
@@ -272,7 +272,7 @@ function renderKpis() {
     ["c-green","READY TO SELL",n(c => c.rank === 0),"Open for viewing",Math.round(n(c => c.rank === 0)/tot*100) + "% of inventory","ready"],
     ["c-amber","V.B.A.O",n(c => c.rank === 1),"View by appointment only",Math.round(n(c => c.rank === 1)/tot*100) + "% of inventory","vbao"],
     ["c-blue","BOOKED",n(c => c.rank === 2),"Booked, not delivered","Locked " + n(c => /w lock/i.test(c.remark)) + " &middot; Unpaid " + n(c => /w\/o payment/i.test(c.remark)),"booked"],
-    ["c-red","AGING STOCK",n(c => c.aging),"Over 90 days listed","Push these first","aging"],
+    ["c-red","AGING STOCK",n(c => c.aging),"Car Phase: Aging Stock","Push these first","aging"],
     ["c-red","VBAO EXPIRED",n(c => c.vexp),"V.B.A.O over 60 days","Delist or extend (Cl 2.4)","vexp"],
     ["c-purple","NEW ARRIVALS",n(c => c.fresh),"Car in, last 14 days","Since " + fmtDate(cutoff.getFullYear() + "-" + (cutoff.getMonth()+1) + "-" + cutoff.getDate()).slice(0,5),"fresh"]
   ];
@@ -314,11 +314,11 @@ function renderTable() {
       .map(l => `<a href="${esc(l[1])}" target="_blank" rel="noopener">${l[0]}</a>`).join("") || '<span class="sub">-</span>';
     const dateCell = MODE === "past"
       ? (c.outDate ? fmtDate(c.outDate) : '<span class="sub">no date</span>') + (c.days != null ? ` <span class="days">${c.days}d</span>` : "") + (c.outNote ? `<div class="sub">${hi(c.outNote, terms)}</div>` : "")
-      : fmtDate(c.listed || c.carIn) + (c.days != null ? ` <span class="days ${c.days > 90 ? "old" : ""}">${c.days}d</span>` : "");
+      : fmtDate(c.carIn) + (c.days != null ? ` <span class="days ${c.days > 90 ? "old" : ""}">${c.days}d</span>` : "");
     const phasePill = c.phase ? `<span class="pill ${phaseCls(c.phase)}">${hi(c.phase, terms)}</span>` : "";
     const mDays = MODE === "past"
       ? (c.outDate ? `<span class="sub">${esc(c.status)} ${fmtDate(c.outDate)}</span>` : "") + (c.days != null ? ` <span class="days">${c.days}d</span>` : "")
-      : (c.days != null ? `<span class="days ${c.days > 90 ? "old" : ""}">${c.days}d listed</span>` : "");
+      : (c.days != null ? `<span class="days ${c.days > 90 ? "old" : ""}">${c.days}d in stock</span>` : "");
     const mcard = `<td class="mcard"><div class="mc1"><span class="plate">${hi(c.plate, terms)}</span>${c.adId ? `<span class="adid">Ad ${hi(c.adId, terms)}</span>` : ""}<span class="mcp">${c.price ? "RM" + hi(rm(c.price), terms) : ""}</span></div>
       <div class="mcm">${hi(c.model, terms)}</div>
       <div class="mcs">${hi([c.color, c.mileage, c.fuel].filter(Boolean).join(" · "), terms)}</div>
