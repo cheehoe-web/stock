@@ -372,7 +372,9 @@ function load(view) {
     const timer = setTimeout(() => { if (ctl) ctl.abort(); }, 25000);
     fetch(API_URL + (view === "past" ? "?view=past&key=" + encodeURIComponent(pinGet()) : ""), { credentials: "omit", cache: "no-store", signal: ctl ? ctl.signal : undefined })
       .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-      .then(d => { clearTimeout(timer); if (!d || !d.cars) throw new Error(d && d.error ? d.error : "bad data"); done(d); })
+      .then(d => { clearTimeout(timer); if (!d || !d.cars) throw new Error(d && d.error ? d.error : "bad data");
+        if (view === "past" && d.view !== "past") throw new Error("Apps Script not updated yet (deploy a New version)");
+        done(d); })
       .catch(e => { clearTimeout(timer); fail(e); });
   } else { fetching[view] = false; done({ cars: view === "past" ? [] : SAMPLE, refreshed: "" }); }
 }
