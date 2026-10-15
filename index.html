@@ -29,7 +29,7 @@
   .logo{width:36px;height:36px;border-radius:10px;background:var(--green);color:#fff;display:grid;place-items:center;font-size:17px}
   .sub{color:var(--mut);font-size:12px}
   input,select{font:inherit;color:inherit;border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:#fff}
-  .grid6{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:14px}
+  .grid6{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:14px}
   .kpi{padding:14px 16px;display:flex;flex-direction:column;gap:4px;cursor:pointer}
   .kpi:hover{border-color:#c7d2fe}
   .kpi .top{font-size:11px;font-weight:700;letter-spacing:.05em}
@@ -81,22 +81,40 @@
   .title{user-select:none;-webkit-user-select:none}
   .seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(16,24,40,.12)}
   .adid{font-size:11px;font-weight:600;color:var(--blue);background:#eff6ff;border-radius:4px;padding:0 5px;margin-left:6px}
+  .mcard{display:none}
+  .ftog{display:none;border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 14px;font:inherit;font-weight:600;cursor:pointer}
+  .ftog.on{border-color:var(--blue);color:var(--blue)}
   mark{background:#fef08a;border-radius:3px}
   @media(max-width:1100px){.grid6{grid-template-columns:repeat(2,1fr)}.three{grid-template-columns:1fr}}
   @media(max-width:720px){
     .wrap{padding:10px}.head{padding:12px 14px}.title{font-size:18px}.three{display:none}
     .grid6{gap:8px}.kpi{padding:10px 12px}.kpi .num{font-size:26px}.kpi .lbl{font-size:12px}
     .tools{padding:10px}.tools select{flex:1 1 45%}
+    .tools input[type=search]{flex:1 1 0;min-width:0}
     .scroll{max-height:none;overflow:visible}
     thead{display:none}
     table,tbody,tr,td{display:block}
     tr{padding:12px 14px;border-bottom:1px solid var(--line)}
-    td{border:0;padding:2px 0;display:inline-block;margin-right:10px;font-size:13px}
-    td:first-child{display:block;margin-bottom:4px;font-size:14px}
-    td.r{text-align:left;font-size:15px}
+    tr{padding:0;border-bottom:8px solid var(--bg)}
+    tr td{display:none}
+    tr td.mcard{display:block;padding:12px 14px;border:0}
     tr:hover td{background:none}
+    .mc1{display:flex;align-items:center;gap:6px}
+    .mc1 .plate{font-size:15px}
+    .mcp{margin-left:auto;font-size:16px;font-weight:800}
+    .mcm{font-size:13.5px;line-height:1.35;margin-top:3px}
+    .mcs{font-size:12px;color:var(--mut);margin-top:2px}
+    .mc2{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:9px}
+    .mc2 .links{margin-left:auto;display:flex;gap:6px}
+    .mc2 .links a{padding:6px 10px;font-size:12px;margin:0}
     input,select,.tools input[type=search]{font-size:16px}          /* stops iPhone zooming in when typing */
-    .links a{padding:7px 12px;margin:4px 6px 0 0;font-size:13px}   /* finger-sized buttons */
+    .grid6{display:flex;overflow-x:auto;gap:8px;margin:0 -10px 12px;padding:0 10px 4px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+    .grid6::-webkit-scrollbar{display:none}
+    .grid6 .kpi{flex:0 0 112px;padding:9px 11px;gap:2px;scroll-snap-align:start}
+    .grid6 .kpi .top{font-size:10px}.grid6 .kpi .num{font-size:22px}
+    .grid6 .kpi .lbl,.grid6 .kpi .foot{display:none}
+    .ftog{display:inline-block !important}
+    .tools.fold select{display:none}
     .btn{padding:10px 16px}
   }
 </style>
@@ -121,13 +139,15 @@
   </div>
 
   <div class="card">
-    <div class="tools">
+    <div class="tools fold" id="tools">
       <input type="search" id="q" placeholder="Search anything: plate, ads ID, model, brand, color, year, price, remark..." autofocus>
+      <button class="ftog" id="ftog" type="button">Filters</button>
       <select id="fStatus"></select>
       <select id="fPrice"></select>
       <select id="fBody"></select>
       <select id="fBrand"></select>
       <select id="fFuel"></select>
+      <select id="fPhase"></select>
       <select id="sort">
         <option value="new" id="sortNew">Sort: newest in</option>
         <option value="pasc">Sort: price low to high</option>
@@ -140,7 +160,7 @@
     <div class="scroll">
       <table>
         <thead><tr>
-          <th>Car</th><th>Status</th><th class="r">Price (RM)</th><th>Year</th><th>Body</th><th>Fuel</th><th>Phase</th><th id="thDate">Car in</th><th>Listings</th>
+          <th>Car</th><th>Status</th><th class="r">Price (RM)</th><th>Year</th><th>Body</th><th>Fuel</th><th>Phase</th><th id="thDate">Listed</th><th>Listings</th>
         </tr></thead>
         <tbody id="rows"></tbody>
       </table>
@@ -191,13 +211,14 @@ function classify(c) {
   c.sellable = c.rank <= 1;
   c.aging = /aging/i.test(c.phase || "");
   c.fresh = !!c.carIn && parseIso(c.carIn) >= cutoff;
-  c.inDt = parseIso(c.carIn); c.outDt = parseIso(c.outDate);
+  c.inDt = parseIso(c.listed || c.carIn); c.outDt = parseIso(c.outDate);       // days counted from first listing
+  c.vexp = /vbao expired/i.test(c.phase || "");
   c.dt = MODE === "past" ? (c.outDt || c.inDt) : c.inDt;                  // "newest" = latest sold/returned in past view
   const end = MODE === "past" ? c.outDt : TODAY;
   c.days = c.inDt && end ? Math.max(0, Math.round((end - c.inDt) / 864e5)) : null;   // days in stock
   c.thisMonth = !!c.outDt && c.outDt.getFullYear() === TODAY.getFullYear() && c.outDt.getMonth() === TODAY.getMonth();
   c.band = (BANDS.find(b => c.price >= b[1] && c.price < b[2]) || [""])[0];
-  c.hay = [c.plate, c.model, c.brand, c.status, c.remark, c.year, c.body, c.color, c.fuel, c.mileage, c.phase, Object.values(c.info || {}).join(" "), c.price, rm(c.price), fmtDate(c.carIn), c.carIn, c.adId, fmtDate(c.outDate), c.outNote].join(" ").toLowerCase();
+  c.hay = [c.plate, c.model, c.brand, c.status, c.remark, c.year, c.body, c.color, c.fuel, c.mileage, c.phase, Object.values(c.info || {}).join(" "), c.price, rm(c.price), fmtDate(c.carIn), c.carIn, c.listed, fmtDate(c.listed), c.adId, fmtDate(c.outDate), c.outNote].join(" ").toLowerCase();
 }
 
 function init(res) {
@@ -205,19 +226,22 @@ function init(res) {
   const view = res.view === "past" ? "past" : "stock";
   DATA[view] = res;
   if (view !== MODE) return;                                   // data for the other tab arrived in the background
-  const keep = CARS.length && CARS.view === view ? ["fStatus","fPrice","fBody","fBrand","fFuel"].map(id => [id, $(id).value]) : null;
+  const keep = CARS.length && CARS.view === view ? ["fStatus","fPrice","fBody","fBrand","fFuel","fPhase"].map(id => [id, $(id).value]) : null;
   CARS = res.cars; CARS.view = view; CARS.forEach((c, i) => { c._i = i; classify(c); });
   $("refreshed").textContent = res.refreshed ? "Data read " + res.refreshed : "Sample data (preview)";
   const past = MODE === "past";
   fill("fStatus", past ? [["__all","All sold / returned / other"],["sold","Sold"],["returned","Returned"],["other","Other (e.g. Severe)"],["soldm","Sold this month"],["retm","Returned this month"]]
-                       : [["__sell","Sellable (Available + V.B.A.O)"],["__all","All cars"],["ready","Available only"],["vbao","V.B.A.O only"],["booked","Booked"],["aging","Aging stock"],["fresh","New arrivals (14 days)"]]);
+                       : [["__sell","Sellable (Available + V.B.A.O)"],["__all","All cars"],["ready","Available only"],["vbao","V.B.A.O only"],["vexp","V.B.A.O expired (60+ days)"],["booked","Booked"],["aging","Aging stock"],["fresh","New arrivals (14 days)"]]);
   document.querySelectorAll(".psub").forEach(x => x.textContent = past ? "(sold & returned)" : "(sellable)");
-  $("thDate").textContent = past ? "Sold / returned" : "Car in";
+  $("thDate").textContent = past ? "Sold / returned" : "Listed";
   $("sortNew").textContent = past ? "Sort: latest sold / returned" : "Sort: newest in";
   fill("fPrice", [["","All prices"]].concat(BANDS.map(b => [b[0], b[0]])));
   fill("fBody", [["","All body types"]].concat(uniq("body").map(v => [v, v])));
   fill("fBrand", [["","All brands"]].concat(uniq("brand").map(v => [v, v])));
   fill("fFuel", [["","All fuel"]].concat(uniq("fuel").map(v => [v, v])));
+  const PH = ["Phase 1 Lock-In","Phase 2","Phase 3","Aging Stock","VBAO Expired"];
+  fill("fPhase", [["","All phases"]].concat(uniq("phase").sort((a, b) => (PH.indexOf(a) + 1 || 99) - (PH.indexOf(b) + 1 || 99)).map(v => [v, v])));
+  $("fPhase").style.display = MODE === "past" ? "none" : "";
   $("fStatus").value = past ? "__all" : "__sell";
   if (keep) keep.forEach(([id, v]) => { if ([...$(id).options].some(o => o.value === v)) $(id).value = v; });
   render();
@@ -227,7 +251,7 @@ function fill(id, opts) { $(id).innerHTML = opts.map(o => `<option value="${esc(
 
 function statusOk(c, s) {
   return s === "__all" ? true : s === "__sell" ? c.sellable : s === "ready" ? c.rank === 0 : s === "vbao" ? c.rank === 1 :
-         s === "booked" ? c.rank === 2 : s === "aging" ? c.aging : s === "fresh" ? c.fresh :
+         s === "booked" ? c.rank === 2 : s === "aging" ? c.aging : s === "vexp" ? c.vexp : s === "fresh" ? c.fresh :
          s === "sold" ? c.rank === 4 : s === "returned" ? c.rank === 5 : s === "other" ? c.rank === 6 :
          s === "soldm" ? c.rank === 4 && c.thisMonth : s === "retm" ? c.rank === 5 && c.thisMonth : true;
 }
@@ -248,7 +272,8 @@ function renderKpis() {
     ["c-green","READY TO SELL",n(c => c.rank === 0),"Open for viewing",Math.round(n(c => c.rank === 0)/tot*100) + "% of inventory","ready"],
     ["c-amber","V.B.A.O",n(c => c.rank === 1),"View by appointment only",Math.round(n(c => c.rank === 1)/tot*100) + "% of inventory","vbao"],
     ["c-blue","BOOKED",n(c => c.rank === 2),"Booked, not delivered","Locked " + n(c => /w lock/i.test(c.remark)) + " &middot; Unpaid " + n(c => /w\/o payment/i.test(c.remark)),"booked"],
-    ["c-red","AGING STOCK",n(c => c.aging),"Push these first","Car Phase: Aging Stock","aging"],
+    ["c-red","AGING STOCK",n(c => c.aging),"Over 90 days listed","Push these first","aging"],
+    ["c-red","VBAO EXPIRED",n(c => c.vexp),"V.B.A.O over 60 days","Delist or extend (Cl 2.4)","vexp"],
     ["c-purple","NEW ARRIVALS",n(c => c.fresh),"Car in, last 14 days","Since " + fmtDate(cutoff.getFullYear() + "-" + (cutoff.getMonth()+1) + "-" + cutoff.getDate()).slice(0,5),"fresh"]
   ];
   $("kpis").innerHTML = k.map(x => `<div class="card kpi" data-status="${x[5]}"><div class="top ${x[0]}">${x[1]}</div><div class="num ${x[0]}">${x[2]}</div><div class="lbl">${x[3]}</div><div class="foot">${x[4]}</div></div>`).join("");
@@ -275,29 +300,38 @@ function hi(text, terms) {
 
 function renderTable() {
   const terms = $("q").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
-  const fs = $("fStatus").value, fp = $("fPrice").value, fb = $("fBody").value, fr = $("fBrand").value, ff = $("fFuel").value;
-  let rows = CARS.filter(c => statusOk(c, fs) && (!fp || c.band === fp) && (!fb || c.body === fb) && (!fr || c.brand === fr) && (!ff || c.fuel === ff) &&
+  const fs = $("fStatus").value, fp = $("fPrice").value, fb = $("fBody").value, fr = $("fBrand").value, ff = $("fFuel").value, fh = $("fPhase").value;
+  let rows = CARS.filter(c => statusOk(c, fs) && (!fp || c.band === fp) && (!fb || c.body === fb) && (!fr || c.brand === fr) && (!ff || c.fuel === ff) && (!fh || c.phase === fh) &&
                               terms.every(t => c.hay.includes(t)));
   const s = $("sort").value;
   const byNew = (a, b) => (b.dt ? b.dt.getTime() : 0) - (a.dt ? a.dt.getTime() : 0);
   rows.sort(s === "pasc" ? (a, b) => (a.price || 1e12) - (b.price || 1e12) : s === "pdesc" ? (a, b) => (b.price || 0) - (a.price || 0) :
             s === "year" ? (a, b) => Number(b.year) - Number(a.year) || byNew(a, b) :
             s === "days" ? (a, b) => (b.days == null ? -1 : b.days) - (a.days == null ? -1 : a.days) : (a, b) => a.rank - b.rank || byNew(a, b));
-  $("count").textContent = "Showing " + Math.min(rows.length, 1000) + " of " + rows.length + " cars" + (terms.length ? " matching \"" + terms.join(" ") + "\"" : "");
+  ftogLabel(); $("count").textContent = "Showing " + Math.min(rows.length, 1000) + " of " + rows.length + " cars" + (terms.length ? " matching \"" + terms.join(" ") + "\"" : "");
   $("rows").innerHTML = rows.slice(0, 1000).map(c => {
     const links = [["CariCarz", c.caricarz], ["Carlist", c.carlist], ["Mudah", c.mudah], ["FB", c.fb]].filter(l => l[1])
       .map(l => `<a href="${esc(l[1])}" target="_blank" rel="noopener">${l[0]}</a>`).join("") || '<span class="sub">-</span>';
     const dateCell = MODE === "past"
       ? (c.outDate ? fmtDate(c.outDate) : '<span class="sub">no date</span>') + (c.days != null ? ` <span class="days">${c.days}d</span>` : "") + (c.outNote ? `<div class="sub">${hi(c.outNote, terms)}</div>` : "")
-      : fmtDate(c.carIn) + (c.days != null ? ` <span class="days ${c.days > 60 ? "old" : ""}">${c.days}d</span>` : "");
+      : fmtDate(c.listed || c.carIn) + (c.days != null ? ` <span class="days ${c.days > 90 ? "old" : ""}">${c.days}d</span>` : "");
+    const phasePill = c.phase ? `<span class="pill ${phaseCls(c.phase)}">${hi(c.phase, terms)}</span>` : "";
+    const mDays = MODE === "past"
+      ? (c.outDate ? `<span class="sub">${esc(c.status)} ${fmtDate(c.outDate)}</span>` : "") + (c.days != null ? ` <span class="days">${c.days}d</span>` : "")
+      : (c.days != null ? `<span class="days ${c.days > 90 ? "old" : ""}">${c.days}d listed</span>` : "");
+    const mcard = `<td class="mcard"><div class="mc1"><span class="plate">${hi(c.plate, terms)}</span>${c.adId ? `<span class="adid">Ad ${hi(c.adId, terms)}</span>` : ""}<span class="mcp">${c.price ? "RM" + hi(rm(c.price), terms) : ""}</span></div>
+      <div class="mcm">${hi(c.model, terms)}</div>
+      <div class="mcs">${hi([c.color, c.mileage, c.fuel].filter(Boolean).join(" · "), terms)}</div>
+      <div class="mc2"><span class="pill b-${c.cls}">${hi(c.status, terms)}</span>${phasePill}${mDays}<span class="links">${links === '<span class="sub">-</span>' ? "" : links}</span></div></td>`;
     return `<tr data-i="${c._i}"><td><div class="plate">${hi(c.plate, terms)}${c.adId ? `<span class="adid">Ad ${hi(c.adId, terms)}</span>` : ""}</div><div>${hi(c.model, terms)}</div><div class="sub">${hi([c.color, c.mileage].filter(Boolean).join(" · "), terms)}</div></td>
       <td><span class="pill b-${c.cls}">${hi(c.status, terms)}</span></td><td class="r"><b>${hi(rm(c.price), terms)}</b></td>
       <td>${hi(c.year, terms)}</td><td>${hi(c.body, terms)}</td><td>${hi(c.fuel, terms)}</td>
-      <td>${c.phase ? `<span class="pill ${c.aging ? "b-red" : "b-grey"}">${hi(c.phase, terms)}</span>` : '<span class="sub">-</span>'}</td>
-      <td>${dateCell}</td><td class="links">${links}</td></tr>`;
+      <td>${phasePill || '<span class="sub">-</span>'}</td>
+      <td>${dateCell}</td><td class="links">${links}</td>${mcard}</tr>`;
   }).join("");
 }
 
+function phaseCls(p) { return /aging|expired/i.test(p) ? "b-red" : /phase 3/i.test(p) ? "b-amber" : /phase 1/i.test(p) ? "b-blue" : "b-grey"; }
 function tgText(c) {
   const i = c.info || {};
   return ["\uD83D\uDE97 " + c.model, "Plate: " + c.plate, "Interchange: " + (i.interchange || "N/A"), "",
@@ -335,6 +369,13 @@ function fallback(t, done) { const a = document.createElement("textarea"); a.val
 function render() { renderKpis(); renderPanels(); renderTable(); }
 
 // ---------- events ----------
+function ftogLabel() {                                   // phone: show how many filters are on
+  const n = ["fPrice","fBody","fBrand","fFuel","fPhase"].filter(id => $(id).value).length +
+            ($("fStatus").value !== (MODE === "past" ? "__all" : "__sell") ? 1 : 0) + ($("sort").value !== "new" ? 1 : 0);
+  $("ftog").textContent = "Filters" + (n ? " (" + n + ")" : "");
+  $("ftog").classList.toggle("on", n > 0);
+}
+$("ftog").onclick = () => $("tools").classList.toggle("fold");
 document.addEventListener("click", e => {
   if (e.target.closest("a")) return;
   const sg = e.target.closest("#seg button"); if (sg) { switchView(sg.dataset.view); return; }
@@ -344,7 +385,7 @@ document.addEventListener("click", e => {
   const r = e.target.closest("[data-sel]");
   if (r) { const el = $(r.dataset.sel); el.value = el.value === r.dataset.val ? "" : r.dataset.val; renderPanels(); renderTable(); }
 });
-["fStatus","fPrice","fBody","fBrand","fFuel","sort"].forEach(id => $(id).addEventListener("change", () => { renderPanels(); renderTable(); }));
+["fStatus","fPrice","fBody","fBrand","fFuel","fPhase","sort"].forEach(id => $(id).addEventListener("change", () => { renderPanels(); renderTable(); }));
 $("q").addEventListener("input", renderTable);
 
 // ---------- loading: show the copy saved on this phone instantly, then refresh from the sheet ----------
@@ -403,7 +444,7 @@ function switchView(view) {
   if (view === "past" && !IN_SHEET && !pinGet()) { askPin(); return; }
   MODE = view; CARS = [];
   document.querySelectorAll("#seg button").forEach(b => b.classList.toggle("on", b.dataset.view === view));
-  $("q").value = ""; $("fPrice").value = ""; $("fBody").value = ""; $("fBrand").value = ""; $("fFuel").value = ""; $("sort").value = "new";
+  $("q").value = ""; $("fPrice").value = ""; $("fBody").value = ""; $("fBrand").value = ""; $("fFuel").value = ""; $("fPhase").value = ""; $("sort").value = "new";
   if (DATA[view] && DATA[view]._fresh) { note(""); init(DATA[view]); return; }   // already loaded this session
   const have = DATA[view] || lsGet(view);
   if (have) { have.view = view; init(have); note("Updating..."); } else { note(""); loading(); }
