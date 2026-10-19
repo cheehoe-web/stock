@@ -239,7 +239,7 @@ function init(res) {
   fill("fBody", [["","All body types"]].concat(uniq("body").map(v => [v, v])));
   fill("fBrand", [["","All brands"]].concat(uniq("brand").map(v => [v, v])));
   fill("fFuel", [["","All fuel"]].concat(uniq("fuel").map(v => [v, v])));
-  const PH = ["Phase 1 Lock-In","Phase 2","Phase 3","Aging Stock","VBAO Expired"];
+  const PH = ["Phase 1 Lock-In","Phase 2","Phase 3","Phase 4","Aging Stock","VBAO Expired"];
   fill("fPhase", [["","All phases"]].concat(uniq("phase").sort((a, b) => (PH.indexOf(a) + 1 || 99) - (PH.indexOf(b) + 1 || 99)).map(v => [v, v])));
   $("fPhase").style.display = MODE === "past" ? "none" : "";
   $("fStatus").value = past ? "__all" : "__sell";
@@ -314,11 +314,11 @@ function renderTable() {
       .map(l => `<a href="${esc(l[1])}" target="_blank" rel="noopener">${l[0]}</a>`).join("") || '<span class="sub">-</span>';
     const dateCell = MODE === "past"
       ? (c.outDate ? fmtDate(c.outDate) : '<span class="sub">no date</span>') + (c.days != null ? ` <span class="days">${c.days}d</span>` : "") + (c.outNote ? `<div class="sub">${hi(c.outNote, terms)}</div>` : "")
-      : fmtDate(c.carIn) + (c.days != null ? ` <span class="days ${c.days > 90 ? "old" : ""}">${c.days}d</span>` : "");
+      : fmtDate(c.carIn) + (c.days != null ? ` <span class="days ${c.days > 120 ? "old" : ""}">${c.days}d</span>` : "");
     const phasePill = c.phase ? `<span class="pill ${phaseCls(c.phase)}">${hi(c.phase, terms)}</span>` : "";
     const mDays = MODE === "past"
       ? (c.outDate ? `<span class="sub">${esc(c.status)} ${fmtDate(c.outDate)}</span>` : "") + (c.days != null ? ` <span class="days">${c.days}d</span>` : "")
-      : (c.days != null ? `<span class="days ${c.days > 90 ? "old" : ""}">${c.days}d in stock</span>` : "");
+      : (c.days != null ? `<span class="days ${c.days > 120 ? "old" : ""}">${c.days}d in stock</span>` : "");
     const mcard = `<td class="mcard"><div class="mc1"><span class="plate">${hi(c.plate, terms)}</span>${c.adId ? `<span class="adid">Ad ${hi(c.adId, terms)}</span>` : ""}<span class="mcp">${c.price ? "RM" + hi(rm(c.price), terms) : ""}</span></div>
       <div class="mcm">${hi(c.model, terms)}</div>
       <div class="mcs">${hi([c.color, c.mileage, c.fuel].filter(Boolean).join(" · "), terms)}</div>
@@ -331,7 +331,7 @@ function renderTable() {
   }).join("");
 }
 
-function phaseCls(p) { return /aging|expired/i.test(p) ? "b-red" : /phase 3/i.test(p) ? "b-amber" : /phase 1/i.test(p) ? "b-blue" : "b-grey"; }
+function phaseCls(p) { return /aging|expired/i.test(p) ? "b-red" : /phase [34]/i.test(p) ? "b-amber" : /phase 1/i.test(p) ? "b-blue" : "b-grey"; }
 function tgText(c) {
   const i = c.info || {};
   return ["\uD83D\uDE97 " + c.model, "Plate: " + c.plate, "Interchange: " + (i.interchange || "N/A"), "",
