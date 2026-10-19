@@ -146,6 +146,28 @@
   #docbody{flex:1;overflow:auto;background:#525659;padding:10px;text-align:center}
   #docbody canvas,#docbody img{display:block;width:100%;height:auto;margin:0 auto 10px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.4)}
   #docbody .msg{color:#fff;padding:40px 10px}
+  .vrev{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13.5px}
+  .vrev.due{border-color:#fecaca;background:#fef2f2}
+  .vrev.done{border-color:#bbf7d0;background:#f0fdf4}
+  .vrev .sub{margin-top:3px}
+  .vrev form{display:grid;gap:8px;margin-top:10px}
+  .vrev input{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 10px;font:inherit;font-size:16px}
+  .vrev .btn{margin-top:8px}
+  .sumbtn{border:1px solid #ddd6fe;background:#f5f3ff;color:var(--purple);border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;display:none}
+  .sumbtn.on{display:inline-block}
+  #sumov{z-index:10;padding:0}
+  .sumw{background:var(--bg);width:100%;height:100%;overflow:auto}
+  .sumh{position:sticky;top:0;z-index:1;display:flex;align-items:center;gap:10px;padding:12px 18px;background:#fff;border-bottom:1px solid var(--line)}
+  .sumh b{font-size:17px;flex:1}
+  .sumh select{border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit}
+  .sumb{max-width:1100px;margin:0 auto;padding:16px}
+  .sumg{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:12px}
+  .sumg .card{padding:14px 16px}
+  .sumg h3{margin:0 0 8px;font-size:14px}
+  .sumt{width:100%;border-collapse:collapse;font-size:13px}
+  .sumt td{padding:5px 0;border-top:1px solid var(--line)}
+  .sumt td:last-child{text-align:right;font-weight:700}
+  @media(max-width:720px){.sumh{padding:10px 12px}.sumb{padding:10px}.sumg{grid-template-columns:1fr}}
   .vact{display:flex;gap:8px;padding:12px 20px;border-top:1px solid var(--line);background:#fff}
   .vact .btn{flex:1}
   @media(max-width:720px){
@@ -199,6 +221,7 @@
     <div class="title"><img class="brand" src="https://stock.caricarzautomall.com/logo.png" alt="CariCarz AutoMall" onerror="this.style.display='none'"><span class="tsep"></span>Stock List</div>
     <div class="hright">
       <div class="seg hide" id="seg"><button data-view="stock" class="on">In stock</button><button data-view="past">Sold &amp; Returned</button></div>
+      <button class="sumbtn" id="sumbtn" type="button">Summary</button>
       <span class="ichip" id="ichip">Internal view <button id="lockbtn" type="button">Lock</button></span>
       <span class="sub" id="refreshed"></span>
     </div>
@@ -249,6 +272,7 @@
   <input type="password" id="pin" placeholder="Passcode" autocomplete="current-password" style="width:100%;margin-bottom:12px">
   <div class="btns"><button class="btn pri" id="pinok">Unlock</button><button class="btn" id="pincancel">Cancel</button></div>
 </div></div>
+<div class="ov" id="sumov"><div class="sumw"><div class="sumh"><b>Management summary</b><select id="summ"></select><button class="btn" id="sumcp">Copy</button><button class="vx" id="sumx" aria-label="Close" style="margin:0">&times;</button></div><div class="sumb" id="sumbody"></div></div></div>
 <div class="ov" id="docov"><div class="docw"><div class="doch"><b id="doct"></b><button class="btn" id="docdl">Download</button><button class="vx" id="docx" aria-label="Close" style="margin:0">&times;</button></div><div id="docbody"></div></div></div>
 <div class="ov" id="ov"><div class="dlg vc"><div class="vbody" id="vbody"></div>
   <div class="vact"><button class="btn pri" id="cp">Copy</button><button class="btn wa" id="wa">WhatsApp</button><button class="btn" id="sh" style="display:none">Share</button></div></div></div>
@@ -283,6 +307,7 @@ function classify(c) {
   c.fresh = !!c.carIn && parseIso(c.carIn) >= cutoff;
   c.inDt = parseIso(c.carIn); c.outDt = parseIso(c.outDate);       // days counted from first listing
   c.vexp = /vbao expired/i.test(c.phase || "");
+  c.rdue = !!(c.rv && c.rv.s === "due");
   const xv = name => FULL && c.x && XI[name] !== undefined ? c.x[XI[name]] : "";
   c.xin = xv("Car-In Price"); c.xucd = xv("UCD Price"); c.xmar = xv("Est. Margin");
   c.dt = MODE === "past" ? (c.outDt || c.inDt) : c.inDt;                  // "newest" = latest sold/returned in past view
@@ -290,23 +315,24 @@ function classify(c) {
   c.days = c.inDt && end ? Math.max(0, Math.round((end - c.inDt) / 864e5)) : null;   // days in stock
   c.thisMonth = !!c.outDt && c.outDt.getFullYear() === TODAY.getFullYear() && c.outDt.getMonth() === TODAY.getMonth();
   c.band = (BANDS.find(b => c.price >= b[1] && c.price < b[2]) || [""])[0];
-  c.hay = [c.plate, c.model, c.brand, c.status, c.remark, c.year, c.body, c.color, c.fuel, c.mileage, c.phase, Object.values(c.info || {}).join(" "), c.price, rm(c.price), fmtDate(c.carIn), c.carIn, c.listed, fmtDate(c.listed), c.adId, c.bdc, c.pr && c.pr.length ? "reduced price drop" : "", fmtDate(c.outDate), c.outNote, FULL && c.x ? c.x.join(" ") : ""].join(" ").toLowerCase();
+  c.hay = [c.plate, c.model, c.brand, c.status, c.remark, c.year, c.body, c.color, c.fuel, c.mileage, c.phase, Object.values(c.info || {}).join(" "), c.price, rm(c.price), fmtDate(c.carIn), c.carIn, c.listed, fmtDate(c.listed), c.adId, c.bdc, c.pr && c.pr.length ? "reduced price drop" : "", c.rdue ? "review due" : "", fmtDate(c.outDate), c.outNote, FULL && c.x ? c.x.join(" ") : ""].join(" ").toLowerCase();
 }
 
 function init(res) {
   const t = new Date(); cutoff = new Date(t.getFullYear(), t.getMonth(), t.getDate() - 14); TODAY = new Date(t.getFullYear(), t.getMonth(), t.getDate());
   const view = res.view === "past" ? "past" : "stock";
   DATA[view] = res;
-  if (view !== MODE) return;                                   // data for the other tab arrived in the background
+  if (view !== MODE) { if ($("sumov").classList.contains("on")) renderSummary(); return; }   // other tab's data arrived in the background
   const keep = CARS.length && CARS.view === view ? ["fStatus","fPrice","fBody","fBrand","fFuel","fPhase"].map(id => [id, $(id).value]) : null;
   FULL = !!res.full && !!res.xf; XF = res.xf || []; XI = {};
   XF.forEach((f, i) => XI[f[1]] = i);
-  $("ichip").classList.toggle("on", FULL);
+  $("ichip").classList.toggle("on", FULL); $("sumbtn").classList.toggle("on", FULL);
+  if ($("sumov").classList.contains("on")) renderSummary();
   CARS = res.cars; CARS.view = view; CARS.forEach((c, i) => { c._i = i; classify(c); });
   $("refreshed").textContent = res.refreshed ? "Data read " + res.refreshed : "Sample data (preview)";
   const past = MODE === "past";
   fill("fStatus", past ? [["__all","All sold / returned / other"],["sold","Sold"],["returned","Returned"],["other","Other (e.g. Severe)"],["soldm","Sold this month"],["retm","Returned this month"]]
-                       : [["__sell","Sellable (Available + V.B.A.O)"],["__all","All cars"],["ready","Available only"],["vbao","V.B.A.O only"],["vexp","V.B.A.O expired (60+ days)"],["booked","Booked"],["aging","Aging stock"],["fresh","New arrivals (14 days)"]]);
+                       : [["__sell","Sellable (Available + V.B.A.O)"],["__all","All cars"],["ready","Available only"],["vbao","V.B.A.O only"],["vexp","V.B.A.O expired (60+ days)"],["booked","Booked"],["aging","Aging stock"],["fresh","New arrivals (14 days)"]].concat(FULL ? [["rdue","Price review due"]] : []));
   document.querySelectorAll(".psub").forEach(x => x.textContent = past ? "(sold & returned)" : "(sellable)");
   $("thDate").textContent = past ? "Sold / returned" : "Car in";
   $("sortNew").textContent = past ? "Sort: latest sold / returned" : "Sort: newest in";
@@ -326,7 +352,7 @@ function fill(id, opts) { $(id).innerHTML = opts.map(o => `<option value="${esc(
 
 function statusOk(c, s) {
   return s === "__all" ? true : s === "__sell" ? c.sellable : s === "ready" ? c.rank === 0 : s === "vbao" ? c.rank === 1 :
-         s === "booked" ? c.rank === 2 : s === "aging" ? c.aging : s === "vexp" ? c.vexp : s === "fresh" ? c.fresh :
+         s === "booked" ? c.rank === 2 : s === "aging" ? c.aging : s === "vexp" ? c.vexp : s === "fresh" ? c.fresh : s === "rdue" ? c.rdue :
          s === "sold" ? c.rank === 4 : s === "returned" ? c.rank === 5 : s === "other" ? c.rank === 6 :
          s === "soldm" ? c.rank === 4 && c.thisMonth : s === "retm" ? c.rank === 5 && c.thisMonth : true;
 }
@@ -350,7 +376,7 @@ function renderKpis() {
     ["c-red","AGING STOCK",n(c => c.aging),"Car Phase: Aging Stock","Push these first","aging"],
     ["c-red","VBAO EXPIRED",n(c => c.vexp),"V.B.A.O over 60 days","Delist or extend (Cl 2.4)","vexp"],
     ["c-purple","NEW ARRIVALS",n(c => c.fresh),"Car in, last 14 days","Since " + fmtDate(cutoff.getFullYear() + "-" + (cutoff.getMonth()+1) + "-" + cutoff.getDate()).slice(0,5),"fresh"]
-  ];
+  ].concat(FULL ? [["c-red","PRICE REVIEW DUE",n(c => c.rdue),"Every " + 10 + " days, consign team","Overdue 5+ days: " + n(c => c.rdue && c.rv.o >= 5),"rdue"]] : []);
   $("kpis").innerHTML = k.map(x => `<div class="card kpi" data-status="${x[5]}"><div class="top ${x[0]}">${x[1]}</div><div class="num ${x[0]}">${x[2]}</div><div class="lbl">${x[3]}</div><div class="foot">${x[4]}</div></div>`).join("");
 }
 
@@ -380,6 +406,7 @@ function renderTable() {
                               terms.every(t => c.hay.includes(t)));
   const s = $("sort").value;
   const byNew = (a, b) => (b.dt ? b.dt.getTime() : 0) - (a.dt ? a.dt.getTime() : 0);
+  if (fs === "rdue" && s === "new") rows.sort((a, b) => b.rv.o - a.rv.o); else
   rows.sort(s === "pasc" ? (a, b) => (a.price || 1e12) - (b.price || 1e12) : s === "pdesc" ? (a, b) => (b.price || 0) - (a.price || 0) :
             s === "year" ? (a, b) => Number(b.year) - Number(a.year) || byNew(a, b) :
             s === "days" ? (a, b) => (b.days == null ? -1 : b.days) - (a.days == null ? -1 : a.days) : (a, b) => a.rank - b.rank || byNew(a, b));
@@ -390,7 +417,7 @@ function renderTable() {
     const dateCell = MODE === "past"
       ? (c.outDate ? fmtDate(c.outDate) : '<span class="sub">no date</span>') + (c.days != null ? ` <span class="days">${c.days}d</span>` : "") + (c.outNote ? `<div class="sub">${hi(c.outNote, terms)}</div>` : "")
       : fmtDate(c.carIn) + (c.days != null ? ` <span class="days ${c.days > 120 ? "old" : ""}">${c.days}d</span>` : "");
-    const phasePill = c.phase ? `<span class="pill ${phaseCls(c.phase)}">${hi(c.phase, terms)}</span>` : "";
+    const phasePill = (c.phase ? `<span class="pill ${phaseCls(c.phase)}">${hi(c.phase, terms)}</span>` : "") + (c.rdue ? ` <span class="pill b-red" title="Price review due">Review due</span>` : "");
     const mDays = MODE === "past"
       ? (c.outDate ? `<span class="sub">${esc(c.status)} ${fmtDate(c.outDate)}</span>` : "") + (c.days != null ? ` <span class="days">${c.days}d</span>` : "")
       : (c.days != null ? `<span class="days ${c.days > 120 ? "old" : ""}">${c.days}d in stock</span>` : "");
@@ -453,6 +480,7 @@ function openCar(i) {
   if (notes.length) h += `<div class="vsec"><h4>Notes</h4>${notes.map(n => `<div class="vnote"><span>${n[0]}</span>${esc(val(n[1]))}</div>`).join("")}</div>`;
   const dates = [["Car in", fmtDate(c.carIn)], MODE === "past" ? [c.status === "Sold" ? "Sold" : "Out", fmtDate(c.outDate)] : null].filter(d => d && d[1]);
   if (c.bdc || dates.length) h += `<div class="vsec"><h4>Handled by</h4><div class="vlist">${c.bdc ? `<div><span class="vpic"><i>${esc(c.bdc.trim().charAt(0).toUpperCase())}</i></span><b style="margin-right:auto;align-self:center">${esc(c.bdc)}</b><span style="align-self:center">BDC PIC</span></div>` : ""}${dates.map(d => row(d[0], d[1])).join("")}</div></div>`;
+  if (FULL && c.rv && c.rv.s) h += `<div class="vsec"><h4>Price review (every 10 days)</h4>${reviewHtml(c)}</div>`;
   const links = [["CariCarz", c.caricarz], ["Carlist", c.carlist], ["Mudah", c.mudah], ["Facebook", c.fb]].filter(l => l[1]);
   if (links.length) h += `<div class="vsec"><h4>Listings</h4><div class="vlinks">${links.map(l => `<a href="${esc(l[1])}" target="_blank" rel="noopener">${l[0]} &#8599;</a>`).join("")}</div></div>`;
   if (FULL && c.docs && c.docs.length) h += `<div class="vsec"><h4>Documents (internal)</h4><div class="vdocs">${c.docs.map((d, n) => `<button data-doc="${n}" title="${esc(d[1])}">&#128196; ${esc(d[0])}</button>`).join("")}</div></div>`;
@@ -470,6 +498,80 @@ function openCar(i) {
   $("cp").textContent = "Copy"; $("ov").classList.add("on"); document.body.style.overflow = "hidden";
 }
 let CUR = null, DOC = null;
+// ---------- price review: status in the card + "Mark reviewed" (writes to the Price Review Log tab) ----------
+function reviewHtml(c) {
+  const r = c.rv, l = r.l, who = l ? `Last: ${fmtDate(l[0])}${l[1] ? " by " + esc(l[1]) : ""}${l[2] !== "" && l[2] != null ? " &middot; RM " + rm(l[2]) : ""}${l[3] ? " &middot; " + esc(l[3]) : ""}` : "No review recorded yet";
+  const head = r.s === "due" ? `<b class="neg">DUE: day ${r.r} review${r.o ? ", " + r.o + " day" + (r.o === 1 ? "" : "s") + " overdue" : ""}</b>`
+    : r.s === "done" ? `<b class="yes">Done for day ${r.r}</b> &middot; next in ${r.n} day${r.n === 1 ? "" : "s"}` : `Next review in ${r.n} day${r.n === 1 ? "" : "s"}`;
+  let name = ""; try { name = localStorage.getItem("caricarz_name") || ""; } catch (e) {}
+  return `<div class="vrev ${r.s}">${head}<div class="sub">${who}</div>${r.s === "due" || r.s === "done" ? `<button class="btn" id="rvopen" type="button">Mark reviewed</button>
+    <form id="rvform" style="display:none"><input id="rvprice" inputmode="numeric" placeholder="New price RM (if changed)"><input id="rvnote" placeholder="Consignor reply / note"><input id="rvby" placeholder="Your name" value="${esc(name)}">
+    <button class="btn pri" type="submit">Save review</button><div class="sub" id="rvmsg"></div></form>` : ""}</div>`;
+}
+$("vbody").addEventListener("click", e => { if (e.target.id === "rvopen") { e.target.style.display = "none"; $("rvform").style.display = "grid"; $("rvprice").focus(); } });
+$("vbody").addEventListener("submit", e => {
+  if (e.target.id !== "rvform") return; e.preventDefault();
+  const c = CUR, by = $("rvby").value.trim(), price = $("rvprice").value.replace(/[^0-9]/g, ""), note = $("rvnote").value.trim();
+  if (!by) { $("rvmsg").textContent = "Please enter your name."; return; }
+  try { localStorage.setItem("caricarz_name", by); } catch (err) {}
+  $("rvmsg").textContent = "Saving...";
+  const q = new URLSearchParams({ act: "review", key: pinGet(), plate: c.plate, by: by, price: price, note: note });
+  fetch(API_URL + "?" + q, { credentials: "omit", cache: "no-store" }).then(r => r.json()).then(d => {
+    if (!d || !d.ok) { $("rvmsg").textContent = (d && d.error === "locked") ? "Passcode changed. Lock and unlock again." : "Not saved: " + ((d && d.error) || "error"); return; }
+    const t = new Date(), iso = t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0") + "-" + String(t.getDate()).padStart(2, "0");
+    c.rv.l = [iso, by, price ? Number(price) : "", note]; if (c.rv.s === "due") { c.rv.s = "done"; delete c.rv.o; } c.rdue = false;
+    lsSet("stock", DATA.stock); openCar(c._i); renderKpis(); renderTable();
+  }).catch(() => { $("rvmsg").textContent = "Not saved. Check the connection and try again."; });
+});
+// ---------- management summary (passcode): built from the stock + sold/returned data already on this device ----------
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+$("sumbtn").onclick = () => {
+  const t = new Date(), opts = []; for (let i = 0; i < 12; i++) { const d = new Date(t.getFullYear(), t.getMonth() - i, 1); opts.push([d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"), MONTHS[d.getMonth()] + " " + d.getFullYear()]); }
+  fill("summ", opts); $("sumov").classList.add("on"); document.body.style.overflow = "hidden";
+  if (!DATA.past) { $("sumbody").innerHTML = '<div class="card" style="padding:16px">Loading sold &amp; returned data...</div>'; DATA.past = lsGet("past"); load("past"); }
+  renderSummary();
+};
+$("summ").onchange = () => renderSummary();
+const closeSum = () => { $("sumov").classList.remove("on"); document.body.style.overflow = ""; };
+$("sumx").onclick = closeSum;
+let SUMTXT = "";
+function renderSummary() {
+  const st = DATA.stock, ps = DATA.past; if (!st || !st.full) return;
+  const m = $("summ").value, inM = s => !!s && s.slice(0, 7) === m;
+  const xf = (st.xf || []).map(f => f[1]), xi = n => xf.indexOf(n), xv = (c, n) => c.x && xi(n) >= 0 ? c.x[xi(n)] : "";
+  const stock = st.cars, past = ps && ps.cars ? ps.cars : [];
+  const R = (c) => (c.remark || "").trim().toLowerCase();
+  const all = stock.concat(past);
+  const carIn = all.filter(c => inM(c.carIn));
+  const sold = past.filter(c => /^sold/.test(R(c)) && inM(c.outDate)), ret = past.filter(c => /^returned/.test(R(c)) && inM(c.outDate));
+  const dd = c => c.carIn && c.outDate ? Math.round((parseIso(c.outDate) - parseIso(c.carIn)) / 864e5) : null;
+  const avgD = l => { const d = l.map(dd).filter(x => x != null); return d.length ? Math.round(d.reduce((a, b) => a + b, 0) / d.length) : "-"; };
+  const sum = (l, f) => l.reduce((s, c) => s + (typeof f(c) === "number" ? f(c) : 0), 0);
+  const group = (l, f) => { const g = {}; l.forEach(c => { const k = String(f(c) || "(blank)").trim() || "(blank)"; g[k] = (g[k] || 0) + 1; }); return Object.entries(g).sort((a, b) => b[1] - a[1]); };
+  const tbl = rows => rows.length ? `<table class="sumt">${rows.map(r => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join("")}</table>` : '<div class="sub">None.</div>';
+  const now = { total: stock.length, avail: stock.filter(c => !R(c)).length, vbao: stock.filter(c => /^v\.?b\.?a\.?o/.test(R(c))).length,
+    booked: stock.filter(c => /^booked/.test(R(c))).length, aging: stock.filter(c => /aging/i.test(c.phase || "")).length,
+    rdue: stock.filter(c => c.rv && c.rv.s === "due").length };
+  const k = [["CAR IN", carIn.length, "c-purple"], ["SOLD", sold.length, "c-green"], ["RETURNED", ret.length, "c-ink"],
+    ["SOLD VALUE", "RM " + (sum(sold, c => c.price) / 1e6).toFixed(2) + "M", "c-green"], ["EST. MARGIN (SOLD)", "RM " + money(Math.round(sum(sold, c => xv(c, "Est. Margin")))), "c-blue"], ["AVG DAYS TO SELL", avgD(sold), "c-amber"]];
+  const label = $("summ").selectedOptions[0].textContent;
+  $("sumbody").innerHTML = (ps ? "" : '<div class="note on">Sold &amp; returned data still loading; sold / returned figures will fill in shortly.</div>') +
+    `<div class="grid6">${k.map(x => `<div class="card kpi" style="cursor:default"><div class="top ${x[2]}">${x[0]}</div><div class="num ${x[2]}" style="font-size:24px">${x[1]}</div><div class="foot">${label}</div></div>`).join("")}</div>
+    <div class="sumg">
+      <div class="card"><h3>Car in by acquisition type</h3>${tbl(group(carIn, c => xv(c, "Acquisition Type")))}</div>
+      <div class="card"><h3>Car in by BDC</h3>${tbl(group(carIn, c => c.bdc))}</div>
+      <div class="card"><h3>Car in by consignment type</h3>${tbl(group(carIn, c => xv(c, "Consignment Type")))}</div>
+      <div class="card"><h3>Sold by brand</h3>${tbl(group(sold, c => c.brand))}</div>
+      <div class="card"><h3>Returned: reason</h3>${tbl(group(ret, c => c.outNote))}</div>
+      <div class="card"><h3>Inventory now</h3>${tbl([["In inventory", now.total], ["Available", now.avail], ["V.B.A.O", now.vbao], ["Booked", now.booked], ["Aging (120+ days)", now.aging], ["Price review due", now.rdue]])}</div>
+    </div>`;
+  const lines = g => g.map(x => "  - " + x[0] + ": " + x[1]).join("\n");
+  SUMTXT = ["*Automall summary: " + label + "*", "", "Car in: " + carIn.length, lines(group(carIn, c => xv(c, "Acquisition Type"))), "",
+    "Sold: " + sold.length + " (RM " + (sum(sold, c => c.price) / 1e6).toFixed(2) + "M, avg " + avgD(sold) + " days)", "Returned: " + ret.length, "",
+    "Inventory now: " + now.total + " (Available " + now.avail + ", V.B.A.O " + now.vbao + ", Booked " + now.booked + ", Aging " + now.aging + ")"].join("\n");
+}
+$("sumcp").onclick = () => fallbackCopy(SUMTXT, () => { $("sumcp").textContent = "Copied \u2713"; setTimeout(() => $("sumcp").textContent = "Copy", 1500); });
+function fallbackCopy(t, done) { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, () => fallback(t, done)); else fallback(t, done); }
 // ---------- documents (VOC / JomCheck): fetched only with the passcode, shown inside the page ----------
 $("vbody").addEventListener("click", e => { const b = e.target.closest("[data-doc]"); if (b) openDoc(CUR, Number(b.dataset.doc)); });
 const closeDoc = () => { $("docov").classList.remove("on"); $("docbody").innerHTML = ""; DOC = null; };
@@ -506,7 +608,7 @@ function openDoc(c, n) {
 $("wa").onclick = () => { window.open("https://wa.me/?text=" + encodeURIComponent(tgText(CUR)), "_blank"); };
 $("sh").onclick = () => { navigator.share({ text: tgText(CUR) }).catch(() => {}); };
 const closeCar = () => { $("ov").classList.remove("on"); document.body.style.overflow = ""; };
-document.addEventListener("keydown", e => { if (e.key === "Escape") { if ($("docov").classList.contains("on")) { closeDoc(); return; } closeCar(); closePin(); } });
+document.addEventListener("keydown", e => { if (e.key === "Escape") { if ($("docov").classList.contains("on")) { closeDoc(); return; } if ($("sumov").classList.contains("on")) { closeSum(); return; } closeCar(); closePin(); } });
 $("ov").addEventListener("click", e => { if (e.target === $("ov")) closeCar(); });
 $("cp").onclick = () => {
   const t = tgText(CUR), done = () => { $("cp").textContent = "Copied \u2713"; };
