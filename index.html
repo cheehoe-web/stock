@@ -151,6 +151,7 @@
   .vrev.done{border-color:#bbf7d0;background:#f0fdf4}
   .vrev .sub{margin-top:3px}
   .vrev form{display:grid;gap:8px;margin-top:10px}
+  .vrev label{display:grid;gap:3px}
   .vrev input{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 10px;font:inherit;font-size:16px}
   .vrev .btn{margin-top:8px}
   .sumbtn{border:1px solid #ddd6fe;background:#f5f3ff;color:var(--purple);border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;display:none}
@@ -307,7 +308,7 @@ function classify(c) {
   c.fresh = !!c.carIn && parseIso(c.carIn) >= cutoff;
   c.inDt = parseIso(c.carIn); c.outDt = parseIso(c.outDate);       // days counted from first listing
   c.vexp = /vbao expired/i.test(c.phase || "");
-  c.rdue = !!(c.rv && c.rv.s === "due");
+  c.rdue = !!(c.rv && c.rv.s === "due"); c.rupd = !!(c.rv && c.rv.u);
   const xv = name => FULL && c.x && XI[name] !== undefined ? c.x[XI[name]] : "";
   c.xin = xv("Car-In Price"); c.xucd = xv("UCD Price"); c.xmar = xv("Est. Margin");
   c.dt = MODE === "past" ? (c.outDt || c.inDt) : c.inDt;                  // "newest" = latest sold/returned in past view
@@ -315,7 +316,7 @@ function classify(c) {
   c.days = c.inDt && end ? Math.max(0, Math.round((end - c.inDt) / 864e5)) : null;   // days in stock
   c.thisMonth = !!c.outDt && c.outDt.getFullYear() === TODAY.getFullYear() && c.outDt.getMonth() === TODAY.getMonth();
   c.band = (BANDS.find(b => c.price >= b[1] && c.price < b[2]) || [""])[0];
-  c.hay = [c.plate, c.model, c.brand, c.status, c.remark, c.year, c.body, c.color, c.fuel, c.mileage, c.phase, Object.values(c.info || {}).join(" "), c.price, rm(c.price), fmtDate(c.carIn), c.carIn, c.listed, fmtDate(c.listed), c.adId, c.bdc, c.pr && c.pr.length ? "reduced price drop" : "", c.rdue ? "review due" : "", fmtDate(c.outDate), c.outNote, FULL && c.x ? c.x.join(" ") : ""].join(" ").toLowerCase();
+  c.hay = [c.plate, c.model, c.brand, c.status, c.remark, c.year, c.body, c.color, c.fuel, c.mileage, c.phase, Object.values(c.info || {}).join(" "), c.price, rm(c.price), fmtDate(c.carIn), c.carIn, c.listed, fmtDate(c.listed), c.adId, c.bdc, c.pr && c.pr.length ? "reduced price drop" : "", c.rdue ? "review due" : "", c.rupd ? "update price master" : "", fmtDate(c.outDate), c.outNote, FULL && c.x ? c.x.join(" ") : ""].join(" ").toLowerCase();
 }
 
 function init(res) {
@@ -332,7 +333,7 @@ function init(res) {
   $("refreshed").textContent = res.refreshed ? "Data read " + res.refreshed : "Sample data (preview)";
   const past = MODE === "past";
   fill("fStatus", past ? [["__all","All sold / returned / other"],["sold","Sold"],["returned","Returned"],["other","Other (e.g. Severe)"],["soldm","Sold this month"],["retm","Returned this month"]]
-                       : [["__sell","Sellable (Available + V.B.A.O)"],["__all","All cars"],["ready","Available only"],["vbao","V.B.A.O only"],["vexp","V.B.A.O expired (60+ days)"],["booked","Booked"],["aging","Aging stock"],["fresh","New arrivals (14 days)"]].concat(FULL ? [["rdue","Price review due"]] : []));
+                       : [["__sell","Sellable (Available + V.B.A.O)"],["__all","All cars"],["ready","Available only"],["vbao","V.B.A.O only"],["vexp","V.B.A.O expired (60+ days)"],["booked","Booked"],["aging","Aging stock"],["fresh","New arrivals (14 days)"]].concat(FULL ? [["rdue","Price review due"],["rupd","Reviewed price not yet in Master"]] : []));
   document.querySelectorAll(".psub").forEach(x => x.textContent = past ? "(sold & returned)" : "(sellable)");
   $("thDate").textContent = past ? "Sold / returned" : "Car in";
   $("sortNew").textContent = past ? "Sort: latest sold / returned" : "Sort: newest in";
@@ -352,7 +353,7 @@ function fill(id, opts) { $(id).innerHTML = opts.map(o => `<option value="${esc(
 
 function statusOk(c, s) {
   return s === "__all" ? true : s === "__sell" ? c.sellable : s === "ready" ? c.rank === 0 : s === "vbao" ? c.rank === 1 :
-         s === "booked" ? c.rank === 2 : s === "aging" ? c.aging : s === "vexp" ? c.vexp : s === "fresh" ? c.fresh : s === "rdue" ? c.rdue :
+         s === "booked" ? c.rank === 2 : s === "aging" ? c.aging : s === "vexp" ? c.vexp : s === "fresh" ? c.fresh : s === "rdue" ? c.rdue : s === "rupd" ? c.rupd :
          s === "sold" ? c.rank === 4 : s === "returned" ? c.rank === 5 : s === "other" ? c.rank === 6 :
          s === "soldm" ? c.rank === 4 && c.thisMonth : s === "retm" ? c.rank === 5 && c.thisMonth : true;
 }
@@ -376,7 +377,8 @@ function renderKpis() {
     ["c-red","AGING STOCK",n(c => c.aging),"Car Phase: Aging Stock","Push these first","aging"],
     ["c-red","VBAO EXPIRED",n(c => c.vexp),"V.B.A.O over 60 days","Delist or extend (Cl 2.4)","vexp"],
     ["c-purple","NEW ARRIVALS",n(c => c.fresh),"Car in, last 14 days","Since " + fmtDate(cutoff.getFullYear() + "-" + (cutoff.getMonth()+1) + "-" + cutoff.getDate()).slice(0,5),"fresh"]
-  ].concat(FULL ? [["c-red","PRICE REVIEW DUE",n(c => c.rdue),"Every " + 10 + " days, consign team","Overdue 5+ days: " + n(c => c.rdue && c.rv.o >= 5),"rdue"]] : []);
+  ].concat(FULL ? [["c-red","PRICE REVIEW DUE",n(c => c.rdue),"Every " + 10 + " days, consign team","Overdue 5+ days: " + n(c => c.rdue && c.rv.o >= 5),"rdue"],
+    ["c-amber","UPDATE MASTER PRICE",n(c => c.rupd),"Reviewed price not in Master","Car-in / UCD / RSP differ","rupd"]] : []);
   $("kpis").innerHTML = k.map(x => `<div class="card kpi" data-status="${x[5]}"><div class="top ${x[0]}">${x[1]}</div><div class="num ${x[0]}">${x[2]}</div><div class="lbl">${x[3]}</div><div class="foot">${x[4]}</div></div>`).join("");
 }
 
@@ -417,7 +419,7 @@ function renderTable() {
     const dateCell = MODE === "past"
       ? (c.outDate ? fmtDate(c.outDate) : '<span class="sub">no date</span>') + (c.days != null ? ` <span class="days">${c.days}d</span>` : "") + (c.outNote ? `<div class="sub">${hi(c.outNote, terms)}</div>` : "")
       : fmtDate(c.carIn) + (c.days != null ? ` <span class="days ${c.days > 120 ? "old" : ""}">${c.days}d</span>` : "");
-    const phasePill = (c.phase ? `<span class="pill ${phaseCls(c.phase)}">${hi(c.phase, terms)}</span>` : "") + (c.rdue ? ` <span class="pill b-red" title="Price review due">Review due</span>` : "");
+    const phasePill = (c.phase ? `<span class="pill ${phaseCls(c.phase)}">${hi(c.phase, terms)}</span>` : "") + (c.rdue ? ` <span class="pill b-red" title="Price review due">Review due</span>` : "") + (c.rupd ? ` <span class="pill b-amber" title="Reviewed price not yet updated in Master">Update price</span>` : "");
     const mDays = MODE === "past"
       ? (c.outDate ? `<span class="sub">${esc(c.status)} ${fmtDate(c.outDate)}</span>` : "") + (c.days != null ? ` <span class="days">${c.days}d</span>` : "")
       : (c.days != null ? `<span class="days ${c.days > 120 ? "old" : ""}">${c.days}d in stock</span>` : "");
@@ -499,27 +501,35 @@ function openCar(i) {
 }
 let CUR = null, DOC = null;
 // ---------- price review: status in the card + "Mark reviewed" (writes to the Price Review Log tab) ----------
+const curPrices = c => ["Car-In Price", "UCD Price", "Retail Selling Price"].map(h => c.x && XI[h] !== undefined && typeof c.x[XI[h]] === "number" ? c.x[XI[h]] : "");
 function reviewHtml(c) {
-  const r = c.rv, l = r.l, who = l ? `Last: ${fmtDate(l[0])}${l[1] ? " by " + esc(l[1]) : ""}${l[2] !== "" && l[2] != null ? " &middot; RM " + rm(l[2]) : ""}${l[3] ? " &middot; " + esc(l[3]) : ""}` : "No review recorded yet";
+  const r = c.rv, l = r.l, cur = curPrices(c);
+  const pr = l && Array.isArray(l[2]) ? ["Car-in", "UCD", "RSP"].map((n, i) => l[2][i] !== "" && l[2][i] != null ? n + " RM " + rm(l[2][i]) : "").filter(Boolean).join(" &middot; ") : "";
+  const who = l ? `Last: ${fmtDate(l[0])}${l[1] ? " by " + esc(l[1]) : ""}${pr ? " &middot; " + pr : ""}${l[3] ? "<br>" + esc(l[3]) : ""}` : "No review recorded yet";
   const head = r.s === "due" ? `<b class="neg">DUE: day ${r.r} review${r.o ? ", " + r.o + " day" + (r.o === 1 ? "" : "s") + " overdue" : ""}</b>`
     : r.s === "done" ? `<b class="yes">Done for day ${r.r}</b> &middot; next in ${r.n} day${r.n === 1 ? "" : "s"}` : `Next review in ${r.n} day${r.n === 1 ? "" : "s"}`;
+  const upd = r.u ? `<div style="margin-top:6px"><span class="pill b-amber">Update price in Master</span> <span class="sub">Master now: Car-in ${rm(cur[0]) || "-"} &middot; UCD ${rm(cur[1]) || "-"} &middot; RSP ${rm(cur[2]) || "-"}</span></div>` : "";
   let name = ""; try { name = localStorage.getItem("caricarz_name") || ""; } catch (e) {}
-  return `<div class="vrev ${r.s}">${head}<div class="sub">${who}</div>${r.s === "due" || r.s === "done" ? `<button class="btn" id="rvopen" type="button">Mark reviewed</button>
-    <form id="rvform" style="display:none"><input id="rvprice" inputmode="numeric" placeholder="New price RM (if changed)"><input id="rvnote" placeholder="Consignor reply / note"><input id="rvby" placeholder="Your name" value="${esc(name)}">
+  const inp = (id, ph, v) => `<label class="sub">${ph}<input id="${id}" inputmode="numeric" value="${v === "" ? "" : rm(v)}"></label>`;
+  return `<div class="vrev ${r.s}">${head}<div class="sub">${who}</div>${upd}${r.s === "due" || r.s === "done" ? `<button class="btn" id="rvopen" type="button">Mark reviewed</button>
+    <form id="rvform" style="display:none">${inp("rvcin", "Car-in price (RM)", cur[0])}${inp("rvucd", "UCD price (RM)", cur[1])}${inp("rvrsp", "Retail selling price (RM)", cur[2])}
+    <input id="rvnote" placeholder="Consignor reply / note"><input id="rvby" placeholder="Your name" value="${esc(name)}">
     <button class="btn pri" type="submit">Save review</button><div class="sub" id="rvmsg"></div></form>` : ""}</div>`;
 }
-$("vbody").addEventListener("click", e => { if (e.target.id === "rvopen") { e.target.style.display = "none"; $("rvform").style.display = "grid"; $("rvprice").focus(); } });
+$("vbody").addEventListener("click", e => { if (e.target.id === "rvopen") { e.target.style.display = "none"; $("rvform").style.display = "grid"; $("rvcin").focus(); } });
 $("vbody").addEventListener("submit", e => {
   if (e.target.id !== "rvform") return; e.preventDefault();
-  const c = CUR, by = $("rvby").value.trim(), price = $("rvprice").value.replace(/[^0-9]/g, ""), note = $("rvnote").value.trim();
+  const c = CUR, by = $("rvby").value.trim(), note = $("rvnote").value.trim(), dig = id => $(id).value.replace(/[^0-9]/g, "");
+  const nums = ["rvcin", "rvucd", "rvrsp"].map(id => dig(id) ? Number(dig(id)) : "");
   if (!by) { $("rvmsg").textContent = "Please enter your name."; return; }
   try { localStorage.setItem("caricarz_name", by); } catch (err) {}
   $("rvmsg").textContent = "Saving...";
-  const q = new URLSearchParams({ act: "review", key: pinGet(), plate: c.plate, by: by, price: price, note: note });
+  const q = new URLSearchParams({ act: "review", key: pinGet(), plate: c.plate, by: by, cin: nums[0], ucd: nums[1], rsp: nums[2], note: note });
   fetch(API_URL + "?" + q, { credentials: "omit", cache: "no-store" }).then(r => r.json()).then(d => {
     if (!d || !d.ok) { $("rvmsg").textContent = (d && d.error === "locked") ? "Passcode changed. Lock and unlock again." : "Not saved: " + ((d && d.error) || "error"); return; }
     const t = new Date(), iso = t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0") + "-" + String(t.getDate()).padStart(2, "0");
-    c.rv.l = [iso, by, price ? Number(price) : "", note]; if (c.rv.s === "due") { c.rv.s = "done"; delete c.rv.o; } c.rdue = false;
+    const cur = curPrices(c); c.rv.l = [iso, by, nums, note]; c.rv.u = nums.some((v, i) => v !== "" && v !== cur[i]) || undefined; c.rupd = !!c.rv.u;
+    if (c.rv.s === "due") { c.rv.s = "done"; delete c.rv.o; } c.rdue = false;
     lsSet("stock", DATA.stock); openCar(c._i); renderKpis(); renderTable();
   }).catch(() => { $("rvmsg").textContent = "Not saved. Check the connection and try again."; });
 });
