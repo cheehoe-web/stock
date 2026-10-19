@@ -460,7 +460,7 @@ function openCar(i) {
     const groups = {};
     XF.forEach((f, i) => { const v = c.x[i]; if (v === "" || v == null) return; (groups[f[0]] = groups[f[0]] || []).push([f[1], f[2] === "rm" ? "RM " + money(v) : v, f[2] === "rm" && typeof v === "number" && v < 0]); });
     const xh = Object.keys(groups).map(g => `<h5>${esc(g)}</h5><div class="xgrid">${groups[g].map(([l, v, neg]) => `<span>${esc(l)}</span><span class="${neg ? "neg" : ""}">${esc(v)}</span>`).join("")}</div>`).join("");
-    if (xh) h += `<details><summary>Internal details (not copied)</summary><div class="xsec">${xh}</div></details>`;
+    if (xh) h += `<details><summary>More internal details</summary><div class="xsec">${xh}</div></details>`;
   }
   document.querySelector(".vc").classList.toggle("hasimg", !!c.photo);
   $("vbody").innerHTML = h; $("vbody").scrollTop = 0;
