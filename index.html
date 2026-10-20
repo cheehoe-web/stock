@@ -699,7 +699,7 @@ function load(view) {
   };
   {
     const ctl = typeof AbortController !== "undefined" ? new AbortController() : null;
-    const timer = setTimeout(() => { if (ctl) ctl.abort(); }, 25000);
+    const timer = setTimeout(() => { if (ctl) ctl.abort(); }, 90000);     // a cold rebuild can take ~30-60 s; keep showing the saved copy meanwhile
     fetch(API_URL + (view === "past" ? "?view=past&key=" + encodeURIComponent(pinGet()) : pinGet() ? "?key=" + encodeURIComponent(pinGet()) : ""), { credentials: "omit", cache: "no-store", signal: ctl ? ctl.signal : undefined })
       .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then(d => { clearTimeout(timer); if (!d || !d.cars) throw new Error(d && d.error ? d.error : "bad data");
