@@ -35,6 +35,19 @@
   .kpi .num{font-size:30px;font-weight:800;line-height:1.1}
   .kpi .lbl{font-weight:600;font-size:13px}
   .kpi .foot{border-top:1px solid var(--line);padding-top:6px;margin-top:4px;font-size:12px;color:var(--mut)}
+  .kmain{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:10px}
+  .kt{padding:12px 16px;cursor:pointer}
+  .kt:hover,.kt.on{border-color:#c7d2fe;box-shadow:0 0 0 2px #e0e7ff}
+  .kt .kl{font-size:12px;color:var(--mut);font-weight:600}
+  .kt .kn{font-size:28px;font-weight:800;line-height:1.15;margin:2px 0}
+  .kt .ks{font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .kalert{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .ka{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer}
+  .ka i{width:8px;height:8px;border-radius:50%;background:currentColor;flex:0 0 auto}
+  .ka i.c-ink{color:var(--mut)}
+  .ka b{font-weight:800;color:var(--mut)}
+  .ka:hover,.ka.on{border-color:#c7d2fe;background:#eef2ff}
+  @media(max-width:720px){.kmain{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.kt{padding:10px 12px}.kt .kn{font-size:22px}.kalert{flex-wrap:nowrap;overflow-x:auto;margin:0 -10px 12px;padding:0 10px 2px}.kalert::-webkit-scrollbar{display:none}.ka{flex:0 0 auto}}
   .c-ink{color:var(--ink)}.c-blue{color:var(--blue)}.c-amber{color:var(--amber)}.c-red{color:var(--red)}.c-green{color:var(--green)}.c-purple{color:var(--purple)}
   .b-green{background:#d1fae5;color:#047857}.b-amber{background:#fef3c7;color:#92400e}.b-blue{background:#dbeafe;color:#1d4ed8}
   .b-grey{background:#f3f4f6;color:#4b5563}.b-red{background:#fee2e2;color:#b91c1c}.b-purple{background:#ede9fe;color:#6d28d9}
@@ -229,7 +242,7 @@
   </div>
 
   <div class="note" id="note"></div>
-  <div class="grid6" id="kpis"></div>
+  <div id="kpis"></div>
 
   <div class="three">
     <div class="card panel"><h3>Price band <span class="sub psub">(sellable)</span></h3><div id="pPrice"></div></div>
@@ -379,7 +392,9 @@ function renderKpis() {
     ["c-purple","NEW ARRIVALS",n(c => c.fresh),"Car in, last 14 days","Since " + fmtDate(cutoff.getFullYear() + "-" + (cutoff.getMonth()+1) + "-" + cutoff.getDate()).slice(0,5),"fresh"]
   ].concat(FULL ? [["c-red","PRICE REVIEW DUE",n(c => c.rdue),"Every " + 10 + " days, consign team","Overdue 5+ days: " + n(c => c.rdue && c.rv.o >= 5),"rdue"],
     ["c-amber","UPDATE MASTER PRICE",n(c => c.rupd),"Reviewed price not in Master","Car-in / UCD / RSP differ","rupd"]] : []);
-  $("kpis").innerHTML = k.map(x => `<div class="card kpi" data-status="${x[5]}"><div class="top ${x[0]}">${x[1]}</div><div class="num ${x[0]}">${x[2]}</div><div class="lbl">${x[3]}</div><div class="foot">${x[4]}</div></div>`).join("");
+  const cur = $("fStatus").value, cap = t => (t.charAt(0) + t.slice(1).toLowerCase()).replace(/v\.b\.a\.o/i, "V.B.A.O").replace(/vbao/i, "VBAO").replace("master", "Master");
+  $("kpis").innerHTML = `<div class="kmain">${k.slice(0, 4).map(x => `<div class="card kt ${cur === x[5] ? "on" : ""}" data-status="${x[5]}"><div class="kl">${cap(x[1])}</div><div class="kn ${x[0]}">${x[2]}</div><div class="ks">${x[4]}</div></div>`).join("")}</div>
+    <div class="kalert">${k.slice(4).map(x => `<button class="ka ${cur === x[5] ? "on" : ""}" data-status="${x[5]}" title="${esc(x[3])} &middot; ${esc(String(x[4]).replace(/&middot;/g, "·"))}"><i class="${x[0]}"></i>${cap(x[1])}<b class="${x[2] ? x[0] : ""}">${x[2]}</b></button>`).join("")}</div>`;
 }
 
 function panel(id, rows, color, sel) {
@@ -641,11 +656,12 @@ document.addEventListener("click", e => {
   const sg = e.target.closest("#seg button"); if (sg) { switchView(sg.dataset.view); return; }
   const tr = e.target.closest("tr[data-i]"); if (tr) { openCar(Number(tr.dataset.i)); return; }
   const k = e.target.closest("[data-status]");
-  if (k) { $("fStatus").value = k.dataset.status; renderPanels(); renderTable(); $("count").scrollIntoView({behavior: "smooth", block: "start"}); return; }
+  if (k) { const def = MODE === "past" ? "__all" : "__sell"; $("fStatus").value = $("fStatus").value === k.dataset.status ? def : k.dataset.status;
+    renderKpis(); renderPanels(); renderTable(); if ($("fStatus").value !== def) $("count").scrollIntoView({behavior: "smooth", block: "start"}); return; }
   const r = e.target.closest("[data-sel]");
   if (r) { const el = $(r.dataset.sel); el.value = el.value === r.dataset.val ? "" : r.dataset.val; renderPanels(); renderTable(); }
 });
-["fStatus","fPrice","fBody","fBrand","fFuel","fPhase","sort"].forEach(id => $(id).addEventListener("change", () => { renderPanels(); renderTable(); }));
+["fStatus","fPrice","fBody","fBrand","fFuel","fPhase","sort"].forEach(id => $(id).addEventListener("change", () => { if (id === "fStatus") renderKpis(); renderPanels(); renderTable(); }));
 $("q").addEventListener("input", renderTable);
 
 // ---------- loading: show the copy saved on this phone instantly, then refresh from the sheet ----------
