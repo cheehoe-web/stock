@@ -104,9 +104,7 @@
   .xgrid span:nth-child(odd){color:var(--mut)}
   .ichip{display:none;font-size:12px;font-weight:600;color:var(--purple);background:#ede9fe;border-radius:8px;padding:6px 10px}
   .ichip.on{display:inline-flex;gap:8px;align-items:center}
-  .lockfoot{display:none;text-align:center;padding:8px 0 28px}
-  .lockfoot button{border:0;background:none;color:var(--mut);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;padding:8px}
-  @media(max-width:720px){#lockbtn{display:none}.lockfoot.on{display:block}}
+
   .ichip button{border:0;background:#fff;color:var(--purple);font:inherit;font-weight:700;border-radius:6px;padding:2px 8px;cursor:pointer}
   /* vehicle card */
   .vc{max-width:520px;padding:0;display:flex;flex-direction:column;overflow:hidden}
@@ -283,7 +281,6 @@
   </div>
 </div>
 
-<div class="lockfoot" id="lockfoot"><button id="lockbtn2" type="button">Lock internal view on this phone</button></div>
 <div class="ov" id="lockov"><div class="dlg" style="max-width:340px">
   <h3 style="margin:0 0 6px">Lock internal view?</h3>
   <div class="sub" style="margin-bottom:14px">Prices, VOC and price review will be hidden on this device. You will need the passcode to unlock again.</div>
@@ -350,7 +347,7 @@ function init(res) {
   const keep = CARS.length && CARS.view === view ? ["fStatus","fPrice","fBody","fBrand","fFuel","fPhase"].map(id => [id, $(id).value]) : null;
   FULL = !!res.full && !!res.xf; XF = res.xf || []; XI = {};
   XF.forEach((f, i) => XI[f[1]] = i);
-  $("ichip").classList.toggle("on", FULL); $("lockfoot").classList.toggle("on", FULL); $("sumbtn").classList.toggle("on", FULL);
+  $("ichip").classList.toggle("on", FULL); $("sumbtn").classList.toggle("on", FULL);
   if ($("sumov").classList.contains("on")) renderSummary();
   CARS = res.cars; CARS.view = view; CARS.forEach((c, i) => { c._i = i; classify(c); });
   $("refreshed").textContent = res.refreshed ? "Data read " + res.refreshed : "Sample data (preview)";
@@ -734,7 +731,7 @@ const submitPin = () => {
   if (MODE === "stock") { note("Unlocking internal view..."); load("stock"); } else switchView("stock");
 };
 const doLock = () => { pinSet(""); lsClearInternal(); location.reload(); };
-$("lockbtn").onclick = $("lockbtn2").onclick = () => $("lockov").classList.add("on");     // always ask first: easy to tap by mistake
+$("lockbtn").onclick = () => $("lockov").classList.add("on");     // always ask first: easy to tap by mistake
 $("lockno").onclick = () => $("lockov").classList.remove("on");
 $("lockov").addEventListener("click", e => { if (e.target === $("lockov")) $("lockov").classList.remove("on"); });
 $("lockyes").onclick = doLock;
