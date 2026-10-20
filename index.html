@@ -321,7 +321,8 @@ function classify(c) {
   c.fresh = !!c.carIn && parseIso(c.carIn) >= cutoff;
   c.inDt = parseIso(c.carIn); c.outDt = parseIso(c.outDate);       // days counted from first listing
   c.vexp = /vbao expired/i.test(c.phase || "");
-  c.rdue = !!(c.rv && c.rv.s === "due"); c.rupd = !!(c.rv && c.rv.u);
+  c.rdue = !!(c.rv && c.rv.s === "due"); c.rupd = !!(c.rv && c.rv.u && !(c.rv.l && c.rv.l[1] === "My Promotion"));   // My Promotion is written after Master, so it never means "update Master"
+  if (c.rv && !c.rupd) delete c.rv.u;
   const xv = name => FULL && c.x && XI[name] !== undefined ? c.x[XI[name]] : "";
   c.xin = xv("Car-In Price"); c.xucd = xv("UCD Price"); c.xmar = xv("Est. Margin");
   c.dt = MODE === "past" ? (c.outDt || c.inDt) : c.inDt;                  // "newest" = latest sold/returned in past view
