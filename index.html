@@ -212,8 +212,8 @@
   .kchips button.on{background:var(--blue);border-color:var(--blue);color:#fff}
   .kphoto{border:2px dashed var(--line);border-radius:10px;padding:14px;text-align:center;cursor:pointer;color:var(--mut);font-size:13px}
   .kphoto img{max-width:100%;max-height:240px;border-radius:8px;display:block;margin:0 auto}
-  .kseg{display:grid;grid-template-columns:1fr 1fr;background:#eef0f6;border-radius:10px;padding:3px}
-  .kseg button{border:0;background:none;border-radius:8px;padding:9px;font:inherit;font-weight:700;font-size:14px;color:var(--mut);cursor:pointer}
+  .kseg{display:grid;grid-template-columns:1fr 1fr 1fr;background:#eef0f6;border-radius:10px;padding:3px}
+  .kseg button{border:0;background:none;border-radius:8px;padding:9px 4px;font:inherit;font-weight:700;font-size:13px;color:var(--mut);cursor:pointer}
   .kseg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.1)}
   .kchips button.kbusy{color:#9ca3af;background:#f9fafb;text-decoration:line-through;cursor:not-allowed}
   .kic{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;font-size:18px;flex:0 0 auto;background:#eff6ff}
@@ -672,7 +672,7 @@ document.addEventListener("click", e => {
   if (e.target.id === "kback") { KFORM = null; openKeys(); }
 });
 function kIcon(r) {
-  if (r.item !== "Equipment") return r.item === "VOC" ? "&#128196;" : "&#128273;";
+  if (r.item !== "Equipment") return r.item === "VOC" ? "&#128196;" : r.item === "All keys" ? "&#128477;&#65039;" : "&#128273;";
   const a = ((KEYS && KEYS.assets) || []).find(x => x.name === r.plate), t = (a ? a.type : r.plate).toLowerCase();
   return /battery|booster/.test(t) ? "&#128267;" : /trade|plate/.test(t) ? "&#127991;" : /buggy/.test(t) ? "&#128763;" : "&#129520;";
 }
@@ -688,14 +688,17 @@ function renderKeyList() {
 function renderKeyForm() {
   const f = KFORM, items = (KEYS && KEYS.items) || ["Key", "Spare key", "VOC"], reasons = (KEYS && KEYS.reasons) || ["Viewing / test drive", "Photo / video", "Car care", "Workshop / checking", "Puspakom", "Move car", "Handover (car leaves)", "Loan / documents", "Other"];
   const chips = (k, list, cur) => `<div class="kchips" data-k="${k}">${list.map(v => `<button type="button" data-v="${esc(v)}" class="${v === cur ? "on" : ""}">${esc(v)}</button>`).join("")}</div>`;
-  const inn = f.action === "In", eq = !inn && f.mode === "eq", assets = (KEYS && KEYS.assets) || [];
+  const inn = f.action === "In", eq = !inn && f.mode === "eq", allk = !inn && f.mode === "all", assets = (KEYS && KEYS.assets) || [];
+  const allOut = KEYS && KEYS.out.find(r => r.item === "All keys");
   const busy = n => KEYS && KEYS.out.find(r => r.item === "Equipment" && r.plate === n);
   let rs = reasons;
   if (eq) { const types = assets.filter(a => f.assets.indexOf(a.name) >= 0).map(a => a.type), map = (KEYS && KEYS.eqReasons) || {}, all = (KEYS && KEYS.eqGeneral) || ["Other"];
     const pick = [].concat(...types.map(t => map[t] || all)); rs = pick.length ? Array.from(new Set(pick.concat("Other"))) : all; if (rs.indexOf(f.reason) < 0) f.reason = ""; }
+  if (allk) { rs = (KEYS && KEYS.allReasons) || ["Move parking", "Start engine", "Car wash", "Other"]; if (rs.indexOf(f.reason) < 0) f.reason = ""; }
   $("keybody").innerHTML = `<div class="kcard"><h3>${inn ? "Return" : "Take"}</h3><form class="kform" id="kform">
     ${inn ? `<label>Returning (${f.keys.length})</label><div class="kpls">${f.keys.map(k => `<span class="kpl"><b>${esc(k.plate)}</b> ${esc(k.item)}</span>`).join("")}</div>`
-      : `<div class="kseg"><button type="button" data-kmode="car" class="${eq ? "" : "on"}">&#128663; Car key / VOC</button><button type="button" data-kmode="eq" class="${eq ? "on" : ""}">&#129520; Equipment</button></div>` + (eq
+      : `<div class="kseg"><button type="button" data-kmode="car" class="${eq || allk ? "" : "on"}">&#128663; Car key / VOC</button><button type="button" data-kmode="all" class="${allk ? "on" : ""}">&#128477;&#65039; All keys</button><button type="button" data-kmode="eq" class="${eq ? "on" : ""}">&#129520; Equipment</button></div>` + (allk
+      ? `<div class="sub" style="margin:4px 0 2px">One record for the whole key box (move parking, start engine...). ${allOut ? `<b class="neg">Already out with ${esc(allOut.by)}.</b>` : ""}</div>` : eq
       ? `<label>Equipment (tap one or more)</label><div class="kchips">${assets.length ? assets.map(a => { const b = busy(a.name);
           return `<button type="button" data-kas="${esc(a.name)}" class="${f.assets.indexOf(a.name) >= 0 ? "on" : ""} ${b ? "kbusy" : ""}" ${b ? "disabled" : ""}>${esc(a.name)}${b ? " &middot; with " + esc(b.by) : ""}</button>`; }).join("")
           : '<span class="sub">No equipment yet. Add rows to the Assets tab in the sheet.</span>'}</div>`
@@ -703,12 +706,12 @@ function renderKeyForm() {
     <label>Item</label>${chips("item", items, f.item)}`)}
     ${f.action === "Out" ? `<label>Reason</label>${chips("reason", rs, f.reason)}` : ""}
     <label>Note<input id="knote" placeholder="${f.action === "Out" ? "Optional (required for Other)" : "Optional"}"></label>
-    <label>Photo (required)</label><div class="kphoto" id="kshot">Tap to take one photo of ${inn ? "what you return" : eq ? "the equipment" : "the key(s)"}</div><input type="file" id="kfile" accept="image/*" capture="environment" style="display:none">
-    <button class="btn pri" type="submit" style="padding:12px">${inn ? "Save return" : "Save, I'm taking " + (eq ? (f.assets.length > 1 ? f.assets.length + " items" : "it") : "it")}</button><div class="kmsg" id="kmsg"></div>
+    <label>Photo (required)</label><div class="kphoto" id="kshot">Tap to take one photo of ${inn ? "what you return" : eq ? "the equipment" : allk ? "the key box" : "the key(s)"}</div><input type="file" id="kfile" accept="image/*" capture="environment" style="display:none">
+    <button class="btn pri" type="submit" style="padding:12px">${inn ? "Save return" : "Save, I'm taking " + (allk ? "all keys" : eq ? (f.assets.length > 1 ? f.assets.length + " items" : "it") : "it")}</button><div class="kmsg" id="kmsg"></div>
     <button class="btn" type="button" id="kback">Back to list</button></form></div>`;
   const cars = (DATA.stock && DATA.stock.cars) || [], norm = t => String(t).toUpperCase().replace(/\s+/g, "");
   if (f.photo) $("kshot").innerHTML = `<img src="${f.photo}" alt="">`;
-  if (!inn && !eq) { drawPlates();
+  if (!inn && !eq && !allk) { drawPlates();
   $("kplate").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); addPlate($("kplate").value); } };
   $("kplate").oninput = () => {                                      // own suggestion list: <datalist> doesn't work on iPhone
     const q = norm($("kplate").value), words = $("kplate").value.toLowerCase().split(/\s+/).filter(Boolean);
@@ -733,7 +736,8 @@ function shrinkPhoto(file) {                                       // ~1280px JP
 }
 function submitKey(force) {
   const f = KFORM; f.note = $("knote").value.trim();
-  if (f.action === "Out" && f.mode === "eq") f.keys = f.assets.map(n => ({ plate: n, item: "Equipment" }));
+  if (f.action === "Out" && f.mode === "all") f.keys = [{ plate: "ALL KEYS", item: "All keys" }];
+  else if (f.action === "Out" && f.mode === "eq") f.keys = f.assets.map(n => ({ plate: n, item: "Equipment" }));
   else if (f.action === "Out") { if ($("kplate").value.trim()) addPlate($("kplate").value); f.keys = f.plates.map(p => ({ plate: p, item: f.item })); }
   const err = !f.keys.length ? (f.mode === "eq" ? "Tap at least one item." : "Add at least one plate.") : f.action === "Out" && !f.item ? "Pick the item." : f.action === "Out" && !f.reason ? "Pick a reason." : f.reason === "Other" && f.action === "Out" && !f.note ? "Write a note for Other." : !f.photo ? "Take a photo first." : "";
   if (err) { $("kmsg").textContent = err; return; }
