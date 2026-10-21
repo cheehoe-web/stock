@@ -196,6 +196,18 @@
   .gbody h4{margin:16px 0 4px;font-size:14.5px}
   .gbody ul{margin:4px 0;padding-left:20px}
   .gbody li{margin:3px 0}
+  .gs{display:flex;gap:12px;padding:14px 0;border-top:1px solid var(--line)}
+  .gs:first-child{border-top:0}
+  .gn{flex:0 0 28px;height:28px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px}
+  .gc{flex:1;min-width:0}
+  .gc>b{font-size:15px}
+  .gt{color:var(--mut);font-size:13.5px;margin:2px 0 8px}
+  .gd{background:#f6f7fb;border-radius:12px;padding:12px;pointer-events:none}
+  .gsearch{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 12px;color:var(--ink);font-size:14px}
+  .gbtns{display:flex;gap:8px}.gbtns .btn{flex:1;text-align:center;padding:9px}
+  .gcap{font-size:12px;color:var(--mut);margin-top:6px}
+  .gflow{display:flex;flex-wrap:wrap;align-items:center;gap:5px;font-size:12px;color:var(--mut)}
+  .gflow span{background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px 8px;color:var(--ink);font-weight:600}
   .gbody .gtip{background:#f6f7fb;border-radius:10px;padding:9px 12px;margin:10px 0;font-size:13.5px}
   .keybtn{border:1px solid #fde68a;background:#fffbeb;color:#92400e;border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
   #keyov{z-index:12;padding:0}
@@ -360,7 +372,7 @@
   <div class="btns"><button class="btn" id="swno">Cancel</button><button class="btn" id="swyes" style="background:var(--red);border-color:var(--red);color:#fff">Switch user</button></div>
 </div></div>
 <div class="ov" id="gov"><div class="dlg">
-  <div class="gh"><div style="display:flex;align-items:center;justify-content:space-between"><h3>How to use the Stock List</h3><button class="vx" id="gx" aria-label="Close">&times;</button></div>
+  <div class="gh"><div style="display:flex;align-items:center;justify-content:space-between"><h3>Stock List guide</h3><button class="vx" id="gx" aria-label="Close">&times;</button></div>
   <div class="gtabs" id="gtabs"></div></div><div class="gbody" id="gbody"></div>
 </div></div>
 <div class="ov" id="pinov"><div class="dlg" style="max-width:340px">
@@ -989,52 +1001,38 @@ const submitPin = () => {
 };
 const doLock = () => { pinSet(""); lsClearInternal(); location.reload(); };
 // ---------- in-app guide: staff guide for everyone, internal guide only when unlocked ----------
-const GUIDE_STAFF = `
-<h4>1. Open it</h4><ul><li>Open <b>stock.caricarzautomall.com</b>. On your phone, use "Add to Home Screen" so it opens like an app.</li>
-<li>Data comes from Inventory Master and refreshes about every 5 minutes (8am-10pm). At night you see the 10pm data. The time is shown at the top.</li></ul>
-<h4>2. Find a car</h4><ul><li>Type anything in Search: plate, model, ads ID, colour, year.</li>
-<li>Tap a tile (Ready to sell, V.B.A.O, Booked) or a chip (Aging stock, New arrivals) to filter. Tap it again to clear.</li>
-<li><b>Filters</b>: price range, body type, brand, fuel, sort.</li></ul>
-<h4>3. Car status</h4><ul><li><b>Available</b>: open for viewing.</li><li><b>V.B.A.O</b>: view by appointment only.</li>
-<li><b>Booked</b>: already booked by a customer, not delivered yet.</li><li><b>&darr; price</b> tag: price was reduced (tap the car to see from/to).</li></ul>
-<h4>4. Car details</h4><ul><li>Tap a car for photo, price, specs, spare key / VOC / warranty / loan info, notes and listing links (CariCarz, Carlist, Mudah, FB).</li>
-<li><b>Copy</b> or <b>WhatsApp</b> sends the car details to a customer in one tap.</li></ul>
-<h4>5. Car not in the list?</h4><ul><li>Sold cars drop off the list automatically. It is not a bug.</li>
-<li>If the car was <b>returned to the owner</b>, search shows a tag "returned to owner" under the results. Tap it, or open the <b>Returned</b> tab.</li>
-<li>Buyer interested in a returned car? Ask the <b>Consign Team</b> for more details.</li></ul>
-<h4>6. Keys &amp; VOC (replaces the WhatsApp keys group)</h4><ul>
-<li>Tap <b>&#128273; Keys</b>. Sign in once with your name and PIN (ask the Inventory Team for your PIN). The phone remembers you.</li>
-<li><b>Take</b>: pick <b>Car key / VOC</b> (add one or more plates, pick Key / Spare key / VOC), <b>All keys</b> (whole key box: move parking, start engine, car wash) or <b>Equipment</b> (battery booster, buggy key, trade plate).</li>
-<li>Pick a reason, take <b>one photo</b> (required), then Save. It posts to the Telegram Keys topic.</li>
-<li><b>Return</b>: tap Return next to the item, or tick several and "Return selected". Photo required.</li>
-<li>Anything not returned by <b>6:20pm</b> turns red and is announced in Telegram.</li>
-<li>You can return a key someone else took; Telegram shows "returned by you for them".</li>
-<li><b>Switch user</b> only on a shared phone. It asks you to confirm.</li></ul>
-<div class="gtip">Tip: if something looks wrong (price, status), tell the Inventory Team. Do not screenshot old data to customers; refresh first.</div>`;
-const GUIDE_INTERNAL = `
-<div class="gtip">Internal only. Do not share the passcode or screenshots of this view with sales or customers.</div>
-<h4>1. Unlock and lock</h4><ul><li>Unlock: tap the <b>Stock List</b> title 5 times, enter the passcode. (Or open the link ending in <b>#manager</b>.)</li>
-<li><b>Lock</b> (top, next to "Internal view") hides everything again on that device. It asks first.</li>
-<li>Passcode is changed in the sheet: menu <b>Stock Site &rarr; Set passcode</b>. Everyone unlocked is logged out on their next refresh.</li></ul>
-<h4>2. What the internal view adds</h4><ul><li>Car-in, UCD and estimated margin under each price, and "More internal details" in the car card.</li>
-<li><b>Documents</b>: VOC and JomCheck PDFs open inside the page (newest file per plate from the Drive folders; name files "VOC ABC1234" / "ABC1234_jomcheck").</li>
-<li><b>Sold &amp; Returned</b> tab with prices, sold / returned this month.</li>
-<li><b>Summary</b>: management summary for the month.</li></ul>
-<h4>3. Price review (every 10 days)</h4><ul><li>Tile <b>Price review due</b> lists cars due; open a car &rarr; <b>Mark reviewed</b> with car-in, UCD and RSP. It is saved in the <b>Price Review Log</b> tab.</li>
-<li>If the reviewed price differs from Master, the car shows <b>Update price</b> until Master is changed.</li>
-<li>Flow after a price change: Master &rarr; CariCarz / Carlist / Mudah / FB &rarr; My Promotion &rarr; ads upgrade &rarr; print price tag. Do all of it for the car in one go.</li></ul>
-<h4>4. Keys admin (in the Inventory sheet)</h4><ul><li><b>Staff</b> tab: Name, PIN, Active. Set Active to "No" when someone leaves.</li>
-<li><b>Assets</b> tab: equipment list (Asset, Type, Active). Type decides the reasons shown.</li>
-<li><b>Key Log</b> tab: every take and return with the Telegram photo link. Do not edit or sort it.</li>
-<li>Telegram Keys topic gets every photo; the 6:20pm alert lists what is still out.</li></ul>
-<h4>5. Telegram "New Car In"</h4><ul><li>Posts only new cars (car in within 7 days), once, when Reg No, Ads Model and RSP are filled (or after 2 days with "RSP: TBC"). Editing old rows never reposts.</li></ul>
-<h4>6. When data looks old</h4><ul><li>Sheet menu <b>Stock Site &rarr; Show latest data now</b> clears the cache.</li>
-<li>If the 5-minute refresh stopped: <b>Stock Site &rarr; Turn on 5-min background refresh</b>.</li>
-<li>Do not rename Master column headers (Reg No, Ads Model, Remark, Retail Selling Price...). The site finds columns by name.</li></ul>`;
+const gstep = (n, title, text, demo) => `<div class="gs"><div class="gn">${n}</div><div class="gc"><b>${title}</b><div class="gt">${text}</div>${demo ? `<div class="gd">${demo}</div>` : ""}</div></div>`;
+const GUIDE_STAFF = [
+  gstep(1, "Find a car", "Type a plate, model or colour. Tap a tile to filter, tap again to clear.",
+    `<div class="gsearch">&#128269; vios 2020</div>`),
+  gstep(2, "Check the status", "Only offer cars that are Available or V.B.A.O.",
+    `<span class="pill b-green">Available</span> <span class="pill b-amber">V.B.A.O</span> <span class="pill b-blue">Booked</span> <span class="drop">&darr;2k</span><div class="gcap">V.B.A.O = view by appointment &middot; &darr; = price reduced</div>`),
+  gstep(3, "Send to a customer", "Tap the car, then Copy or WhatsApp. Photo, price and details are all in the card.",
+    `<div class="gbtns"><span class="btn pri">Copy</span><span class="btn wa">WhatsApp</span></div>`),
+  gstep(4, "Car not in the list?", "Sold cars disappear on their own. If it was returned to the owner, a tag shows under your search. Buyer still keen? Ask the <b>Consign Team</b>.",
+    `<span class="pasthit" style="cursor:default">1 returned to owner: ABC1234 &rsaquo;</span>`),
+  gstep(5, "Take a key", "Tap Keys, sign in once with your name and PIN (from the Inventory Team). Choose what you take, pick a reason, snap one photo, Save.",
+    `<div class="kseg" style="max-width:330px"><button type="button" class="on">&#128663; Car key / VOC</button><button type="button">&#128477;&#65039; All keys</button><button type="button">&#129520; Equipment</button></div><div class="kphoto" style="margin-top:8px;padding:10px">&#128247; Photo required</div>`),
+  gstep(6, "Return it", "Tap Return and take a photo. Not back by <b>6:20pm</b>? It turns red and Telegram is told.",
+    `<div class="krow late" style="margin:0;border-radius:10px"><span class="kic">&#128273;</span><div class="km"><span class="kp">ABC1234</span> <span class="sub">Key &middot; Test drive</span></div><span class="btn" style="padding:6px 12px">Return</span></div>`)
+].join("");
+const GUIDE_INTERNAL = `<div class="gtip">&#128274; Internal only. Don't share screenshots of this view with sales or customers.</div>` + [
+  gstep(1, "Cost and margin", "Under every price you see car-in, UCD and margin. Open a car for the full internal details.",
+    `<div style="font-size:15px;font-weight:800">RM 68,800</div><div class="xline">In <b>58,000</b> &middot; UCD <b>62,000</b> &middot; Margin <b>6,800</b></div>`),
+  gstep(2, "VOC and JomCheck", "Open a car and tap the document. It opens right in the page.",
+    `<div class="vdocs"><button type="button">&#128196; VOC</button><button type="button">&#128196; JomCheck</button></div>`),
+  gstep(3, "Price review every 10 days", "Tap <b>Price review due</b>, open the car, then <b>Mark reviewed</b> with car-in, UCD and RSP.",
+    `<span class="pill b-red">Review due</span> <span class="pill b-amber">Update price</span><div class="gcap">"Update price" = reviewed price not yet changed in Master</div>`),
+  gstep(4, "After a price change, do all in one go", "",
+    `<div class="gflow"><span>Master</span>&rarr;<span>CariCarz / Carlist / Mudah / FB</span>&rarr;<span>My Promotion</span>&rarr;<span>Ads upgrade</span>&rarr;<span>Price tag</span></div>`),
+  gstep(5, "Sold & Returned, Summary", "Full history with prices, and the monthly management summary button at the top.",
+    `<span class="sumbtn on" style="cursor:default">Summary</span>`),
+  gstep(6, "Staff and equipment", "New staff or new equipment: add a row in the <b>Staff</b> or <b>Assets</b> tab of the sheet. Someone left? Set Active to <b>No</b>.", "")
+].join("");
 let GTAB = "staff";
 function openGuide(tab) {
   if (tab) GTAB = tab; if (!pinGet()) GTAB = "staff";
-  $("gtabs").innerHTML = pinGet() ? `<button data-g="staff" class="${GTAB === "staff" ? "on" : ""}">Staff &amp; sales</button><button data-g="internal" class="${GTAB === "internal" ? "on" : ""}">Internal team</button>` : "";
+  $("gtabs").innerHTML = pinGet() ? `<button data-g="staff" class="${GTAB === "staff" ? "on" : ""}">Sales guide</button><button data-g="internal" class="${GTAB === "internal" ? "on" : ""}">Internal guide</button>` : "";
   $("gbody").innerHTML = GTAB === "internal" ? GUIDE_INTERNAL : GUIDE_STAFF; $("gov").classList.add("on"); $("gov").querySelector(".dlg").scrollTop = 0;
 }
 $("gbtn").onclick = () => openGuide();
