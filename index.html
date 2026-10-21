@@ -201,6 +201,10 @@
   .kchips button.on{background:var(--blue);border-color:var(--blue);color:#fff}
   .kphoto{border:2px dashed var(--line);border-radius:10px;padding:14px;text-align:center;cursor:pointer;color:var(--mut);font-size:13px}
   .kphoto img{max-width:100%;max-height:240px;border-radius:8px;display:block;margin:0 auto}
+  .ksug{display:grid;gap:4px;margin-top:-6px}
+  .ksug:empty{display:none}
+  .ksug button{text-align:left;border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 10px;font:inherit;font-size:14px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ksug button:hover{background:#eef2ff}
   .kmsg{font-size:13px;color:var(--red);min-height:1em}
   .vkey{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13.5px}
   .vkey .btns{margin-top:8px}
@@ -624,16 +628,22 @@ function renderKeyList() {
 }
 function renderKeyForm() {
   const f = KFORM, items = (KEYS && KEYS.items) || ["Key", "Spare key", "VOC"], reasons = (KEYS && KEYS.reasons) || ["Viewing / test drive", "Photo / video", "Car care", "Workshop / checking", "Puspakom", "Move car", "Handover (car leaves)", "Loan / documents", "Other"];
-  const plates = ((DATA.stock && DATA.stock.cars) || []).map(c => c.plate);
   const chips = (k, list, cur) => `<div class="kchips" data-k="${k}">${list.map(v => `<button type="button" data-v="${esc(v)}" class="${v === cur ? "on" : ""}">${esc(v)}</button>`).join("")}</div>`;
   $("keybody").innerHTML = `<div class="kcard"><h3>${f.action === "In" ? "Return" : "Take"} key / VOC</h3><form class="kform" id="kform">
-    <label>Plate<input id="kplate" list="kplates" value="${esc(f.plate || "")}" autocapitalize="characters" placeholder="Type to search"></label><datalist id="kplates">${plates.map(p => `<option value="${esc(p)}">`).join("")}</datalist>
+    <label>Plate<input id="kplate" value="${esc(f.plate || "")}" autocapitalize="characters" autocomplete="off" placeholder="Type plate or model to search"></label><div class="ksug" id="ksug"></div>
     <label>Item</label>${chips("item", items, f.item)}
     ${f.action === "Out" ? `<label>Reason</label>${chips("reason", reasons, f.reason)}` : ""}
     <label>Note<input id="knote" placeholder="${f.action === "Out" ? "Optional (required for Other)" : "Optional"}"></label>
     <label>Photo (required)</label><div class="kphoto" id="kshot">Tap to take a photo of the ${f.action === "In" ? "returned key" : "key"}</div><input type="file" id="kfile" accept="image/*" capture="environment" style="display:none">
     <button class="btn pri" type="submit" style="padding:12px">${f.action === "In" ? "Save return" : "Save, I'm taking it"}</button><div class="kmsg" id="kmsg"></div>
     <button class="btn" type="button" id="kback">Back to list</button></form></div>`;
+  const cars = (DATA.stock && DATA.stock.cars) || [], norm = t => String(t).toUpperCase().replace(/\s+/g, "");
+  $("kplate").oninput = () => {                                      // own suggestion list: <datalist> doesn't work on iPhone
+    const q = norm($("kplate").value), words = $("kplate").value.toLowerCase().split(/\s+/).filter(Boolean);
+    const hits = !q ? [] : cars.filter(c => norm(c.plate).includes(q) || words.every(w => (c.model || "").toLowerCase().includes(w))).slice(0, 8);
+    $("ksug").innerHTML = hits.map(c => `<button type="button" data-kpl="${esc(c.plate)}"><b>${esc(c.plate)}</b> <span class="sub">${esc(c.model)}</span></button>`).join("");
+  };
+  $("ksug").onclick = e => { const b = e.target.closest("[data-kpl]"); if (!b) return; $("kplate").value = b.dataset.kpl; $("ksug").innerHTML = ""; };
   $("kshot").onclick = () => $("kfile").click();
   $("kfile").onchange = () => { const file = $("kfile").files[0]; if (!file) return; $("kshot").textContent = "Preparing photo...";
     shrinkPhoto(file).then(url => { f.photo = url; $("kshot").innerHTML = `<img src="${url}" alt="">`; }).catch(() => { $("kshot").textContent = "Could not read that photo. Try again."; }); };
