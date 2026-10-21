@@ -183,6 +183,30 @@
   .sumt td{padding:5px 0;border-top:1px solid var(--line)}
   .sumt td:last-child{text-align:right;font-weight:700}
   @media(max-width:720px){.sumh{padding:10px 12px}.sumb{padding:10px}.sumg{grid-template-columns:1fr}}
+  .keybtn{border:1px solid #fde68a;background:#fffbeb;color:#92400e;border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+  #keyov{z-index:12;padding:0}
+  .kcard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+  .kcard h3{margin:0 0 10px;font-size:15px}
+  .krow{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+  .krow:first-of-type{border-top:0}
+  .krow .kp{font-weight:800}
+  .krow .km{flex:1;min-width:0;font-size:13px}
+  .krow.late{background:#fef2f2;margin:0 -16px;padding:10px 16px}
+  .krow.late .kp{color:var(--red)}
+  .kform{display:grid;gap:12px}
+  .kform label{display:grid;gap:5px;font-size:13px;font-weight:600}
+  .kform input[type=text],.kform input[type=password],.kform input:not([type]){border:1px solid var(--line);border-radius:8px;padding:10px;font:inherit;font-size:16px;width:100%}
+  .kchips{display:flex;flex-wrap:wrap;gap:6px}
+  .kchips button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;font:inherit;font-size:13px;cursor:pointer}
+  .kchips button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+  .kphoto{border:2px dashed var(--line);border-radius:10px;padding:14px;text-align:center;cursor:pointer;color:var(--mut);font-size:13px}
+  .kphoto img{max-width:100%;max-height:240px;border-radius:8px;display:block;margin:0 auto}
+  .kmsg{font-size:13px;color:var(--red);min-height:1em}
+  .vkey{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13.5px}
+  .vkey .btns{margin-top:8px}
+  .khist{font-size:13px}
+  .khist div{padding:6px 0;border-top:1px solid var(--line)}
+  .khist a{color:var(--blue);cursor:pointer}
   .vact{display:flex;gap:8px;padding:12px 20px;border-top:1px solid var(--line);background:#fff}
   .vact .btn{flex:1}
   @media(max-width:720px){
@@ -236,6 +260,7 @@
     <div class="title"><img class="brand" src="https://stock.caricarzautomall.com/logo.png" alt="CariCarz AutoMall" onerror="this.style.display='none'"><span class="tsep"></span>Stock List</div>
     <div class="hright">
       <div class="seg hide" id="seg"><button data-view="stock" class="on">In stock</button><button data-view="past">Sold &amp; Returned</button></div>
+      <button class="keybtn" id="keybtn" type="button">&#128273; Keys</button>
       <button class="sumbtn" id="sumbtn" type="button">Summary</button>
       <span class="ichip" id="ichip">Internal view <button id="lockbtn" type="button">Lock</button></span>
       <span class="sub" id="refreshed"></span>
@@ -292,6 +317,7 @@
   <input type="password" id="pin" placeholder="Passcode" autocomplete="current-password" style="width:100%;margin-bottom:12px">
   <div class="btns"><button class="btn pri" id="pinok">Unlock</button><button class="btn" id="pincancel">Cancel</button></div>
 </div></div>
+<div class="ov" id="keyov"><div class="sumw"><div class="sumh"><b>Keys &amp; VOC</b><span class="sub" id="kwho"></span><button class="vx" id="keyx" aria-label="Close" style="margin:0">&times;</button></div><div class="sumb" id="keybody"></div></div></div>
 <div class="ov" id="sumov"><div class="sumw"><div class="sumh"><b>Management summary</b><select id="summ"></select><button class="btn" id="sumcp">Copy</button><button class="vx" id="sumx" aria-label="Close" style="margin:0">&times;</button></div><div class="sumb" id="sumbody"></div></div></div>
 <div class="ov" id="docov"><div class="docw"><div class="doch"><b id="doct"></b><button class="btn" id="docdl">Download</button><button class="vx" id="docx" aria-label="Close" style="margin:0">&times;</button></div><div id="docbody"></div></div></div>
 <div class="ov" id="ov"><div class="dlg vc"><div class="vbody" id="vbody"></div>
@@ -504,6 +530,7 @@ function openCar(i) {
   if (notes.length) h += `<div class="vsec"><h4>Notes</h4>${notes.map(n => `<div class="vnote"><span>${n[0]}</span>${esc(val(n[1]))}</div>`).join("")}</div>`;
   const dates = [["Car in", fmtDate(c.carIn)], MODE === "past" ? [c.status === "Sold" ? "Sold" : "Out", fmtDate(c.outDate)] : null].filter(d => d && d[1]);
   if (c.bdc || dates.length) h += `<div class="vsec"><h4>Handled by</h4><div class="vlist">${c.bdc ? `<div><span class="vpic"><i>${esc(c.bdc.trim().charAt(0).toUpperCase())}</i></span><b style="margin-right:auto;align-self:center">${esc(c.bdc)}</b><span style="align-self:center">BDC PIC</span></div>` : ""}${dates.map(d => row(d[0], d[1])).join("")}</div></div>`;
+  h += `<div class="vsec"><h4>Key &amp; VOC</h4><div class="vkey" id="vkey">${keyCardHtml(c)}</div></div>`;
   if (FULL && c.rv && c.rv.s) h += `<div class="vsec"><h4>Price review (every 10 days)</h4>${reviewHtml(c)}</div>`;
   const links = [["CariCarz", c.caricarz], ["Carlist", c.carlist], ["Mudah", c.mudah], ["Facebook", c.fb]].filter(l => l[1]);
   if (links.length) h += `<div class="vsec"><h4>Listings</h4><div class="vlinks">${links.map(l => `<a href="${esc(l[1])}" target="_blank" rel="noopener">${l[0]} &#8599;</a>`).join("")}</div></div>`;
@@ -516,12 +543,124 @@ function openCar(i) {
   }
   document.querySelector(".vc").classList.toggle("hasimg", !!c.photo);
   $("vbody").innerHTML = h; $("vbody").scrollTop = 0;
+  if (KUSER || pinGet()) loadKeys().then(() => { if (CUR === c && $("vkey")) $("vkey").innerHTML = keyCardHtml(c); });
   $("cl").onclick = closeCar;
   CUR = c;
   $("sh").style.display = navigator.share ? "" : "none";
   $("cp").textContent = "Copy"; $("ov").classList.add("on"); document.body.style.overflow = "hidden";
 }
 let CUR = null, DOC = null;
+// ---------- keys & VOC (replaces the WhatsApp keys group): staff name + PIN, photo on take and return ----------
+let KUSER = null, KEYS = null, KEYS_AT = 0, KFORM = null;
+try { KUSER = JSON.parse(localStorage.getItem("caricarz_keyuser") || "null"); } catch (e) {}
+const kAuth = () => ({ name: KUSER ? KUSER.name : "", pin: KUSER ? KUSER.pin : "", key: pinGet() });
+const kGet = (act, extra) => fetch(API_URL + "?" + new URLSearchParams(Object.assign({ act: act }, kAuth(), extra || {})), { credentials: "omit", cache: "no-store" }).then(r => r.json());
+const kTime = t => { const d = new Date(t); return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" }) + " " + d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).toLowerCase().replace(" ", ""); };
+function kLate(t) {                                                  // still out at 6:20pm (today or an earlier day)
+  const a = (KEYS && KEYS.alert) || [18, 20], now = new Date(), cut = new Date(now.getFullYear(), now.getMonth(), now.getDate(), a[0], a[1]);
+  return now >= cut ? t < cut.getTime() : t < cut.getTime() - 864e5;
+}
+function loadKeys(force) {
+  if (!force && KEYS && Date.now() - KEYS_AT < 60000) return Promise.resolve(KEYS);
+  if (!KUSER && !pinGet()) return Promise.resolve(null);
+  return kGet("keys").then(d => { if (d && d.out) { KEYS = d; KEYS_AT = Date.now(); } else if (d && d.error === "locked" && KUSER) { KUSER = null; try { localStorage.removeItem("caricarz_keyuser"); } catch (e) {} } return KEYS; }).catch(() => KEYS);
+}
+const keyOf = (plate, item) => KEYS && KEYS.out.find(r => r.plate.replace(/\s/g, "").toUpperCase() === String(plate).replace(/\s/g, "").toUpperCase() && (!item || r.item === item));
+function keyCardHtml(c) {
+  const outs = KEYS ? KEYS.out.filter(r => r.plate.replace(/\s/g, "").toUpperCase() === c.plate.replace(/\s/g, "").toUpperCase()) : [];
+  const st = !KEYS ? '<span class="sub">Sign in to Keys to see who has it.</span>' : outs.length
+    ? outs.map(r => `<div class="${kLate(r.t) ? "neg" : ""}"><b>${esc(r.item)} out</b> with ${esc(r.by)} &middot; ${esc(r.reason)} &middot; ${kTime(r.t)}${kLate(r.t) ? " &middot; not returned" : ""}</div>`).join("") : '<b class="yes">All in</b>';
+  return st + `<div class="btns"><button class="btn" data-kact="Out">Take key / VOC</button>${outs.length ? '<button class="btn" data-kact="In">Return</button>' : ""}<button class="btn" data-kact="hist">History</button></div><div class="khist" id="khist"></div>`;
+}
+$("vbody").addEventListener("click", e => {
+  const b = e.target.closest("[data-kact]"); if (!b) return;
+  const c = CUR, a = b.dataset.kact;
+  if (a === "hist") { if (!KUSER && !pinGet()) { openKeys(); return; } $("khist").textContent = "Loading..."; kGet("keyhist", { plate: c.plate }).then(d => {
+      $("khist").innerHTML = d.rows && d.rows.length ? d.rows.map(r => `<div><b>${r.a === "Out" ? "Out" : "In"}</b> ${esc(r.item)} &middot; ${esc(r.by)}${r.reason ? " &middot; " + esc(r.reason) : ""}${r.note ? " &middot; " + esc(r.note) : ""} &middot; ${kTime(r.t)}${r.photo ? ` &middot; <a data-kphoto="${esc(r.photo)}">photo</a>` : ""}</div>`).join("") : (d.error ? esc(d.error) : "No key records yet."); }); return; }
+  const o = a === "In" ? keyOf(c.plate) : null;
+  openKeys({ action: a, plate: c.plate, item: o ? o.item : "Key" });
+});
+document.addEventListener("click", e => {
+  const ph = e.target.closest("[data-kphoto]"); if (!ph) return;
+  ph.textContent = "loading..."; kGet("keyphoto", { id: ph.dataset.kphoto }).then(d => {
+    if (!d.b64) { ph.textContent = d.error || "not found"; return; }
+    const bin = atob(d.b64), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    $("doct").textContent = "Key photo"; $("docbody").innerHTML = ""; const im = new Image(); im.src = URL.createObjectURL(new Blob([u8], { type: d.mime })); $("docbody").appendChild(im);
+    DOC = { name: "key-photo.jpg", blob: new Blob([u8], { type: d.mime }) }; $("docov").classList.add("on"); ph.textContent = "photo"; });
+});
+const closeKeys = () => { $("keyov").classList.remove("on"); if (!$("ov").classList.contains("on")) document.body.style.overflow = ""; if (CUR && $("vkey")) $("vkey").innerHTML = keyCardHtml(CUR); };
+$("keybtn").onclick = () => openKeys();
+$("keyx").onclick = closeKeys;
+function openKeys(form) {
+  $("keyov").classList.add("on"); document.body.style.overflow = "hidden"; KFORM = form || null;
+  if (!KUSER) { renderSignIn(); return; }
+  $("kwho").innerHTML = `${esc(KUSER.name)} &middot; <a href="#" id="kswitch">Switch user</a>`;
+  if (KFORM) { renderKeyForm(); loadKeys(); } else { $("keybody").innerHTML = '<div class="kcard">Loading keys...</div>'; loadKeys(true).then(renderKeyList); }
+}
+function renderSignIn() {
+  $("kwho").textContent = "";
+  $("keybody").innerHTML = `<div class="kcard"><h3>Who are you?</h3><form class="kform" id="ksign"><label>Your name<input id="kname" autocomplete="username" placeholder="As in the Staff list"></label>
+    <label>Your PIN<input id="kpin" type="password" inputmode="numeric" autocomplete="current-password"></label><button class="btn pri" type="submit">Continue</button><div class="kmsg" id="kmsg"></div>
+    <div class="sub">This phone will remember you. Ask Chee Hoe for your PIN.</div></form></div>`;
+  setTimeout(() => $("kname").focus(), 50);
+}
+document.addEventListener("submit", e => {
+  if (e.target.id === "ksign") {
+    e.preventDefault(); const name = $("kname").value.trim(), pin = $("kpin").value.trim(); if (!name || !pin) return;
+    $("kmsg").textContent = "Checking...";
+    fetch(API_URL + "?" + new URLSearchParams({ act: "keyme", name: name, pin: pin }), { credentials: "omit", cache: "no-store" }).then(r => r.json()).then(d => {
+      if (!d.ok) { $("kmsg").textContent = d.error || "Wrong name or PIN."; return; }
+      KUSER = { name: d.name, pin: pin }; try { localStorage.setItem("caricarz_keyuser", JSON.stringify(KUSER)); } catch (err) {}
+      openKeys(KFORM);
+    }).catch(() => { $("kmsg").textContent = "No connection. Try again."; });
+  }
+  if (e.target.id === "kform") { e.preventDefault(); submitKey(); }
+});
+document.addEventListener("click", e => {
+  if (e.target.id === "kswitch") { e.preventDefault(); KUSER = null; KEYS = null; try { localStorage.removeItem("caricarz_keyuser"); } catch (err) {} renderSignIn(); }
+  if (e.target.id === "ktake") { KFORM = { action: "Out", plate: "", item: "Key" }; renderKeyForm(); }
+  const rt = e.target.closest("[data-kret]"); if (rt) { const r = KEYS.out[Number(rt.dataset.kret)]; KFORM = { action: "In", plate: r.plate, item: r.item }; renderKeyForm(); }
+  const ch = e.target.closest(".kchips button"); if (ch && KFORM) { KFORM[ch.parentNode.dataset.k] = ch.dataset.v; ch.parentNode.querySelectorAll("button").forEach(b => b.classList.toggle("on", b === ch)); }
+  if (e.target.id === "kback") { KFORM = null; openKeys(); }
+});
+function renderKeyList() {
+  if (!KUSER) return;
+  const out = KEYS ? KEYS.out : [], late = out.filter(r => kLate(r.t)).length;
+  $("keybody").innerHTML = `<button class="btn pri" id="ktake" style="width:100%;padding:14px;margin-bottom:12px">Take key / VOC</button>
+    <div class="kcard"><h3>Out now: ${out.length}${late ? ` <span class="neg">&middot; ${late} not returned by 6:20pm</span>` : ""}</h3>
+    ${out.length ? out.map((r, i) => `<div class="krow ${kLate(r.t) ? "late" : ""}"><div class="km"><span class="kp">${esc(r.plate)}</span> &middot; ${esc(r.item)}<div class="sub">${esc(r.by)} &middot; ${esc(r.reason)}${r.note ? " &middot; " + esc(r.note) : ""} &middot; ${kTime(r.t)}</div></div><button class="btn" data-kret="${i}">Return</button></div>`).join("") : '<div class="sub">All keys and VOC are in.</div>'}</div>`;
+}
+function renderKeyForm() {
+  const f = KFORM, items = (KEYS && KEYS.items) || ["Key", "Spare key", "VOC"], reasons = (KEYS && KEYS.reasons) || ["Viewing / test drive", "Photo / video", "Car care", "Workshop / checking", "Puspakom", "Move car", "Handover (car leaves)", "Loan / documents", "Other"];
+  const plates = ((DATA.stock && DATA.stock.cars) || []).map(c => c.plate);
+  const chips = (k, list, cur) => `<div class="kchips" data-k="${k}">${list.map(v => `<button type="button" data-v="${esc(v)}" class="${v === cur ? "on" : ""}">${esc(v)}</button>`).join("")}</div>`;
+  $("keybody").innerHTML = `<div class="kcard"><h3>${f.action === "In" ? "Return" : "Take"} key / VOC</h3><form class="kform" id="kform">
+    <label>Plate<input id="kplate" list="kplates" value="${esc(f.plate || "")}" autocapitalize="characters" placeholder="Type to search"></label><datalist id="kplates">${plates.map(p => `<option value="${esc(p)}">`).join("")}</datalist>
+    <label>Item</label>${chips("item", items, f.item)}
+    ${f.action === "Out" ? `<label>Reason</label>${chips("reason", reasons, f.reason)}` : ""}
+    <label>Note<input id="knote" placeholder="${f.action === "Out" ? "Optional (required for Other)" : "Optional"}"></label>
+    <label>Photo (required)</label><div class="kphoto" id="kshot">Tap to take a photo of the ${f.action === "In" ? "returned key" : "key"}</div><input type="file" id="kfile" accept="image/*" capture="environment" style="display:none">
+    <button class="btn pri" type="submit" style="padding:12px">${f.action === "In" ? "Save return" : "Save, I'm taking it"}</button><div class="kmsg" id="kmsg"></div>
+    <button class="btn" type="button" id="kback">Back to list</button></form></div>`;
+  $("kshot").onclick = () => $("kfile").click();
+  $("kfile").onchange = () => { const file = $("kfile").files[0]; if (!file) return; $("kshot").textContent = "Preparing photo...";
+    shrinkPhoto(file).then(url => { f.photo = url; $("kshot").innerHTML = `<img src="${url}" alt="">`; }).catch(() => { $("kshot").textContent = "Could not read that photo. Try again."; }); };
+}
+function shrinkPhoto(file) {                                       // ~1280px JPEG keeps uploads small (~150 KB)
+  return new Promise((ok, bad) => { const r = new FileReader(); r.onerror = bad; r.onload = () => { const im = new Image(); im.onerror = bad; im.onload = () => {
+    const k = Math.min(1, 1280 / Math.max(im.width, im.height)), cv = document.createElement("canvas"); cv.width = Math.round(im.width * k); cv.height = Math.round(im.height * k);
+    cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height); ok(cv.toDataURL("image/jpeg", 0.7)); }; im.src = r.result; }; r.readAsDataURL(file); });
+}
+function submitKey() {
+  const f = KFORM; f.plate = $("kplate").value.trim().toUpperCase(); f.note = $("knote").value.trim();
+  const err = !f.plate ? "Enter the plate." : !f.item ? "Pick the item." : f.action === "Out" && !f.reason ? "Pick a reason." : f.reason === "Other" && f.action === "Out" && !f.note ? "Write a note for Other." : !f.photo ? "Take a photo first." : "";
+  if (err) { $("kmsg").textContent = err; return; }
+  $("kmsg").textContent = "Saving..."; $("kform").querySelector("[type=submit]").disabled = true;
+  fetch(API_URL, { method: "POST", credentials: "omit", body: JSON.stringify(Object.assign({ name: KUSER.name, pin: KUSER.pin }, f)) }).then(r => r.json()).then(d => {
+    if (!d.ok) { $("kmsg").textContent = d.error || "Not saved."; $("kform").querySelector("[type=submit]").disabled = false; return; }
+    KFORM = null; loadKeys(true).then(() => { renderKeyList(); if (d.warn) note(d.warn); if (CUR && $("vkey")) $("vkey").innerHTML = keyCardHtml(CUR); });
+  }).catch(() => { $("kmsg").textContent = "Not saved: no connection. Try again."; $("kform").querySelector("[type=submit]").disabled = false; });
+}
 // ---------- price review: status in the card + "Mark reviewed" (writes to the Price Review Log tab) ----------
 const curPrices = c => ["Car-In Price", "UCD Price", "Retail Selling Price"].map(h => c.x && XI[h] !== undefined && typeof c.x[XI[h]] === "number" ? c.x[XI[h]] : "");
 function reviewHtml(c) {
@@ -640,7 +779,8 @@ function openDoc(c, n) {
 $("wa").onclick = () => { window.open("https://wa.me/?text=" + encodeURIComponent(tgText(CUR)), "_blank"); };
 $("sh").onclick = () => { navigator.share({ text: tgText(CUR) }).catch(() => {}); };
 const closeCar = () => { $("ov").classList.remove("on"); document.body.style.overflow = ""; };
-document.addEventListener("keydown", e => { if (e.key === "Escape") { if ($("docov").classList.contains("on")) { closeDoc(); return; } if ($("sumov").classList.contains("on")) { closeSum(); return; } closeCar(); closePin(); } });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && $("keyov").classList.contains("on")) { closeKeys(); return; }
+  if (e.key === "Escape") { if ($("docov").classList.contains("on")) { closeDoc(); return; } if ($("sumov").classList.contains("on")) { closeSum(); return; } closeCar(); closePin(); } });
 $("ov").addEventListener("click", e => { if (e.target === $("ov")) closeCar(); });
 $("cp").onclick = () => {
   const t = tgText(CUR), done = () => { $("cp").textContent = "Copied \u2713"; };
