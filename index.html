@@ -340,8 +340,13 @@
   <div class="sub" style="margin-bottom:14px">Prices, VOC and price review will be hidden on this device. You will need the passcode to unlock again.</div>
   <div class="btns"><button class="btn" id="lockno">Cancel</button><button class="btn" id="lockyes" style="background:var(--red);border-color:var(--red);color:#fff">Lock</button></div>
 </div></div>
+<div class="ov" id="swov" style="z-index:13"><div class="dlg" style="max-width:340px">
+  <h3 style="margin:0 0 6px">Switch user?</h3>
+  <div class="sub" id="swmsg" style="margin-bottom:14px">You will be signed out of Keys on this phone and need a name and PIN to sign in again.</div>
+  <div class="btns"><button class="btn" id="swno">Cancel</button><button class="btn" id="swyes" style="background:var(--red);border-color:var(--red);color:#fff">Switch user</button></div>
+</div></div>
 <div class="ov" id="pinov"><div class="dlg" style="max-width:340px">
-  <h3 style="margin:0 0 6px">Sold &amp; Returned</h3>
+  <h3 style="margin:0 0 6px">Internal view</h3>
   <div class="sub" id="pinmsg" style="margin-bottom:12px">Enter the passcode to view sold and returned cars.</div>
   <input type="password" id="pin" placeholder="Passcode" autocomplete="current-password" style="width:100%;margin-bottom:12px">
   <div class="btns"><button class="btn pri" id="pinok">Unlock</button><button class="btn" id="pincancel">Cancel</button></div>
@@ -659,7 +664,7 @@ document.addEventListener("submit", e => {
   if (e.target.id === "kform") { e.preventDefault(); submitKey(); }
 });
 document.addEventListener("click", e => {
-  if (e.target.id === "kswitch") { e.preventDefault(); KUSER = null; KEYS = null; try { localStorage.removeItem("caricarz_keyuser"); } catch (err) {} renderSignIn(); }
+  if (e.target.id === "kswitch") { e.preventDefault(); $("swmsg").textContent = KUSER.name + " will be signed out of Keys on this phone. Signing in again needs a name and PIN."; $("swov").classList.add("on"); }
   if (e.target.id === "ktake") { KFORM = { action: "Out", mode: "car", plates: [], assets: [], item: "Key" }; renderKeyForm(); }
   const md = e.target.closest("[data-kmode]"); if (md && KFORM) { KFORM.mode = md.dataset.kmode; KFORM.reason = ""; renderKeyForm(); }
   const as = e.target.closest("[data-kas]"); if (as && KFORM && !as.disabled) { const n = as.dataset.kas, i = KFORM.assets.indexOf(n);
@@ -965,6 +970,9 @@ const submitPin = () => {
   if (MODE === "stock") { note("Unlocking internal view..."); load("stock"); } else switchView("stock");
 };
 const doLock = () => { pinSet(""); lsClearInternal(); location.reload(); };
+$("swno").onclick = () => $("swov").classList.remove("on");          // Switch user: ask first, like Lock
+$("swov").addEventListener("click", e => { if (e.target === $("swov")) $("swov").classList.remove("on"); });
+$("swyes").onclick = () => { $("swov").classList.remove("on"); KUSER = null; KEYS = null; try { localStorage.removeItem("caricarz_keyuser"); } catch (err) {} renderSignIn(); };
 $("lockbtn").onclick = () => $("lockov").classList.add("on");     // always ask first: easy to tap by mistake
 $("lockno").onclick = () => $("lockov").classList.remove("on");
 $("lockov").addEventListener("click", e => { if (e.target === $("lockov")) $("lockov").classList.remove("on"); });
