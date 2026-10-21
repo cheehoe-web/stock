@@ -576,17 +576,9 @@ $("vbody").addEventListener("click", e => {
   const b = e.target.closest("[data-kact]"); if (!b) return;
   const c = CUR, a = b.dataset.kact;
   if (a === "hist") { if (!KUSER && !pinGet()) { openKeys(); return; } $("khist").textContent = "Loading..."; kGet("keyhist", { plate: c.plate }).then(d => {
-      $("khist").innerHTML = d.rows && d.rows.length ? d.rows.map(r => `<div><b>${r.a === "Out" ? "Out" : "In"}</b> ${esc(r.item)} &middot; ${esc(r.by)}${r.reason ? " &middot; " + esc(r.reason) : ""}${r.note ? " &middot; " + esc(r.note) : ""} &middot; ${kTime(r.t)}${r.photo ? ` &middot; <a data-kphoto="${esc(r.photo)}">photo</a>` : ""}</div>`).join("") : (d.error ? esc(d.error) : "No key records yet."); }); return; }
+      $("khist").innerHTML = d.rows && d.rows.length ? d.rows.map(r => `<div><b>${r.a === "Out" ? "Out" : "In"}</b> ${esc(r.item)} &middot; ${esc(r.by)}${r.reason ? " &middot; " + esc(r.reason) : ""}${r.note ? " &middot; " + esc(r.note) : ""} &middot; ${kTime(r.t)}${r.photo ? ` &middot; <a href="${esc(r.photo)}" target="_blank" rel="noopener">photo</a>` : ""}</div>`).join("") : (d.error ? esc(d.error) : "No key records yet."); }); return; }
   const o = a === "In" ? keyOf(c.plate) : null;
   openKeys({ action: a, plate: c.plate, item: o ? o.item : "Key" });
-});
-document.addEventListener("click", e => {
-  const ph = e.target.closest("[data-kphoto]"); if (!ph) return;
-  ph.textContent = "loading..."; kGet("keyphoto", { id: ph.dataset.kphoto }).then(d => {
-    if (!d.b64) { ph.textContent = d.error || "not found"; return; }
-    const bin = atob(d.b64), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
-    $("doct").textContent = "Key photo"; $("docbody").innerHTML = ""; const im = new Image(); im.src = URL.createObjectURL(new Blob([u8], { type: d.mime })); $("docbody").appendChild(im);
-    DOC = { name: "key-photo.jpg", blob: new Blob([u8], { type: d.mime }) }; $("docov").classList.add("on"); ph.textContent = "photo"; });
 });
 const closeKeys = () => { $("keyov").classList.remove("on"); if (!$("ov").classList.contains("on")) document.body.style.overflow = ""; if (CUR && $("vkey")) $("vkey").innerHTML = keyCardHtml(CUR); };
 $("keybtn").onclick = () => openKeys();
