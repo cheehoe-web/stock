@@ -658,7 +658,7 @@ $("vbody").addEventListener("click", e => {
   const b = e.target.closest("[data-kact]"); if (!b) return;
   const c = CUR, a = b.dataset.kact;
   if (a === "hist") { if (!KUSER && !pinGet()) { openKeys(); return; } $("khist").textContent = "Loading..."; kGet("keyhist", { plate: c.plate }).then(d => {
-      $("khist").innerHTML = d.rows && d.rows.length ? d.rows.map(r => `<div><b>${r.a === "Out" ? "Out" : "In"}</b> ${esc(r.item)} &middot; ${esc(r.by)}${r.reason ? " &middot; " + esc(r.reason) : ""}${r.note ? " &middot; " + esc(r.note) : ""} &middot; ${kTime(r.t)}${r.photo ? ` &middot; <a href="${esc(r.photo)}" target="_blank" rel="noopener">photo</a>` : ""}</div>`).join("") : (d.error ? esc(d.error) : "No key records yet."); }); return; }
+      $("khist").innerHTML = d.rows && d.rows.length ? d.rows.map(r => `<div><b>${r.a === "Out" ? "Out" : r.a === "Delivered" ? "Delivered" : "In"}</b> ${esc(r.item)} &middot; ${esc(r.by)}${r.reason ? " &middot; " + esc(r.reason) : ""}${r.note ? " &middot; " + esc(r.note) : ""} &middot; ${kTime(r.t)}${r.photo ? ` &middot; <a href="${esc(r.photo)}" target="_blank" rel="noopener">photo</a>` : ""}</div>`).join("") : (d.error ? esc(d.error) : "No key records yet."); }); return; }
   const mine = KEYS ? KEYS.out.filter(r => r.plate.replace(/\s/g, "").toUpperCase() === c.plate.replace(/\s/g, "").toUpperCase()) : [];
   openKeys(a === "In" ? { action: "In", keys: mine.map(r => ({ plate: r.plate, item: r.item })) } : { action: "Out", plates: [c.plate], item: "Key" });
 });
@@ -703,7 +703,8 @@ document.addEventListener("click", e => {
   if (e.target.id === "kretsel") { const sel = [...document.querySelectorAll("[data-ksel]:checked")].map(x => KEYS.out[Number(x.dataset.ksel)]);
     if (sel.length) { KFORM = { action: "In", keys: sel.map(r => ({ plate: r.plate, item: r.item })) }; renderKeyForm(); } }
   const rm1 = e.target.closest("[data-krm]"); if (rm1 && KFORM) { KFORM.plates.splice(Number(rm1.dataset.krm), 1); drawPlates(); }
-  const ch = e.target.closest(".kchips button"); if (ch && KFORM && ch.parentNode.dataset.k) { KFORM[ch.parentNode.dataset.k] = ch.dataset.v; ch.parentNode.querySelectorAll("button").forEach(b => b.classList.toggle("on", b === ch)); }
+  const ch = e.target.closest(".kchips button"); if (ch && KFORM && ch.parentNode.dataset.k) { const k = ch.parentNode.dataset.k, was = KFORM.item; KFORM[k] = ch.dataset.v; ch.parentNode.querySelectorAll("button").forEach(b => b.classList.toggle("on", b === ch));
+    if (k === "item" && (was === "Delivery") !== (ch.dataset.v === "Delivery")) { const n = $("knote") ? $("knote").value : ""; renderKeyForm(); if ($("knote")) $("knote").value = n; } }   // Delivery hides the reason
   if (e.target.id === "kback") { KFORM = null; openKeys(); }
 });
 function kIcon(r) {
@@ -724,7 +725,7 @@ function renderKeyForm() {
   const f = KFORM, items = (KEYS && KEYS.items) || ["Key", "Spare key", "VOC"], reasons = (KEYS && KEYS.reasons) || ["Viewing / test drive", "Photo / video", "Car care", "Workshop / checking", "Puspakom", "Move car", "Handover (car leaves)", "Loan / documents", "Other"];
   const chips = (k, list, cur) => `<div class="kchips" data-k="${k}">${list.map(v => `<button type="button" data-v="${esc(v)}" class="${v === cur ? "on" : ""}">${esc(v)}</button>`).join("")}</div>`;
   const inn = f.action === "In", eq = !inn && f.mode === "eq", allk = !inn && f.mode === "all", assets = (KEYS && KEYS.assets) || [];
-  const allOut = KEYS && KEYS.out.find(r => r.item === "All keys");
+  const allOut = KEYS && KEYS.out.find(r => r.item === "All keys"), dlv = !inn && !eq && !allk && f.item === "Delivery";
   const busy = n => KEYS && KEYS.out.find(r => r.item === "Equipment" && r.plate === n);
   let rs = reasons;
   if (eq) { const types = assets.filter(a => f.assets.indexOf(a.name) >= 0).map(a => a.type), map = (KEYS && KEYS.eqReasons) || {}, all = (KEYS && KEYS.eqGeneral) || ["Other"];
@@ -739,10 +740,10 @@ function renderKeyForm() {
           : '<span class="sub">No equipment yet. Add rows to the Assets tab in the sheet.</span>'}</div>`
       : `<label>Plates (add one or more)<input id="kplate" autocapitalize="characters" autocomplete="off" placeholder="Type plate or model, tap to add"></label><div class="ksug" id="ksug"></div><div class="kpls" id="kpls"></div>
     <label>Item</label>${chips("item", items, f.item)}`)}
-    ${f.action === "Out" ? `<label>Reason</label>${chips("reason", rs, f.reason)}` : ""}
+    ${dlv ? `<div class="sub" style="margin:2px 0 4px">&#128666; Sold car handed to the buyer: records <b>Key + Spare key</b> as gone with the car (not VOC). No return needed.</div>` : f.action === "Out" ? `<label>Reason</label>${chips("reason", rs, f.reason)}` : ""}
     <label>Note<input id="knote" placeholder="${f.action === "Out" ? "Optional (required for Other)" : "Optional"}"></label>
-    <label>Photo (required)</label><div class="kphoto" id="kshot">Tap to take one photo of ${inn ? "what you return" : eq ? "the equipment" : allk ? "the key box" : "the key(s)"}</div><input type="file" id="kfile" accept="image/*" capture="environment" style="display:none">
-    <button class="btn pri" type="submit" style="padding:12px">${inn ? "Save return" : "Save, I'm taking " + (allk ? "all keys" : eq ? (f.assets.length > 1 ? f.assets.length + " items" : "it") : "it")}</button><div class="kmsg" id="kmsg"></div>
+    <label>Photo (required)</label><div class="kphoto" id="kshot">Tap to take one photo of ${inn ? "what you return" : eq ? "the equipment" : allk ? "the key box" : dlv ? "the keys being handed over" : "the key(s)"}</div><input type="file" id="kfile" accept="image/*" capture="environment" style="display:none">
+    <button class="btn pri" type="submit" style="padding:12px">${inn ? "Save return" : dlv ? "Save delivery" : "Save, I'm taking " + (allk ? "all keys" : eq ? (f.assets.length > 1 ? f.assets.length + " items" : "it") : "it")}</button><div class="kmsg" id="kmsg"></div>
     <button class="btn" type="button" id="kback">Back to list</button></form></div>`;
   const cars = (DATA.stock && DATA.stock.cars) || [], norm = t => String(t).toUpperCase().replace(/\s+/g, "");
   if (f.photo) $("kshot").innerHTML = `<img src="${f.photo}" alt="">`;
@@ -774,7 +775,7 @@ function submitKey(force) {
   if (f.action === "Out" && f.mode === "all") f.keys = [{ plate: "ALL KEYS", item: "All keys" }];
   else if (f.action === "Out" && f.mode === "eq") f.keys = f.assets.map(n => ({ plate: n, item: "Equipment" }));
   else if (f.action === "Out") { if ($("kplate").value.trim()) addPlate($("kplate").value); f.keys = f.plates.map(p => ({ plate: p, item: f.item })); }
-  const err = !f.keys.length ? (f.mode === "eq" ? "Tap at least one item." : "Add at least one plate.") : f.action === "Out" && !f.item ? "Pick the item." : f.action === "Out" && !f.reason ? "Pick a reason." : f.reason === "Other" && f.action === "Out" && !f.note ? "Write a note for Other." : !f.photo ? "Take a photo first." : "";
+  const err = !f.keys.length ? (f.mode === "eq" ? "Tap at least one item." : "Add at least one plate.") : f.action === "Out" && !f.item ? "Pick the item." : f.action === "Out" && !f.reason && f.item !== "Delivery" ? "Pick a reason." : f.reason === "Other" && f.action === "Out" && !f.note ? "Write a note for Other." : !f.photo ? "Take a photo first." : "";
   if (err) { $("kmsg").textContent = err; return; }
   $("kmsg").textContent = "Saving and sending photo..."; $("kform").querySelector("[type=submit]").disabled = true;
   fetch(API_URL, { method: "POST", credentials: "omit", body: JSON.stringify({ name: KUSER.name, pin: KUSER.pin, action: f.action, keys: f.keys, reason: f.reason, note: f.note, photo: f.photo, force: !!force }) }).then(r => r.json()).then(d => {
@@ -783,7 +784,8 @@ function submitKey(force) {
     if (KEYS) {                                                    // show the result at once; the server copy refreshes in the background
       const same = (r, k) => r.plate.replace(/\s/g, "").toUpperCase() === k.plate.replace(/\s/g, "").toUpperCase() && r.item === k.item;
       if (f.action === "In") KEYS.out = KEYS.out.filter(r => !f.keys.some(k => same(r, k)));
-      else f.keys.forEach(k => KEYS.out.push({ t: Date.now(), a: "Out", plate: k.plate, item: k.item, reason: f.reason, note: f.note, by: KUSER.name }));
+      else if (f.item === "Delivery" && f.mode !== "eq" && f.mode !== "all") KEYS.out = KEYS.out.filter(r => !f.keys.some(k => same(r, { plate: k.plate, item: r.item }) && /key/i.test(r.item) && r.item !== "All keys"));
+      else if (f.item !== "Delivery" || f.mode === "eq" || f.mode === "all") f.keys.forEach(k => KEYS.out.push({ t: Date.now(), a: "Out", plate: k.plate, item: k.item, reason: f.reason, note: f.note, by: KUSER.name }));
       keyBadge();
     }
     KFORM = null; renderKeyList(); if (d.warn) note(d.warn); if (CUR && $("vkey")) $("vkey").innerHTML = keyCardHtml(CUR);
