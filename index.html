@@ -481,6 +481,9 @@ function init(res) {
   $("fStatus").value = past ? "__all" : "__sell";
   if (keep) keep.forEach(([id, v]) => { if ([...$(id).options].some(o => o.value === v)) $(id).value = v; });
   render();
+  const deep = view === "stock" && (location.hash.match(/^#car=([^&]+)/) || [])[1];   // link from Telegram: open that car
+  if (deep) { const k = decodeURIComponent(deep).replace(/\s/g, "").toUpperCase(), c = CARS.find(x => x.plate.replace(/\s/g, "").toUpperCase() === k);
+    if (c) { openCar(c._i); history.replaceState(null, "", location.pathname); } else if (res._fresh) { $("q").value = k; renderTable(); history.replaceState(null, "", location.pathname); } }
 }
 function uniq(f) { return Array.from(new Set(CARS.map(c => c[f]).filter(Boolean))).sort(); }
 function fill(id, opts) { $(id).innerHTML = opts.map(o => `<option value="${esc(o[0])}">${esc(o[1])}</option>`).join(""); }
