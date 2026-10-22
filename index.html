@@ -235,8 +235,16 @@
   .kchips{display:flex;flex-wrap:wrap;gap:6px}
   .kchips button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;font:inherit;font-size:13px;cursor:pointer}
   .kchips button.on{background:var(--blue);border-color:var(--blue);color:#fff}
-  .kphoto{border:2px dashed var(--line);border-radius:10px;padding:14px;text-align:center;cursor:pointer;color:var(--mut);font-size:13px}
-  .kphoto img{max-width:100%;max-height:240px;border-radius:8px;display:block;margin:0 auto}
+  .kphoto{position:relative;border:2px dashed #bfdbfe;background:#f8fbff;border-radius:14px;padding:18px 12px;text-align:center;cursor:pointer;color:var(--mut);font-size:13px;transition:background .15s}
+  .kphoto:active{background:#eff6ff}
+  .kphoto .kcam{width:56px;height:56px;border-radius:50%;background:var(--blue);display:grid;place-items:center;margin:0 auto 8px;box-shadow:0 4px 12px rgba(37,99,235,.3)}
+  .kphoto .kcam svg{width:28px;height:28px}
+  .kphoto .kct{color:var(--ink);font-weight:700;font-size:15px}
+  .kphoto.has{border-style:solid;border-color:#bbf7d0;background:#f0fdf4;padding:8px}
+  .kphoto img{max-width:100%;max-height:240px;border-radius:10px;display:block;margin:0 auto}
+  .kphoto .kok{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;font-size:13px;font-weight:700;color:#15803d}
+  .kphoto .kre{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;padding:5px 10px;font-weight:700}
+  .kphoto .kre svg{width:15px;height:15px}
   .kseg{display:grid;grid-template-columns:1fr 1fr 1fr;background:#eef0f6;border-radius:10px;padding:3px}
   .kseg button{border:0;background:none;border-radius:8px;padding:9px 4px;font:inherit;font-weight:700;font-size:13px;color:var(--mut);cursor:pointer}
   .kseg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.1)}
@@ -742,11 +750,11 @@ function renderKeyForm() {
     <label>Item</label>${chips("item", items, f.item)}`)}
     ${dlv ? `<div class="sub" style="margin:2px 0 4px">&#128666; Sold car handed to the buyer: records <b>Key + Spare key</b> as gone with the car (not VOC). No return needed.</div>` : f.action === "Out" ? `<label>Reason</label>${chips("reason", rs, f.reason)}` : ""}
     <label>Note<input id="knote" placeholder="${f.action === "Out" ? "Optional (required for Other)" : "Optional"}"></label>
-    <label>Photo (required)</label><div class="kphoto" id="kshot">Tap to take one photo of ${inn ? "what you return" : eq ? "the equipment" : allk ? "the key box" : dlv ? "the keys being handed over" : "the key(s)"}</div><input type="file" id="kfile" accept="image/*" capture="environment" style="display:none">
+    <label>Photo (required)</label><div class="kphoto" id="kshot" role="button" tabindex="0">${kShotEmpty(inn ? "what you return" : eq ? "the equipment" : allk ? "the key box" : dlv ? "the keys being handed over" : "the key(s)")}</div><input type="file" id="kfile" accept="image/*" capture="environment" style="display:none">
     <button class="btn pri" type="submit" style="padding:12px">${inn ? "Save return" : dlv ? "Save delivery" : "Save, I'm taking " + (allk ? "all keys" : eq ? (f.assets.length > 1 ? f.assets.length + " items" : "it") : "it")}</button><div class="kmsg" id="kmsg"></div>
     <button class="btn" type="button" id="kback">Back to list</button></form></div>`;
   const cars = (DATA.stock && DATA.stock.cars) || [], norm = t => String(t).toUpperCase().replace(/\s+/g, "");
-  if (f.photo) $("kshot").innerHTML = `<img src="${f.photo}" alt="">`;
+  if (f.photo) kShotDone(f.photo);
   if (!inn && !eq && !allk) { drawPlates();
   $("kplate").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); addPlate($("kplate").value); } };
   $("kplate").oninput = () => {                                      // own suggestion list: <datalist> doesn't work on iPhone
@@ -756,8 +764,14 @@ function renderKeyForm() {
   };
   $("ksug").onclick = e => { const b = e.target.closest("[data-kpl]"); if (b) addPlate(b.dataset.kpl); }; }
   $("kshot").onclick = () => $("kfile").click();
-  $("kfile").onchange = () => { const file = $("kfile").files[0]; if (!file) return; $("kshot").textContent = "Preparing photo...";
-    shrinkPhoto(file).then(url => { f.photo = url; $("kshot").innerHTML = `<img src="${url}" alt="">`; }).catch(() => { $("kshot").textContent = "Could not read that photo. Try again."; }); };
+  $("kfile").onchange = () => { const file = $("kfile").files[0]; if (!file) return; $("kshot").innerHTML = '<div class="kct">Preparing photo...</div>';
+    shrinkPhoto(file).then(url => { f.photo = url; kShotDone(url); }).catch(() => { $("kshot").classList.remove("has"); $("kshot").innerHTML = kShotEmpty("again: could not read that photo"); }); $("kfile").value = ""; };
+}
+const KCAM = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>';
+const kShotEmpty = what => `<div class="kcam">${KCAM}</div><div class="kct">Take photo</div><div>Tap to snap ${esc(what)}</div>`;
+function kShotDone(url) {
+  $("kshot").classList.add("has");
+  $("kshot").innerHTML = `<img src="${url}" alt="Photo taken"><div class="kok"><span>&#10003; Photo added</span><span class="kre">${KCAM.replace('stroke="#fff"', 'stroke="currentColor"')} Retake</span></div>`;
 }
 function addPlate(v) {
   const p = String(v || "").toUpperCase().replace(/\s+/g, ""); if (!p || !KFORM) return;
