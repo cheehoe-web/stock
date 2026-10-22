@@ -733,6 +733,7 @@ document.addEventListener("click", e => {
   const rt = e.target.closest("[data-kret]"); if (rt) { const r = KEYS.out[Number(rt.dataset.kret)]; KFORM = { action: "In", keys: [{ plate: r.plate, item: r.item }] }; renderKeyForm(); }
   const rg = e.target.closest("[data-kretg]"); if (rg) { const sel = KEYS_GROUPS[rg.dataset.kretg] || [];
     if (sel.length) { KFORM = { action: "In", keys: sel.map(r => ({ plate: r.plate, item: r.item })) }; renderKeyForm(); } }
+  const ur = e.target.closest("[data-kunret]"); if (ur && KFORM && KFORM.keys.length > 1) { const n = $("knote") ? $("knote").value : ""; KFORM.keys.splice(Number(ur.dataset.kunret), 1); renderKeyForm(); if ($("knote")) $("knote").value = n; }
   const rm1 = e.target.closest("[data-krm]"); if (rm1 && KFORM) { KFORM.plates.splice(Number(rm1.dataset.krm), 1); drawPlates(); }
   const ch = e.target.closest(".kchips button"); if (ch && KFORM && ch.parentNode.dataset.k) { const k = ch.parentNode.dataset.k, was = KFORM.item; KFORM[k] = ch.dataset.v; ch.parentNode.querySelectorAll("button").forEach(b => b.classList.toggle("on", b === ch));
     if (k === "item" && (was === "Delivery") !== (ch.dataset.v === "Delivery")) { const n = $("knote") ? $("knote").value : ""; renderKeyForm(); if ($("knote")) $("knote").value = n; } }   // Delivery hides the reason
@@ -768,7 +769,7 @@ function renderKeyForm() {
     const pick = [].concat(...types.map(t => map[t] || all)); rs = pick.length ? Array.from(new Set(pick.concat("Other"))) : all; if (rs.indexOf(f.reason) < 0) f.reason = ""; }
   if (allk) { rs = (KEYS && KEYS.allReasons) || ["Move parking", "Start engine", "Car wash", "Other"]; if (rs.indexOf(f.reason) < 0) f.reason = ""; }
   $("keybody").innerHTML = `<div class="kcard"><h3>${inn ? "Return" : "Take"}</h3><form class="kform" id="kform">
-    ${inn ? `<label>Returning (${f.keys.length})</label><div class="kpls">${f.keys.map(k => `<span class="kpl"><b>${esc(k.plate)}</b> ${esc(k.item)}</span>`).join("")}</div>`
+    ${inn ? `<label>Returning (${f.keys.length})${f.keys.length > 1 ? ' <span class="sub" style="font-weight:400">tap &times; to leave one out</span>' : ""}</label><div class="kpls">${f.keys.map((k, i) => `<span class="kpl"><b>${esc(k.plate)}</b> ${esc(k.item)}${f.keys.length > 1 ? `<button type="button" data-kunret="${i}" aria-label="Not returning this">&times;</button>` : ""}</span>`).join("")}</div>`
       : `<div class="kseg"><button type="button" data-kmode="car" class="${eq || allk ? "" : "on"}">&#128663; Car key / VOC</button><button type="button" data-kmode="all" class="${allk ? "on" : ""}">&#128477;&#65039; All keys</button><button type="button" data-kmode="eq" class="${eq ? "on" : ""}">&#129520; Equipment</button></div>` + (allk
       ? `<div class="sub" style="margin:4px 0 2px">One record for the whole key box (move parking, start engine...). ${allOut ? `<b class="neg">Already out with ${esc(allOut.by)}.</b>` : ""}</div>` : eq
       ? `<label>Equipment (tap one or more)</label><div class="kchips">${assets.length ? assets.map(a => { const b = busy(a.name);
