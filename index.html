@@ -393,7 +393,7 @@
 
 <div class="ov" id="lockov"><div class="dlg" style="max-width:340px">
   <h3 style="margin:0 0 6px">Lock internal view?</h3>
-  <div class="sub" style="margin-bottom:14px">Prices, VOC and price review will be hidden on this device. You will need the passcode to unlock again.</div>
+  <div class="sub" style="margin-bottom:14px">Cost, VOC and price review will be hidden on this device. To see them again you'll need to sign in (or the passcode).</div>
   <div class="btns"><button class="btn" id="lockno">Cancel</button><button class="btn" id="lockyes" style="background:var(--red);border-color:var(--red);color:#fff">Lock</button></div>
 </div></div>
 <div class="ov" id="kcov" style="z-index:13"><div class="dlg" style="max-width:340px">
@@ -884,7 +884,7 @@ $("vbody").addEventListener("submit", e => {
   if (!by) { $("rvmsg").textContent = "Please enter your name."; return; }
   try { localStorage.setItem("caricarz_name", by); } catch (err) {}
   $("rvmsg").innerHTML = '<span class="spin"></span> Saving...';
-  const q = new URLSearchParams({ act: "review", key: pinGet(), plate: c.plate, by: by, cin: nums[0], ucd: nums[1], rsp: nums[2], note: note });
+  const q = new URLSearchParams({ act: "review", key: pinGet(), name: KUSER ? KUSER.name : "", pin: KUSER ? KUSER.pin : "", plate: c.plate, by: by, cin: nums[0], ucd: nums[1], rsp: nums[2], note: note });
   fetch(API_URL + "?" + q, { credentials: "omit", cache: "no-store" }).then(r => r.json()).then(d => {
     if (!d || !d.ok) { $("rvmsg").textContent = (d && d.error === "locked") ? "Passcode changed. Lock and unlock again." : "Not saved: " + ((d && d.error) || "error"); return; }
     const t = new Date(), iso = t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0") + "-" + String(t.getDate()).padStart(2, "0");
@@ -959,7 +959,7 @@ const DOCC = {};
 function fetchDoc(c, n) {
   const k = c.plate + "|" + n; if (DOCC[k]) return DOCC[k];
   const ctl = typeof AbortController !== "undefined" ? new AbortController() : null, timer = setTimeout(() => ctl && ctl.abort(), 60000);
-  return DOCC[k] = fetch(API_URL + "?doc=" + encodeURIComponent(c.plate) + "&n=" + n + "&key=" + encodeURIComponent(pinGet()), { credentials: "omit", cache: "no-store", signal: ctl ? ctl.signal : undefined })
+  return DOCC[k] = fetch(API_URL + "?doc=" + encodeURIComponent(c.plate) + "&n=" + n + "&" + authQ(), { credentials: "omit", cache: "no-store", signal: ctl ? ctl.signal : undefined })
     .then(r => r.json()).then(r => { clearTimeout(timer); if (!r || r.error) delete DOCC[k]; return r; })
     .catch(e => { clearTimeout(timer); delete DOCC[k]; throw e; });
 }
@@ -1025,7 +1025,7 @@ $("q").addEventListener("input", renderTable);
 
 // ---------- loading: show the copy saved on this phone instantly, then refresh from the sheet ----------
 const LS = { stock: "caricarz_stock_v1", stockfull: "caricarz_stockfull_v1", past: "caricarz_past_v1", pastpub: "caricarz_pastpub_v1" };
-const lsName = v => v === "past" ? (pinGet() ? LS.past : LS.pastpub) : (pinGet() ? LS.stockfull : LS.stock);
+const lsName = v => v === "past" ? (isInt() ? LS.past : LS.pastpub) : (isInt() ? LS.stockfull : LS.stock);
 const lsGet = v => { try { const x = localStorage.getItem(lsName(v)); return x ? JSON.parse(x) : null; } catch (e) { return null; } };
 const lsSet = (v, d) => { try { localStorage.setItem(d.full && v === "stock" ? LS.stockfull : v === "past" ? (d.full ? LS.past : LS.pastpub) : LS.stock, JSON.stringify(d)); } catch (e) {} };
 const lsClearInternal = () => { try { localStorage.removeItem(LS.stockfull); localStorage.removeItem(LS.past); } catch (e) {} };
@@ -1045,6 +1045,7 @@ function load(view) {
   if (fetching[view]) return; fetching[view] = true;
   const done = d => {
     fetching[view] = false; d.view = view;
+    if (view === "stock" && !d.full && KUSER && KUSER.role === "internal" && !pinGet()) { kRoleCheck(true); }
     if (view === "stock" && pinGet() && !d.full) {        // passcode changed / wrong: drop back to the normal view
       pinSet(""); lsClearInternal(); DATA.past = null; askPin("Wrong or changed passcode. Please try again.");
     }
@@ -1072,7 +1073,8 @@ function load(view) {
   }
 }
 // ---------- sign-in: sales / staff need name + PIN (Staff tab), brokers & dealers get the Keys screen only ----------
-const authQ = () => pinGet() ? "key=" + encodeURIComponent(pinGet()) : KUSER ? new URLSearchParams({ name: KUSER.name, pin: KUSER.pin }).toString() : "";
+const authQ = () => new URLSearchParams(Object.assign(pinGet() ? { key: pinGet() } : {}, KUSER ? { name: KUSER.name, pin: KUSER.pin } : {})).toString();
+const isInt = () => !!pinGet() || !!(KUSER && KUSER.role === "internal");   // internal: passcode, or Staff Role = Internal
 let GATE = false;
 const lsClearAll = () => { try { Object.values(LS).forEach(k => localStorage.removeItem(k)); } catch (e) {} };
 function gate(msg) {                                                 // nothing to see until signed in
@@ -1090,7 +1092,7 @@ function brokerMode() {                                              // keys onl
 const pinGet = () => { try { return localStorage.getItem("caricarz_pin") || ""; } catch (e) { return PIN_MEM; } };
 let PIN_MEM = "";
 const pinSet = v => { PIN_MEM = v; try { v ? localStorage.setItem("caricarz_pin", v) : localStorage.removeItem("caricarz_pin"); } catch (e) {} };
-const showSeg = on => { $("seg").classList.toggle("hide", !on); $("seg").querySelector("[data-view=past]").textContent = pinGet() ? "Sold & Returned" : "Returned"; };
+const showSeg = on => { $("seg").classList.toggle("hide", !on); $("seg").querySelector("[data-view=past]").textContent = isInt() ? "Sold & Returned" : "Returned"; };
 let taps = 0, tapTimer = null;                       // hidden unlock: tap the "Stock List" title 5 times
 document.querySelector(".title").addEventListener("click", () => {
   taps++; clearTimeout(tapTimer); tapTimer = setTimeout(() => taps = 0, 2500);
@@ -1110,7 +1112,9 @@ const submitPin = () => {
   DATA.stock = null; fetching.stock = false; DATA.past = null; fetching.past = false;   // drop the public sold list
   if (MODE === "stock") { note("Unlocking internal view...", 1); load("stock"); } else switchView("stock");
 };
-const doLock = () => { pinSet(""); lsClearInternal(); location.reload(); };
+const doLock = () => { pinSet(""); lsClearInternal();                  // Internal role: Lock = sign out of this phone
+  if (KUSER && KUSER.role === "internal") { KUSER = null; try { localStorage.removeItem("caricarz_keyuser"); } catch (e) {} lsClearAll(); }
+  location.reload(); };
 // ---------- in-app guide: staff guide for everyone, internal guide only when unlocked ----------
 const gstep = (n, title, text, demo) => `<div class="gs"><div class="gn">${n}</div><div class="gc"><b>${title}</b><div class="gt">${text}</div>${demo ? `<div class="gd">${demo}</div>` : ""}</div></div>`;
 const GUIDE_STAFF = [
@@ -1142,8 +1146,8 @@ const GUIDE_INTERNAL = `<div class="gtip">&#128274; Internal only. Don't share s
 ].join("");
 let GTAB = "staff";
 function openGuide(tab) {
-  if (tab) GTAB = tab; if (!pinGet()) GTAB = "staff";
-  $("gtabs").innerHTML = pinGet() ? `<button data-g="staff" class="${GTAB === "staff" ? "on" : ""}">Sales guide</button><button data-g="internal" class="${GTAB === "internal" ? "on" : ""}">Internal guide</button>` : "";
+  if (tab) GTAB = tab; if (!isInt()) GTAB = "staff";
+  $("gtabs").innerHTML = isInt() ? `<button data-g="staff" class="${GTAB === "staff" ? "on" : ""}">Sales guide</button><button data-g="internal" class="${GTAB === "internal" ? "on" : ""}">Internal guide</button>` : "";
   $("gbody").innerHTML = GTAB === "internal" ? GUIDE_INTERNAL : GUIDE_STAFF; $("gov").classList.add("on"); $("gov").querySelector(".dlg").scrollTop = 0;
 }
 $("gbtn").onclick = () => openGuide();
@@ -1153,7 +1157,7 @@ if (location.hash === "#guide") setTimeout(() => openGuide(), 300);
 $("swno").onclick = () => $("swov").classList.remove("on");          // Switch user: ask first, like Lock
 $("swov").addEventListener("click", e => { if (e.target === $("swov")) $("swov").classList.remove("on"); });
 $("swyes").onclick = () => { $("swov").classList.remove("on"); KUSER = null; KEYS = null; try { localStorage.removeItem("caricarz_keyuser"); } catch (err) {}
-  if (pinGet()) { renderSignIn(); return; }                            // internal view stays open; just a different Keys user
+  if (pinGet()) { renderSignIn(); return; }                            // passcode device: internal view stays open; just a different Keys user
   lsClearAll(); location.reload(); };                                  // otherwise start clean: the next person signs in
 $("lockbtn").onclick = () => $("lockov").classList.add("on");     // always ask first: easy to tap by mistake
 $("lockno").onclick = () => $("lockov").classList.remove("on");
@@ -1171,7 +1175,17 @@ function switchView(view) {
   if (have) { have.view = view; init(have); note("Updating to the latest data...", 1); } else { note(""); loading(); }
   load(view);
 }
+// role can change in the Staff tab: check it quietly on each visit, reload if it changed
+function kRoleCheck(force) {
+  if (!KUSER) return;
+  fetch(API_URL + "?" + new URLSearchParams({ act: "keyme", name: KUSER.name, pin: KUSER.pin }), { credentials: "omit", cache: "no-store" }).then(r => r.json()).then(d => {
+    if (!d.ok) { if (!pinGet()) gate("Your name or PIN has changed. Please sign in again."); return; }
+    if ((d.role || "sales") !== KUSER.role || force) { const changed = (d.role || "sales") !== KUSER.role; KUSER.role = d.role || "sales";
+      try { localStorage.setItem("caricarz_keyuser", JSON.stringify(KUSER)); } catch (e) {} if (changed) { lsClearAll(); location.reload(); } }
+  }).catch(() => {});
+}
 (function start() {
+  setTimeout(() => kRoleCheck(), 2500);
   if (!pinGet() && KUSER && KUSER.role === "broker") { brokerMode(); return; }
   if (!pinGet() && !KUSER) { gate(); return; }                         // sign in once per phone
   if (KUSER || pinGet()) setTimeout(() => loadKeys(true), 1500);       // fills the Keys badge
