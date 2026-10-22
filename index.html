@@ -1060,7 +1060,7 @@ function load(view) {
     fetching[view] = false; d.view = view;
     if (view === "stock" && !d.full && KUSER && KUSER.role === "internal" && !pinGet()) { kRoleCheck(true); }
     if (view === "stock" && pinGet() && !d.full) {        // passcode changed / wrong: drop back to the normal view
-      pinSet(""); lsClearInternal(); DATA.past = null; askPin("Wrong or changed passcode. Please try again.");
+      pinSet(""); lsClearAll(); location.reload(); return;           // old passcode: forget it, fall back to this phone's role (or dealer view)
     }
     if (MODE === view) note(""); if (!d.dealer) lsSet(view, d); d._fresh = true; init(d);
   };
