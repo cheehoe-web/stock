@@ -394,6 +394,11 @@
   <div class="sub" style="margin-bottom:14px">Prices, VOC and price review will be hidden on this device. You will need the passcode to unlock again.</div>
   <div class="btns"><button class="btn" id="lockno">Cancel</button><button class="btn" id="lockyes" style="background:var(--red);border-color:var(--red);color:#fff">Lock</button></div>
 </div></div>
+<div class="ov" id="kcov" style="z-index:13"><div class="dlg" style="max-width:340px">
+  <h3 style="margin:0 0 6px">Return someone else's key?</h3>
+  <div class="sub" id="kcmsg" style="margin-bottom:14px"></div>
+  <div class="btns"><button class="btn" id="kcno">Cancel</button><button class="btn pri" id="kcyes">Yes, return</button></div>
+</div></div>
 <div class="ov" id="swov" style="z-index:13"><div class="dlg" style="max-width:340px">
   <h3 style="margin:0 0 6px">Switch user?</h3>
   <div class="sub" id="swmsg" style="margin-bottom:14px">You will be signed out of Keys on this phone and need a name and PIN to sign in again.</div>
@@ -692,7 +697,8 @@ $("vbody").addEventListener("click", e => {
   if (a === "hist") { if (!KUSER && !pinGet()) { openKeys(); return; } $("khist").innerHTML = LD("Loading history..."); kGet("keyhist", { plate: c.plate }).then(d => {
       $("khist").innerHTML = d.rows && d.rows.length ? d.rows.map(r => `<div><b>${r.a === "Out" ? "Out" : r.a === "Delivered" ? "Delivered" : "In"}</b> ${esc(r.item)} &middot; ${esc(r.by)}${r.reason ? " &middot; " + esc(r.reason) : ""}${r.note ? " &middot; " + esc(r.note) : ""} &middot; ${kTime(r.t)}${r.photo ? ` &middot; <a href="${esc(r.photo)}" target="_blank" rel="noopener">photo</a>` : ""}</div>`).join("") : (d.error ? esc(d.error) : "No key records yet."); }); return; }
   const mine = KEYS ? KEYS.out.filter(r => r.plate.replace(/\s/g, "").toUpperCase() === c.plate.replace(/\s/g, "").toUpperCase()) : [];
-  openKeys(a === "In" ? { action: "In", keys: mine.map(r => ({ plate: r.plate, item: r.item })) } : { action: "Out", plates: [c.plate], item: "Key" });
+  if (a === "In") kConfirmReturn(mine, () => openKeys({ action: "In", keys: mine.map(r => ({ plate: r.plate, item: r.item })) }));
+  else openKeys({ action: "Out", plates: [c.plate], item: "Key" });
 });
 const closeKeys = () => { $("keyov").classList.remove("on"); if (!$("ov").classList.contains("on")) document.body.style.overflow = ""; if (CUR && $("vkey")) $("vkey").innerHTML = keyCardHtml(CUR); };
 $("keybtn").onclick = $("kfab").onclick = () => openKeys();
@@ -731,9 +737,9 @@ document.addEventListener("click", e => {
   const md = e.target.closest("[data-kmode]"); if (md && KFORM) { KFORM.mode = md.dataset.kmode; KFORM.reason = ""; renderKeyForm(); }
   const as = e.target.closest("[data-kas]"); if (as && KFORM && !as.disabled) { const n = as.dataset.kas, i = KFORM.assets.indexOf(n);
     if (i < 0) KFORM.assets.push(n); else KFORM.assets.splice(i, 1); const keepNote = $("knote") ? $("knote").value : ""; renderKeyForm(); if ($("knote")) $("knote").value = keepNote; }
-  const rt = e.target.closest("[data-kret]"); if (rt) { const r = KEYS.out[Number(rt.dataset.kret)]; KFORM = { action: "In", keys: [{ plate: r.plate, item: r.item }] }; renderKeyForm(); }
+  const rt = e.target.closest("[data-kret]"); if (rt) { const r = KEYS.out[Number(rt.dataset.kret)]; kConfirmReturn([r], () => { KFORM = { action: "In", keys: [{ plate: r.plate, item: r.item }] }; renderKeyForm(); }); }
   const rg = e.target.closest("[data-kretg]"); if (rg) { const sel = KEYS_GROUPS[rg.dataset.kretg] || [];
-    if (sel.length) { KFORM = { action: "In", keys: sel.map(r => ({ plate: r.plate, item: r.item })) }; renderKeyForm(); } }
+    if (sel.length) kConfirmReturn(sel, () => { KFORM = { action: "In", keys: sel.map(r => ({ plate: r.plate, item: r.item })) }; renderKeyForm(); }); }
   const ur = e.target.closest("[data-kunret]"); if (ur && KFORM && KFORM.keys.length > 1) { const n = $("knote") ? $("knote").value : ""; KFORM.keys.splice(Number(ur.dataset.kunret), 1); renderKeyForm(); if ($("knote")) $("knote").value = n; }
   const rm1 = e.target.closest("[data-krm]"); if (rm1 && KFORM) { KFORM.plates.splice(Number(rm1.dataset.krm), 1); drawPlates(); }
   const ch = e.target.closest(".kchips button"); if (ch && KFORM && ch.parentNode.dataset.k) { const k = ch.parentNode.dataset.k, was = KFORM.item; KFORM[k] = ch.dataset.v; ch.parentNode.querySelectorAll("button").forEach(b => b.classList.toggle("on", b === ch));
@@ -745,6 +751,17 @@ function kIcon(r) {
   const a = ((KEYS && KEYS.assets) || []).find(x => x.name === r.plate), t = (a ? a.type : r.plate).toLowerCase();
   return /battery|booster/.test(t) ? "&#128267;" : /trade|plate/.test(t) ? "&#127991;" : /buggy/.test(t) ? "&#128763;" : "&#129520;";
 }
+// returning a key someone else took: ask first (Telegram also flags "returned by X for Y")
+function kConfirmReturn(rows, go) {
+  const me = KUSER ? KUSER.name.trim().toLowerCase() : "", nm = {}; rows.forEach(r => { const n = r.by.trim(), k = n.toLowerCase(); if (me && k !== me && (!nm[k] || nm[k] === nm[k].toLowerCase())) nm[k] = n; }); const others = Object.values(nm);
+  if (!others.length) { go(); return; }
+  const what = rows.filter(r => r.by.trim().toLowerCase() !== me).map(r => r.plate + " " + r.item);
+  $("kcmsg").textContent = (what.length > 3 ? what.slice(0, 3).join(", ") + " and " + (what.length - 3) + " more" : what.join(", ")) + (what.length > 1 ? " were" : " was") + " taken by " + others.join(", ") + ". Return " + (what.length > 1 ? "them" : "it") + " on their behalf?";
+  $("kcov").classList.add("on");
+  $("kcyes").onclick = () => { $("kcov").classList.remove("on"); go(); };
+}
+$("kcno").onclick = () => $("kcov").classList.remove("on");
+$("kcov").addEventListener("click", e => { if (e.target === $("kcov")) $("kcov").classList.remove("on"); });
 function renderKeyList() {                                         // mine first, then grouped by person; "Return all" per group
   if (!KUSER) return;
   const out = KEYS ? KEYS.out : [], late = out.filter(r => kLate(r.t)).length, me = KUSER.name.trim().toLowerCase();
