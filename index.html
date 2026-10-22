@@ -945,10 +945,12 @@ function renderSummary() {
   const label = $("summ").selectedOptions[0].textContent;
   // sales (Lark Sales Admin Base via Order Tracking / Lark Orders, Invoice Summary)
   const od = ps && ps.orders && !ps.orders.error ? ps.orders : null;
-  const bk = od ? od.o.filter(r => inM(r[0])) : [], cx = od ? od.o.filter(r => inM(r[1])) : [], dv = od ? od.dv.filter(r => inM(r[0])) : [], iv = od ? od.iv.filter(r => inM(r[0])) : [];
+  const bk = od ? od.o.filter(r => inM(r[0])) : [], cx = od ? od.o.filter(r => inM(r[1])) : [], dv = od ? od.iv.filter(r => inM(r[3])).map(r => [r[3], r[1], r[2]]) : [], iv = od ? od.iv.filter(r => inM(r[0])) : [];   // delivered: Invoice Summary delivery date
   const openO = od ? od.o.filter(r => !/deliver|cancel/i.test(r[2])) : [];
-  const bySE = (() => { const m = {}; bk.forEach(r => { const k = r[3] || "(blank)"; (m[k] = m[k] || [0, 0])[0]++; }); dv.forEach(r => { const k = r[1] || "(blank)"; (m[k] = m[k] || [0, 0])[1]++; });
-    return Object.entries(m).sort((a, b) => b[1][1] - a[1][1] || b[1][0] - a[1][0]).map(([k, v]) => [k, v[0] + " booked · " + v[1] + " delivered"]); })();
+  const bySE = (() => { const m = {}, nm = {}, key = n => String(n || "(blank)").toLowerCase().replace(/\s+/g, " ").trim();   // Lark "Naim" = Invoice "NAIM"
+    const add = (n, i) => { const k = key(n); if (!nm[k] || nm[k] === nm[k].toUpperCase()) nm[k] = String(n || "(blank)").trim(); (m[k] = m[k] || [0, 0])[i]++; };
+    bk.forEach(r => add(r[3], 0)); dv.forEach(r => add(r[1], 1));
+    return Object.entries(m).sort((a, b) => b[1][1] - a[1][1] || b[1][0] - a[1][0]).map(([k, v]) => [nm[k], v[0] + " booked · " + v[1] + " delivered"]); })();
   const salesHtml = od ? `<div class="card sumsales"><h3>Sales &middot; ${esc(label)}</h3><div class="sstat">${[["Booking", bk.length, "c-blue"], ["Delivered", dv.length, "c-green"], ["Invoiced", iv.length, "c-purple"], ["Cancelled", cx.length, "c-red"]]
       .map(x => `<div><b class="${x[2]}">${x[1]}</b><span>${x[0]}</span></div>`).join("")}</div>
       <div class="sumg" style="margin-top:12px"><div><h4>By sales person</h4>${tbl(bySE)}</div><div><h4>Open orders now (${openO.length})</h4>${tbl(group(openO, r => r[2]))}</div></div></div>`
