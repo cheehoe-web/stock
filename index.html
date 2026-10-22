@@ -201,6 +201,11 @@
   body.gated .wrap > :not(.head):not(#landing), body.gated #kfab, body.gated .hright > :not(#gbtn), body.broker #gbtn{display:none !important}
   #landing{display:none;text-align:center;padding:28px 20px}
   body.gated #landing{display:block}
+  /* dealer view: cars only, no status / aging / booking / phase / days */
+  body.dealer #kpis, body.dealer .three, body.dealer #seg, body.dealer #fStatus, body.dealer #fPhase, body.dealer option[value=days], body.dealer #sumbtn, body.dealer #ichip,
+  body.dealer #rows .pill, body.dealer #rows .days, body.dealer .vtags .pill, body.dealer .vtags .days, body.dealer #gbtn,
+  body.dealer table th:nth-child(2), body.dealer table td:nth-child(2), body.dealer table th:nth-child(7), body.dealer table td:nth-child(7),
+  body.dealer table th:nth-child(8), body.dealer table td:nth-child(8){display:none !important}
   #landing .lk{width:72px;height:72px;border-radius:50%;background:#fffbeb;display:grid;place-items:center;margin:0 auto 10px;font-size:36px}
   #landing h3{margin:0 0 6px;font-size:18px}
   #landing .btn{margin-top:14px;padding:13px 22px;font-size:15px;width:100%;max-width:320px}
@@ -442,7 +447,7 @@ const fmtDate = s => { const d = parseIso(s); return d ? String(d.getDate()).pad
 const rm = n => n ? Number(n).toLocaleString("en-US") : "";
 
 const BANDS = [["Under RM30k",0,30000],["RM30k - 50k",30000,50000],["RM50k - 80k",50000,80000],["RM80k - 120k",80000,120000],["RM120k - 200k",120000,200000],["RM200k and above",200000,1e12]];
-let CARS = [], cutoff = null, TODAY = null, MODE = "stock", FULL = false, XF = [], XI = {};
+let DEALER = false, CARS = [], cutoff = null, TODAY = null, MODE = "stock", FULL = false, XF = [], XI = {};
 const DATA = { stock: null, past: null };
 
 function classify(c) {
@@ -479,7 +484,7 @@ function init(res) {
   DATA[view] = res;
   if (view !== MODE) { if ($("sumov").classList.contains("on")) renderSummary(); if (view === "past" && CARS.length && $("q").value.trim()) renderTable(); return; }   // other tab's data arrived in the background
   const keep = CARS.length && CARS.view === view ? ["fStatus","fPrice","fBody","fBrand","fFuel","fPhase"].map(id => [id, $(id).value]) : null;
-  FULL = !!res.full && !!res.xf; XF = res.xf || []; XI = {};
+  FULL = !!res.full && !!res.xf; XF = res.xf || []; XI = {}; DEALER = !!res.dealer;
   XF.forEach((f, i) => XI[f[1]] = i);
   $("ichip").classList.toggle("on", FULL); $("sumbtn").classList.toggle("on", FULL);
   if ($("sumov").classList.contains("on")) renderSummary();
@@ -576,7 +581,7 @@ function renderTable() {
             s === "year" ? (a, b) => Number(b.year) - Number(a.year) || byNew(a, b) :
             s === "days" ? (a, b) => (b.days == null ? -1 : b.days) - (a.days == null ? -1 : a.days) : (a, b) => a.rank - b.rank || byNew(a, b));
   ftogLabel(); $("count").textContent = "Showing " + Math.min(rows.length, 1000) + " of " + rows.length + " cars" + (terms.length ? " matching \"" + terms.join(" ") + "\"" : "");
-  if (MODE === "stock" && terms.length) pastHint(terms);
+  if (MODE === "stock" && terms.length && !DEALER) pastHint(terms);
   $("rows").innerHTML = rows.slice(0, 1000).map(c => {
     const links = [["CariCarz", c.caricarz], ["Carlist", c.carlist], ["Mudah", c.mudah], ["FB", c.fb]].filter(l => l[1])
       .map(l => `<a href="${esc(l[1])}" target="_blank" rel="noopener">${l[0]}</a>`).join("") || '<span class="sub">-</span>';
@@ -618,6 +623,7 @@ function xLine(c, terms) {                               // internal view: car-i
 function phaseCls(p) { return /aging|expired/i.test(p) ? "b-red" : /phase [34]/i.test(p) ? "b-amber" : /phase 1/i.test(p) ? "b-blue" : "b-grey"; }
 function tgText(c) {
   const i = c.info || {};
+  if (DEALER) return ["\uD83D\uDE97 " + c.model, "Plate: " + c.plate, "Year: " + c.year + " | Color: " + c.color + " | Mileage: " + c.mileage, "\uD83D\uDCB0 RSP: " + (c.price ? "RM" + c.price : "N/A")].join("\n");
   return ["\uD83D\uDE97 " + c.model, "Plate: " + c.plate, "Interchange: " + (i.interchange || "N/A"), "",
     "Year: " + c.year + " | Color: " + c.color + " | Mileage: " + c.mileage, "Category: " + (i.category || "N/A"), "",
     "\uD83D\uDCB0 RSP: " + (c.price ? "RM" + c.price : "N/A"),
@@ -650,11 +656,11 @@ function openCar(i) {
   }
   h += `<div class="vspecs">${tile("Year", c.year)}${tile("Mileage", c.mileage)}${tile("Color", c.color)}${tile("Body", c.body)}${tile("Fuel", c.fuel)}${tile("Category", inf.category)}</div>`;
   const lite = MODE === "past" && !FULL;                          // public sold / returned: no keys/docs info, no copy or share
-  if (!lite) h += `<div class="vsec"><h4>Keys &amp; documents</h4><div class="vlist">
+  if (!lite && !DEALER) h += `<div class="vsec"><h4>Keys &amp; documents</h4><div class="vlist">
     ${row("Interchange plate", yn(inf.interchange), 1)}${row("Spare key", yn(inf.spareKey), 1)}${row("VOC", yn(inf.voc), 1)}
     ${row("Principal warranty", yn(inf.warranty), 1)}${row("Under loan / settlement", yn(inf.settlement), 1)}</div></div>`;
   const notes = [["Current status", inf.curStatus], ["Selling point", inf.sellingPoint], MODE === "past" ? ["Return remark", c.outNote] : null].filter(n => n && val(n[1]));
-  if (notes.length) h += `<div class="vsec"><h4>Notes</h4>${notes.map(n => `<div class="vnote"><span>${n[0]}</span>${esc(val(n[1]))}</div>`).join("")}</div>`;
+  if (notes.length && !DEALER) h += `<div class="vsec"><h4>Notes</h4>${notes.map(n => `<div class="vnote"><span>${n[0]}</span>${esc(val(n[1]))}</div>`).join("")}</div>`;
   const dates = [FULL ? ["Car in", fmtDate(c.carIn)] : null, MODE === "past" ? [c.status === "Sold" ? "Sold" : "Returned", fmtDate(c.outDate)] : null].filter(d => d && d[1]);
   if ((FULL && c.bdc) || dates.length) h += `<div class="vsec"><h4>${FULL ? "Handled by" : "Dates"}</h4><div class="vlist">${FULL && c.bdc ? `<div><span class="vpic"><i>${esc(c.bdc.trim().charAt(0).toUpperCase())}</i></span><b style="margin-right:auto;align-self:center">${esc(c.bdc)}</b><span style="align-self:center">BDC PIC</span></div>` : ""}${dates.map(d => row(d[0], d[1])).join("")}</div></div>`;
   h += `<div class="vsec"><h4>Key &amp; VOC</h4><div class="vkey" id="vkey">${keyCardHtml(c)}</div></div>`;
@@ -736,7 +742,7 @@ document.addEventListener("submit", e => {
     fetch(API_URL + "?" + new URLSearchParams({ act: "keyme", name: name, pin: pin }), { credentials: "omit", cache: "no-store" }).then(r => r.json()).then(d => {
       if (!d.ok) { $("kmsg").textContent = d.error || "Wrong name or PIN."; return; }
       KUSER = { name: d.name, pin: pin, role: d.role || "sales" }; try { localStorage.setItem("caricarz_keyuser", JSON.stringify(KUSER)); } catch (err) {}
-      if (KUSER.role === "broker" && !pinGet()) { brokerMode(); return; }
+      if (KUSER.role === "broker" && !pinGet()) { closeKeys(); brokerMode(); return; }
       if (GATE) { GATE = false; document.body.classList.remove("gated"); closeKeys(); loading(); load("stock"); setTimeout(() => loadKeys(true), 1500); return; }
       openKeys(KFORM);
     }).catch(() => { $("kmsg").textContent = "No connection. Try again."; });
@@ -1056,13 +1062,15 @@ function load(view) {
     if (view === "stock" && pinGet() && !d.full) {        // passcode changed / wrong: drop back to the normal view
       pinSet(""); lsClearInternal(); DATA.past = null; askPin("Wrong or changed passcode. Please try again.");
     }
-    if (MODE === view) note(""); lsSet(view, d); d._fresh = true; init(d);
+    if (MODE === view) note(""); if (!d.dealer) lsSet(view, d); d._fresh = true; init(d);
   };
   const fail = e => {
     fetching[view] = false;
     if (e && e.message === "paused") { note("Too many wrong PIN tries on this name. Please try again in 15 minutes."); return; }
     if (e && e.message === "signin") { gate(KUSER ? "Your name or PIN has changed. Please sign in again." : ""); return; }
-    if (e && e.message === "broker") { brokerMode(); return; }
+    if (e && e.message === "broker") { if (view === "past") { DATA.past = { cars: [] }; if (MODE === "past") switchView("stock"); }
+      else { document.body.classList.add("gated"); $("landbtn").textContent = "Open Keys"; $("landmsg").textContent = "Signed in as " + (KUSER ? KUSER.name : "") + ". Take or return keys here."; }   // older server: keys only
+      return; }
     if (view === "past" && e && e.message === "locked" && pinGet()) { pinSet(""); DATA.past = null; lsClearInternal(); switchView("stock"); askPin("Wrong or changed passcode. Please try again."); return; }
     if (MODE !== view) return;
     const old = DATA[view] || lsGet(view);
@@ -1092,12 +1100,11 @@ function gate(msg) {                                                 // nothing 
   $("landt").textContent = "Keys"; $("landbtn").textContent = "Sign in";
   $("landmsg").textContent = msg || "Sign in with your name and PIN to take or return keys.";
 }
-function brokerMode() {                                              // keys only: no stock data on this device
-  GATE = false; DATA.stock = DATA.past = null; CARS = []; lsClearAll();
-  document.body.classList.add("gated", "broker"); $("rows").innerHTML = ""; $("kpis").innerHTML = ""; note("");
-  $("landt").textContent = "Keys"; $("landbtn").textContent = "Open Keys";
-  $("landmsg").textContent = "Signed in as " + (KUSER ? KUSER.name : "") + ". Take or return keys here.";
-  openKeys();
+function brokerMode() {                                              // dealer view: sellable cars only (server strips status, aging, booking)
+  GATE = false; DATA.past = null; lsClearAll(); MODE = "stock";
+  document.body.classList.remove("gated"); document.body.classList.add("dealer", "broker"); note("");
+  if (!DATA.stock || !DATA.stock.dealer) { DATA.stock = null; CARS = []; loading(); fetching.stock = false; load("stock"); }
+  setTimeout(() => loadKeys(true), 1500);
 }
 const pinGet = () => { try { return localStorage.getItem("caricarz_pin") || ""; } catch (e) { return PIN_MEM; } };
 let PIN_MEM = "";
