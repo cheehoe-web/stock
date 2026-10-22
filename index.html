@@ -1053,6 +1053,7 @@ function load(view) {
   };
   const fail = e => {
     fetching[view] = false;
+    if (e && e.message === "paused") { note("Too many wrong PIN tries on this name. Please try again in 15 minutes."); return; }
     if (e && e.message === "signin") { gate(KUSER ? "Your name or PIN has changed. Please sign in again." : ""); return; }
     if (e && e.message === "broker") { brokerMode(); return; }
     if (view === "past" && e && e.message === "locked" && pinGet()) { pinSet(""); DATA.past = null; lsClearInternal(); switchView("stock"); askPin("Wrong or changed passcode. Please try again."); return; }
