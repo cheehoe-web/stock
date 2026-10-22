@@ -198,6 +198,8 @@
   .sumt td{padding:5px 0;border-top:1px solid var(--line)}
   .sumt td:last-child{text-align:right;font-weight:700}
   @media(max-width:720px){.sumh{padding:10px 12px}.sumb{padding:10px}.sumg{grid-template-columns:1fr}}
+  body.gated .wrap > :not(.head), body.gated #kfab, body.gated .hright > :not(#gbtn), body.gated #keyx, body.broker #gbtn{display:none !important}
+  body.broker .kseg{grid-template-columns:1fr 1fr}
   .gbtn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
   #gov{z-index:14}
   #gov .dlg{max-width:620px;padding:0}
@@ -714,7 +716,7 @@ function openKeys(form) {
 }
 function renderSignIn() {
   $("kwho").textContent = "";
-  $("keybody").innerHTML = `<div class="kcard"><h3>Who are you?</h3><form class="kform" id="ksign"><label>Your name<input id="kname" autocomplete="username" placeholder="As in the Staff list"></label>
+  $("keybody").innerHTML = `<div class="kcard"><h3>${GATE ? "Sign in to see the stock list" : "Who are you?"}</h3><form class="kform" id="ksign"><label>Your name<input id="kname" autocomplete="username" placeholder="As in the Staff list"></label>
     <label>Your PIN<input id="kpin" type="password" inputmode="numeric" autocomplete="current-password"></label><button class="btn pri" type="submit">Continue</button><div class="kmsg" id="kmsg"></div>
     <div class="sub">This phone will remember you. Ask the Inventory Team for your PIN.</div></form></div>`;
   setTimeout(() => $("kname").focus(), 50);
@@ -725,7 +727,10 @@ document.addEventListener("submit", e => {
     $("kmsg").textContent = "Checking...";
     fetch(API_URL + "?" + new URLSearchParams({ act: "keyme", name: name, pin: pin }), { credentials: "omit", cache: "no-store" }).then(r => r.json()).then(d => {
       if (!d.ok) { $("kmsg").textContent = d.error || "Wrong name or PIN."; return; }
-      KUSER = { name: d.name, pin: pin }; try { localStorage.setItem("caricarz_keyuser", JSON.stringify(KUSER)); } catch (err) {}
+      KUSER = { name: d.name, pin: pin, role: d.role || "sales" }; try { localStorage.setItem("caricarz_keyuser", JSON.stringify(KUSER)); } catch (err) {}
+      $("keyov").querySelector(".sumh b").textContent = "Keys & equipment";
+      if (KUSER.role === "broker" && !pinGet()) { brokerMode(); return; }
+      if (GATE) { GATE = false; document.body.classList.remove("gated"); closeKeys(); loading(); load("stock"); setTimeout(() => loadKeys(true), 1500); return; }
       openKeys(KFORM);
     }).catch(() => { $("kmsg").textContent = "No connection. Try again."; });
   }
@@ -788,7 +793,7 @@ function renderKeyForm() {
   if (allk) { rs = (KEYS && KEYS.allReasons) || ["Move parking", "Start engine", "Car wash", "Other"]; if (rs.indexOf(f.reason) < 0) f.reason = ""; }
   $("keybody").innerHTML = `<div class="kcard"><h3>${inn ? "Return" : "Take"}</h3><form class="kform" id="kform">
     ${inn ? `<label>Returning (${f.keys.length})${f.keys.length > 1 ? ' <span class="sub" style="font-weight:400">tap &times; to leave one out</span>' : ""}</label><div class="kpls">${f.keys.map((k, i) => `<span class="kpl"><b>${esc(k.plate)}</b> ${esc(k.item)}${f.keys.length > 1 ? `<button type="button" data-kunret="${i}" aria-label="Not returning this">&times;</button>` : ""}</span>`).join("")}</div>`
-      : `<div class="kseg"><button type="button" data-kmode="car" class="${eq || allk ? "" : "on"}">&#128663; Car key / VOC</button><button type="button" data-kmode="all" class="${allk ? "on" : ""}">&#128477;&#65039; All keys</button><button type="button" data-kmode="eq" class="${eq ? "on" : ""}">&#129520; Equipment</button></div>` + (allk
+      : `<div class="kseg"><button type="button" data-kmode="car" class="${eq || allk ? "" : "on"}">&#128663; Car key / VOC</button>${KEYS && KEYS.broker ? "" : `<button type="button" data-kmode="all" class="${allk ? "on" : ""}">&#128477;&#65039; All keys</button>`}<button type="button" data-kmode="eq" class="${eq ? "on" : ""}">&#129520; Equipment</button></div>` + (allk
       ? `<div class="sub" style="margin:4px 0 2px">One record for the whole key box (move parking, start engine...). ${allOut ? `<b class="neg">Already out with ${esc(allOut.by)}.</b>` : ""}</div>` : eq
       ? `<label>Equipment (tap one or more)</label><div class="kchips">${assets.length ? assets.map(a => { const b = busy(a.name);
           return `<button type="button" data-kas="${esc(a.name)}" class="${f.assets.indexOf(a.name) >= 0 ? "on" : ""} ${b ? "kbusy" : ""}" ${b ? "disabled" : ""}>${esc(a.name)}${b ? " &middot; with " + esc(b.by) : ""}</button>`; }).join("")
@@ -986,7 +991,7 @@ function openDoc(c, n) {
 $("wa").onclick = () => { window.open("https://wa.me/?text=" + encodeURIComponent(tgText(CUR)), "_blank"); };
 $("sh").onclick = () => { navigator.share({ text: tgText(CUR) }).catch(() => {}); };
 const closeCar = () => { $("ov").classList.remove("on"); document.body.style.overflow = ""; };
-document.addEventListener("keydown", e => { if (e.key === "Escape" && $("keyov").classList.contains("on")) { closeKeys(); return; }
+document.addEventListener("keydown", e => { if (e.key === "Escape" && $("keyov").classList.contains("on")) { if (!document.body.classList.contains("gated")) closeKeys(); return; }
   if (e.key === "Escape") { if ($("docov").classList.contains("on")) { closeDoc(); return; } if ($("sumov").classList.contains("on")) { closeSum(); return; } closeCar(); closePin(); } });
 $("ov").addEventListener("click", e => { if (e.target === $("ov")) closeCar(); });
 $("cp").onclick = () => {
@@ -1047,6 +1052,8 @@ function load(view) {
   };
   const fail = e => {
     fetching[view] = false;
+    if (e && e.message === "signin") { gate(KUSER ? "Your name or PIN has changed. Please sign in again." : ""); return; }
+    if (e && e.message === "broker") { brokerMode(); return; }
     if (view === "past" && e && e.message === "locked" && pinGet()) { pinSet(""); DATA.past = null; lsClearInternal(); switchView("stock"); askPin("Wrong or changed passcode. Please try again."); return; }
     if (MODE !== view) return;
     const old = DATA[view] || lsGet(view);
@@ -1056,13 +1063,29 @@ function load(view) {
   {
     const ctl = typeof AbortController !== "undefined" ? new AbortController() : null;
     const timer = setTimeout(() => { if (ctl) ctl.abort(); }, 90000);     // a cold rebuild can take ~30-60 s; keep showing the saved copy meanwhile
-    fetch(API_URL + (view === "past" ? "?view=past" + (pinGet() ? "&key=" + encodeURIComponent(pinGet()) : "") : pinGet() ? "?key=" + encodeURIComponent(pinGet()) : ""), { credentials: "omit", cache: "no-store", signal: ctl ? ctl.signal : undefined })
+    fetch(API_URL + "?" + (view === "past" ? "view=past&" : "") + authQ(), { credentials: "omit", cache: "no-store", signal: ctl ? ctl.signal : undefined })
       .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then(d => { clearTimeout(timer); if (!d || !d.cars) throw new Error(d && d.error ? d.error : "bad data");
         if (view === "past" && d.view !== "past") throw new Error("Apps Script not updated yet (deploy a New version)");
         done(d); })
       .catch(e => { clearTimeout(timer); fail(e); });
   }
+}
+// ---------- sign-in: sales / staff need name + PIN (Staff tab), brokers & dealers get the Keys screen only ----------
+const authQ = () => pinGet() ? "key=" + encodeURIComponent(pinGet()) : KUSER ? new URLSearchParams({ name: KUSER.name, pin: KUSER.pin }).toString() : "";
+let GATE = false;
+const lsClearAll = () => { try { Object.values(LS).forEach(k => localStorage.removeItem(k)); } catch (e) {} };
+function gate(msg) {                                                 // nothing to see until signed in
+  GATE = true; KUSER = null; KEYS = null; DATA.stock = DATA.past = null; CARS = [];
+  try { localStorage.removeItem("caricarz_keyuser"); } catch (e) {} lsClearAll();
+  document.body.classList.add("gated"); $("rows").innerHTML = ""; $("kpis").innerHTML = ""; note("");
+  $("keyov").querySelector(".sumh b").textContent = "CariCarz Stock List";
+  openKeys(); if (msg && $("kmsg")) $("kmsg").textContent = msg;
+}
+function brokerMode() {                                              // keys only: no stock data on this device
+  GATE = false; DATA.stock = DATA.past = null; CARS = []; lsClearAll();
+  document.body.classList.add("gated", "broker"); $("rows").innerHTML = ""; $("kpis").innerHTML = ""; note("");
+  openKeys();
 }
 const pinGet = () => { try { return localStorage.getItem("caricarz_pin") || ""; } catch (e) { return PIN_MEM; } };
 let PIN_MEM = "";
@@ -1083,6 +1106,7 @@ $("pinov").addEventListener("click", e => { if (e.target === $("pinov")) closePi
 const submitPin = () => {
   const v = $("pin").value.trim(); if (!v) return;
   pinSet(v); closePin(); showSeg(true);
+  if (document.body.classList.contains("gated")) { GATE = false; document.body.classList.remove("gated", "broker"); closeKeys(); loading(); }
   DATA.stock = null; fetching.stock = false; DATA.past = null; fetching.past = false;   // drop the public sold list
   if (MODE === "stock") { note("Unlocking internal view...", 1); load("stock"); } else switchView("stock");
 };
@@ -1128,7 +1152,9 @@ $("gov").addEventListener("click", e => { if (e.target === $("gov")) $("gov").cl
 if (location.hash === "#guide") setTimeout(() => openGuide(), 300);
 $("swno").onclick = () => $("swov").classList.remove("on");          // Switch user: ask first, like Lock
 $("swov").addEventListener("click", e => { if (e.target === $("swov")) $("swov").classList.remove("on"); });
-$("swyes").onclick = () => { $("swov").classList.remove("on"); KUSER = null; KEYS = null; try { localStorage.removeItem("caricarz_keyuser"); } catch (err) {} renderSignIn(); };
+$("swyes").onclick = () => { $("swov").classList.remove("on"); KUSER = null; KEYS = null; try { localStorage.removeItem("caricarz_keyuser"); } catch (err) {}
+  if (pinGet()) { renderSignIn(); return; }                            // internal view stays open; just a different Keys user
+  lsClearAll(); location.reload(); };                                  // otherwise start clean: the next person signs in
 $("lockbtn").onclick = () => $("lockov").classList.add("on");     // always ask first: easy to tap by mistake
 $("lockno").onclick = () => $("lockov").classList.remove("on");
 $("lockov").addEventListener("click", e => { if (e.target === $("lockov")) $("lockov").classList.remove("on"); });
@@ -1146,6 +1172,8 @@ function switchView(view) {
   load(view);
 }
 (function start() {
+  if (!pinGet() && KUSER && KUSER.role === "broker") { brokerMode(); return; }
+  if (!pinGet() && !KUSER) { gate(); return; }                         // sign in once per phone
   if (KUSER || pinGet()) setTimeout(() => loadKeys(true), 1500);       // fills the Keys badge
   showSeg(true);                                                       // Sold & Returned is open to all (public = 7-day sold + returned, no price)
   if (location.hash === "#manager" && !pinGet()) setTimeout(() => askPin(), 300);
