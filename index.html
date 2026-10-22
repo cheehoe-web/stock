@@ -195,6 +195,12 @@
   .sumg .card{padding:14px 16px}
   .sumg h3{margin:0 0 8px;font-size:14px}
   .sumt{width:100%;border-collapse:collapse;font-size:13px}
+  .sumsales{margin-bottom:14px;padding:14px 16px}
+  .sumsales h4{margin:0 0 6px;font-size:13px;color:var(--mut)}
+  .sstat{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+  .sstat div{background:#f6f7fb;border-radius:12px;padding:10px 8px;text-align:center}
+  .sstat b{display:block;font-size:24px;line-height:1.1}
+  .sstat span{font-size:12px;color:var(--mut);font-weight:600}
   .sumt td{padding:5px 0;border-top:1px solid var(--line)}
   .sumt td:last-child{text-align:right;font-weight:700}
   @media(max-width:720px){.sumh{padding:10px 12px}.sumb{padding:10px}.sumg{grid-template-columns:1fr}}
@@ -937,8 +943,18 @@ function renderSummary() {
   const k = [["CAR IN", carIn.length, "c-purple"], ["SOLD", sold.length, "c-green"], ["RETURNED", ret.length, "c-ink"],
     ["SOLD VALUE", "RM " + (sum(sold, c => c.price) / 1e6).toFixed(2) + "M", "c-green"], ["EST. MARGIN (SOLD)", "RM " + money(Math.round(sum(sold, c => xv(c, "Est. Margin")))), "c-blue"], ["AVG DAYS TO SELL", avgD(sold), "c-amber"]];
   const label = $("summ").selectedOptions[0].textContent;
+  // sales (Lark Sales Admin Base via Order Tracking / Lark Orders, Invoice Summary)
+  const od = ps && ps.orders && !ps.orders.error ? ps.orders : null;
+  const bk = od ? od.o.filter(r => inM(r[0])) : [], cx = od ? od.o.filter(r => inM(r[1])) : [], dv = od ? od.dv.filter(r => inM(r[0])) : [], iv = od ? od.iv.filter(r => inM(r[0])) : [];
+  const openO = od ? od.o.filter(r => !/deliver|cancel/i.test(r[2])) : [];
+  const bySE = (() => { const m = {}; bk.forEach(r => { const k = r[3] || "(blank)"; (m[k] = m[k] || [0, 0])[0]++; }); dv.forEach(r => { const k = r[1] || "(blank)"; (m[k] = m[k] || [0, 0])[1]++; });
+    return Object.entries(m).sort((a, b) => b[1][1] - a[1][1] || b[1][0] - a[1][0]).map(([k, v]) => [k, v[0] + " booked · " + v[1] + " delivered"]); })();
+  const salesHtml = od ? `<div class="card sumsales"><h3>Sales &middot; ${esc(label)}</h3><div class="sstat">${[["Booking", bk.length, "c-blue"], ["Delivered", dv.length, "c-green"], ["Invoiced", iv.length, "c-purple"], ["Cancelled", cx.length, "c-red"]]
+      .map(x => `<div><b class="${x[2]}">${x[1]}</b><span>${x[0]}</span></div>`).join("")}</div>
+      <div class="sumg" style="margin-top:12px"><div><h4>By sales person</h4>${tbl(bySE)}</div><div><h4>Open orders now (${openO.length})</h4>${tbl(group(openO, r => r[2]))}</div></div></div>`
+    : ps ? '<div class="card"><h3>Sales</h3><div class="sub">Order data not available yet (update Inventory.gs).</div></div>' : "";
   $("sumbody").innerHTML = (ps ? "" : '<div class="note on">Sold &amp; returned data still loading; sold / returned figures will fill in shortly.</div>') +
-    `<div class="grid6">${k.map(x => `<div class="card kpi" style="cursor:default"><div class="top ${x[2]}">${x[0]}</div><div class="num ${x[2]}" style="font-size:24px">${x[1]}</div><div class="foot">${label}</div></div>`).join("")}</div>
+    salesHtml + `<div class="grid6">${k.map(x => `<div class="card kpi" style="cursor:default"><div class="top ${x[2]}">${x[0]}</div><div class="num ${x[2]}" style="font-size:24px">${x[1]}</div><div class="foot">${label}</div></div>`).join("")}</div>
     <div class="sumg">
       <div class="card"><h3>Car in by acquisition type</h3>${tbl(group(carIn, c => xv(c, "Acquisition Type")))}</div>
       <div class="card"><h3>Car in by BDC</h3>${tbl(group(carIn, c => c.bdc))}</div>
@@ -950,7 +966,8 @@ function renderSummary() {
   const lines = g => g.map(x => "  - " + x[0] + ": " + x[1]).join("\n");
   SUMTXT = ["*Automall summary: " + label + "*", "", "Car in: " + carIn.length, lines(group(carIn, c => xv(c, "Acquisition Type"))), "",
     "Sold: " + sold.length + " (RM " + (sum(sold, c => c.price) / 1e6).toFixed(2) + "M, avg " + avgD(sold) + " days)", "Returned: " + ret.length, "",
-    "Inventory now: " + now.total + " (Available " + now.avail + ", V.B.A.O " + now.vbao + ", Booked " + now.booked + ", Aging " + now.aging + ")"].join("\n");
+    "Inventory now: " + now.total + " (Available " + now.avail + ", V.B.A.O " + now.vbao + ", Booked " + now.booked + ", Aging " + now.aging + ")"]
+    .concat(od ? ["", "Sales: booking " + bk.length + ", delivered " + dv.length + ", invoiced " + iv.length + ", cancelled " + cx.length, lines(bySE)] : []).join("\n");
 }
 $("sumcp").onclick = () => fallbackCopy(SUMTXT, () => { $("sumcp").textContent = "Copied \u2713"; setTimeout(() => $("sumcp").textContent = "Copy", 1500); });
 function fallbackCopy(t, done) { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, () => fallback(t, done)); else fallback(t, done); }
