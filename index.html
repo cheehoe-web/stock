@@ -954,7 +954,7 @@ function renderSummary() {
   const salesHtml = od ? `<div class="card sumsales"><h3>Sales &middot; ${esc(label)}</h3><div class="sstat">${[["Booking", bk.length, "c-blue"], ["Delivered", dv.length, "c-green"], ["Invoiced", iv.length, "c-purple"], ["Cancelled", cx.length, "c-red"]]
       .map(x => `<div><b class="${x[2]}">${x[1]}</b><span>${x[0]}</span></div>`).join("")}</div>
       <div class="sumg" style="margin-top:12px"><div><h4>By sales person</h4>${tbl(bySE)}</div><div><h4>Open orders now (${openO.length})</h4>${tbl(group(openO, r => r[2]))}</div></div></div>`
-    : ps ? '<div class="card"><h3>Sales</h3><div class="sub">Order data not available yet (update Inventory.gs).</div></div>' : "";
+    : ps ? '<div class="card sumsales"><h3>Sales</h3><div class="sub">Sales figures will appear after the next data refresh (up to 15 min). To get them now: sheet menu Stock Site &rarr; Show latest data now.</div></div>' : "";
   $("sumbody").innerHTML = (ps ? "" : '<div class="note on">Sold &amp; returned data still loading; sold / returned figures will fill in shortly.</div>') +
     salesHtml + `<div class="grid6">${k.map(x => `<div class="card kpi" style="cursor:default"><div class="top ${x[2]}">${x[0]}</div><div class="num ${x[2]}" style="font-size:24px">${x[1]}</div><div class="foot">${label}</div></div>`).join("")}</div>
     <div class="sumg">
