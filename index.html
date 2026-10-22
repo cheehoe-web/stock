@@ -198,7 +198,12 @@
   .sumt td{padding:5px 0;border-top:1px solid var(--line)}
   .sumt td:last-child{text-align:right;font-weight:700}
   @media(max-width:720px){.sumh{padding:10px 12px}.sumb{padding:10px}.sumg{grid-template-columns:1fr}}
-  body.gated .wrap > :not(.head), body.gated #kfab, body.gated .hright > :not(#gbtn), body.gated #keyx, body.broker #gbtn{display:none !important}
+  body.gated .wrap > :not(.head):not(#landing), body.gated #kfab, body.gated .hright > :not(#gbtn), body.broker #gbtn{display:none !important}
+  #landing{display:none;text-align:center;padding:28px 20px}
+  body.gated #landing{display:block}
+  #landing .lk{width:72px;height:72px;border-radius:50%;background:#fffbeb;display:grid;place-items:center;margin:0 auto 10px;font-size:36px}
+  #landing h3{margin:0 0 6px;font-size:18px}
+  #landing .btn{margin-top:14px;padding:13px 22px;font-size:15px;width:100%;max-width:320px}
   body.broker .kseg{grid-template-columns:1fr 1fr}
   .gbtn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
   #gov{z-index:14}
@@ -352,6 +357,9 @@
     </div>
   </div>
 
+  <div class="card" id="landing"><div class="lk">&#128273;</div><h3 id="landt">Keys</h3>
+    <div class="sub" id="landmsg">Sign in with your name and PIN to take or return keys.</div>
+    <button class="btn pri" id="landbtn" type="button">Sign in</button></div>
   <div class="note" id="note"></div>
   <div id="kpis"></div>
 
@@ -703,7 +711,7 @@ $("vbody").addEventListener("click", e => {
   else openKeys({ action: "Out", plates: [c.plate], item: "Key" });
 });
 const closeKeys = () => { $("keyov").classList.remove("on"); if (!$("ov").classList.contains("on")) document.body.style.overflow = ""; if (CUR && $("vkey")) $("vkey").innerHTML = keyCardHtml(CUR); };
-$("keybtn").onclick = $("kfab").onclick = () => openKeys();
+$("keybtn").onclick = $("kfab").onclick = $("landbtn").onclick = () => openKeys();
 function keyBadge() {                                                // phone button: how many keys are out (red if any missed 6:20pm)
   const out = KEYS ? KEYS.out : [], b = $("kbadge"); b.textContent = out.length; b.classList.toggle("on", out.length > 0); b.classList.toggle("late", out.some(r => kLate(r.t)));
 }
@@ -716,7 +724,7 @@ function openKeys(form) {
 }
 function renderSignIn() {
   $("kwho").textContent = "";
-  $("keybody").innerHTML = `<div class="kcard"><h3>${GATE ? "Sign in to see the stock list" : "Who are you?"}</h3><form class="kform" id="ksign"><label>Your name<input id="kname" autocomplete="username" placeholder="As in the Staff list"></label>
+  $("keybody").innerHTML = `<div class="kcard"><h3>${GATE ? "Sign in" : "Who are you?"}</h3><form class="kform" id="ksign"><label>Your name<input id="kname" autocomplete="username" placeholder="As in the Staff list"></label>
     <label>Your PIN<input id="kpin" type="password" inputmode="numeric" autocomplete="current-password"></label><button class="btn pri" type="submit">Continue</button><div class="kmsg" id="kmsg"></div>
     <div class="sub">This phone will remember you. Ask the Inventory Team for your PIN.</div></form></div>`;
   setTimeout(() => $("kname").focus(), 50);
@@ -728,7 +736,6 @@ document.addEventListener("submit", e => {
     fetch(API_URL + "?" + new URLSearchParams({ act: "keyme", name: name, pin: pin }), { credentials: "omit", cache: "no-store" }).then(r => r.json()).then(d => {
       if (!d.ok) { $("kmsg").textContent = d.error || "Wrong name or PIN."; return; }
       KUSER = { name: d.name, pin: pin, role: d.role || "sales" }; try { localStorage.setItem("caricarz_keyuser", JSON.stringify(KUSER)); } catch (err) {}
-      $("keyov").querySelector(".sumh b").textContent = "Keys & equipment";
       if (KUSER.role === "broker" && !pinGet()) { brokerMode(); return; }
       if (GATE) { GATE = false; document.body.classList.remove("gated"); closeKeys(); loading(); load("stock"); setTimeout(() => loadKeys(true), 1500); return; }
       openKeys(KFORM);
@@ -991,7 +998,7 @@ function openDoc(c, n) {
 $("wa").onclick = () => { window.open("https://wa.me/?text=" + encodeURIComponent(tgText(CUR)), "_blank"); };
 $("sh").onclick = () => { navigator.share({ text: tgText(CUR) }).catch(() => {}); };
 const closeCar = () => { $("ov").classList.remove("on"); document.body.style.overflow = ""; };
-document.addEventListener("keydown", e => { if (e.key === "Escape" && $("keyov").classList.contains("on")) { if (!document.body.classList.contains("gated")) closeKeys(); return; }
+document.addEventListener("keydown", e => { if (e.key === "Escape" && $("keyov").classList.contains("on")) { closeKeys(); return; }
   if (e.key === "Escape") { if ($("docov").classList.contains("on")) { closeDoc(); return; } if ($("sumov").classList.contains("on")) { closeSum(); return; } closeCar(); closePin(); } });
 $("ov").addEventListener("click", e => { if (e.target === $("ov")) closeCar(); });
 $("cp").onclick = () => {
@@ -1082,12 +1089,14 @@ function gate(msg) {                                                 // nothing 
   GATE = true; KUSER = null; KEYS = null; DATA.stock = DATA.past = null; CARS = [];
   try { localStorage.removeItem("caricarz_keyuser"); } catch (e) {} lsClearAll();
   document.body.classList.add("gated"); $("rows").innerHTML = ""; $("kpis").innerHTML = ""; note("");
-  $("keyov").querySelector(".sumh b").textContent = "CariCarz Stock List";
-  openKeys(); if (msg && $("kmsg")) $("kmsg").textContent = msg;
+  $("landt").textContent = "Keys"; $("landbtn").textContent = "Sign in";
+  $("landmsg").textContent = msg || "Sign in with your name and PIN to take or return keys.";
 }
 function brokerMode() {                                              // keys only: no stock data on this device
   GATE = false; DATA.stock = DATA.past = null; CARS = []; lsClearAll();
   document.body.classList.add("gated", "broker"); $("rows").innerHTML = ""; $("kpis").innerHTML = ""; note("");
+  $("landt").textContent = "Keys"; $("landbtn").textContent = "Open Keys";
+  $("landmsg").textContent = "Signed in as " + (KUSER ? KUSER.name : "") + ". Take or return keys here.";
   openKeys();
 }
 const pinGet = () => { try { return localStorage.getItem("caricarz_pin") || ""; } catch (e) { return PIN_MEM; } };
