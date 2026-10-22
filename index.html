@@ -86,6 +86,20 @@
   .days.old{color:var(--red)}
   .note{margin:0 0 14px;padding:10px 14px;border-radius:10px;background:#fef3c7;color:#92400e;font-size:13px;display:none}
   .note.on{display:block}
+  .note.busy.on{display:flex;align-items:center;gap:9px;background:#eff6ff;color:#1d4ed8;font-weight:600}
+  /* loading: CSS only, no extra requests */
+  @keyframes sp{to{transform:rotate(360deg)}}
+  @keyframes tb{0%{left:-40%}100%{left:100%}}
+  @keyframes sh{to{background-position:-200% 0}}
+  .spin{width:18px;height:18px;border:2.5px solid #dbeafe;border-top-color:var(--blue);border-radius:50%;animation:sp .7s linear infinite;display:inline-block;flex:0 0 auto;vertical-align:-4px}
+  .spin.w{border-color:rgba(255,255,255,.35);border-top-color:#fff;width:16px;height:16px}
+  .ld{display:flex;align-items:center;justify-content:center;gap:10px;padding:22px 12px;color:var(--mut);font-weight:600;font-size:14px;text-align:center}
+  #topbar{position:fixed;top:0;left:0;right:0;height:3px;z-index:30;overflow:hidden;pointer-events:none;opacity:0;transition:opacity .25s}
+  #topbar.on{opacity:1}
+  #topbar::before{content:"";position:absolute;top:0;bottom:0;left:-40%;width:40%;background:var(--blue);border-radius:3px;animation:tb 1.1s ease-in-out infinite}
+  .skel{background:linear-gradient(90deg,#eef0f6 25%,#f7f8fb 50%,#eef0f6 75%);background-size:200% 100%;animation:sh 1.2s linear infinite;border-radius:8px}
+  .btn .spin{margin-right:8px}
+  @media (prefers-reduced-motion: reduce){.spin,.skel,#topbar::before{animation-duration:2.5s}}
   .wrap{padding-top:max(18px, env(safe-area-inset-top))}
   .hright{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
   .seg{display:inline-flex;background:#eef0f6;border-radius:10px;padding:3px}
@@ -317,6 +331,7 @@
 </style>
 </head>
 <body>
+<div id="topbar"></div>
 <div class="wrap">
   <div class="card head">
     <div class="title"><img class="brand" src="https://stock.caricarzautomall.com/logo.png" alt="CariCarz AutoMall" onerror="this.style.display='none'"><span class="tsep"></span>Stock List</div>
@@ -665,7 +680,7 @@ function keyCardHtml(c) {
 $("vbody").addEventListener("click", e => {
   const b = e.target.closest("[data-kact]"); if (!b) return;
   const c = CUR, a = b.dataset.kact;
-  if (a === "hist") { if (!KUSER && !pinGet()) { openKeys(); return; } $("khist").textContent = "Loading..."; kGet("keyhist", { plate: c.plate }).then(d => {
+  if (a === "hist") { if (!KUSER && !pinGet()) { openKeys(); return; } $("khist").innerHTML = LD("Loading history..."); kGet("keyhist", { plate: c.plate }).then(d => {
       $("khist").innerHTML = d.rows && d.rows.length ? d.rows.map(r => `<div><b>${r.a === "Out" ? "Out" : r.a === "Delivered" ? "Delivered" : "In"}</b> ${esc(r.item)} &middot; ${esc(r.by)}${r.reason ? " &middot; " + esc(r.reason) : ""}${r.note ? " &middot; " + esc(r.note) : ""} &middot; ${kTime(r.t)}${r.photo ? ` &middot; <a href="${esc(r.photo)}" target="_blank" rel="noopener">photo</a>` : ""}</div>`).join("") : (d.error ? esc(d.error) : "No key records yet."); }); return; }
   const mine = KEYS ? KEYS.out.filter(r => r.plate.replace(/\s/g, "").toUpperCase() === c.plate.replace(/\s/g, "").toUpperCase()) : [];
   openKeys(a === "In" ? { action: "In", keys: mine.map(r => ({ plate: r.plate, item: r.item })) } : { action: "Out", plates: [c.plate], item: "Key" });
@@ -680,7 +695,7 @@ function openKeys(form) {
   $("keyov").classList.add("on"); document.body.style.overflow = "hidden"; KFORM = form || null;
   if (!KUSER) { renderSignIn(); return; }
   $("kwho").innerHTML = `${esc(KUSER.name)} &middot; <a href="#" id="kswitch">Switch user</a>`;
-  if (KFORM) { renderKeyForm(); loadKeys(); } else { $("keybody").innerHTML = '<div class="kcard">Loading keys...</div>'; loadKeys(true).then(renderKeyList); }
+  if (KFORM) { renderKeyForm(); loadKeys(); } else { $("keybody").innerHTML = '<div class="kcard">' + LD("Loading keys...") + '</div>'; loadKeys(true).then(renderKeyList); }
 }
 function renderSignIn() {
   $("kwho").textContent = "";
@@ -764,7 +779,7 @@ function renderKeyForm() {
   };
   $("ksug").onclick = e => { const b = e.target.closest("[data-kpl]"); if (b) addPlate(b.dataset.kpl); }; }
   $("kshot").onclick = () => $("kfile").click();
-  $("kfile").onchange = () => { const file = $("kfile").files[0]; if (!file) return; $("kshot").innerHTML = '<div class="kct">Preparing photo...</div>';
+  $("kfile").onchange = () => { const file = $("kfile").files[0]; if (!file) return; $("kshot").innerHTML = LD("Preparing photo...");
     shrinkPhoto(file).then(url => { f.photo = url; kShotDone(url); }).catch(() => { $("kshot").classList.remove("has"); $("kshot").innerHTML = kShotEmpty("again: could not read that photo"); }); $("kfile").value = ""; };
 }
 const KCAM = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>';
@@ -784,6 +799,7 @@ function shrinkPhoto(file) {                                       // ~1280px JP
     const k = Math.min(1, 1280 / Math.max(im.width, im.height)), cv = document.createElement("canvas"); cv.width = Math.round(im.width * k); cv.height = Math.round(im.height * k);
     cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height); ok(cv.toDataURL("image/jpeg", 0.7)); }; im.src = r.result; }; r.readAsDataURL(file); });
 }
+const kUnbusy = () => { const b = $("kform") && $("kform").querySelector("[type=submit]"); if (b) { b.disabled = false; if (b.dataset.t) b.textContent = b.dataset.t; } };
 function submitKey(force) {
   const f = KFORM; f.note = $("knote").value.trim();
   if (f.action === "Out" && f.mode === "all") f.keys = [{ plate: "ALL KEYS", item: "All keys" }];
@@ -791,10 +807,11 @@ function submitKey(force) {
   else if (f.action === "Out") { if ($("kplate").value.trim()) addPlate($("kplate").value); f.keys = f.plates.map(p => ({ plate: p, item: f.item })); }
   const err = !f.keys.length ? (f.mode === "eq" ? "Tap at least one item." : "Add at least one plate.") : f.action === "Out" && !f.item ? "Pick the item." : f.action === "Out" && !f.reason && f.item !== "Delivery" ? "Pick a reason." : f.reason === "Other" && f.action === "Out" && !f.note ? "Write a note for Other." : !f.photo ? "Take a photo first." : "";
   if (err) { $("kmsg").textContent = err; return; }
-  $("kmsg").textContent = "Saving and sending photo..."; $("kform").querySelector("[type=submit]").disabled = true;
+  const sb = $("kform").querySelector("[type=submit]"); sb.dataset.t = sb.dataset.t || sb.textContent;
+  $("kmsg").textContent = ""; sb.disabled = true; sb.innerHTML = '<span class="spin w"></span>Saving and sending photo...';
   fetch(API_URL, { method: "POST", credentials: "omit", body: JSON.stringify({ name: KUSER.name, pin: KUSER.pin, action: f.action, keys: f.keys, reason: f.reason, note: f.note, photo: f.photo, force: !!force }) }).then(r => r.json()).then(d => {
-    if (d.unknown) { $("kmsg").innerHTML = esc(d.error) + ' <button type="button" class="btn" id="kforce" style="margin-top:6px">Save anyway</button>'; $("kform").querySelector("[type=submit]").disabled = false; $("kforce").onclick = () => submitKey(true); return; }
-    if (!d.ok) { $("kmsg").textContent = d.error || "Not saved."; $("kform").querySelector("[type=submit]").disabled = false; return; }
+    if (d.unknown) { $("kmsg").innerHTML = esc(d.error) + ' <button type="button" class="btn" id="kforce" style="margin-top:6px">Save anyway</button>'; kUnbusy(); $("kforce").onclick = () => submitKey(true); return; }
+    if (!d.ok) { $("kmsg").textContent = d.error || "Not saved."; kUnbusy(); return; }
     if (KEYS) {                                                    // show the result at once; the server copy refreshes in the background
       const same = (r, k) => r.plate.replace(/\s/g, "").toUpperCase() === k.plate.replace(/\s/g, "").toUpperCase() && r.item === k.item;
       if (f.action === "In") KEYS.out = KEYS.out.filter(r => !f.keys.some(k => same(r, k)));
@@ -804,7 +821,7 @@ function submitKey(force) {
     }
     KFORM = null; renderKeyList(); if (d.warn) note(d.warn); if (CUR && $("vkey")) $("vkey").innerHTML = keyCardHtml(CUR);
     loadKeys(true).then(() => { if (!KFORM && $("keyov").classList.contains("on")) renderKeyList(); });
-  }).catch(() => { $("kmsg").textContent = "Not saved: no connection. Try again."; $("kform").querySelector("[type=submit]").disabled = false; });
+  }).catch(() => { $("kmsg").textContent = "Not saved: no connection. Try again."; kUnbusy(); });
 }
 // ---------- price review: status in the card + "Mark reviewed" (writes to the Price Review Log tab) ----------
 const curPrices = c => ["Car-In Price", "UCD Price", "Retail Selling Price"].map(h => c.x && XI[h] !== undefined && typeof c.x[XI[h]] === "number" ? c.x[XI[h]] : "");
@@ -829,7 +846,7 @@ $("vbody").addEventListener("submit", e => {
   const nums = ["rvcin", "rvucd", "rvrsp"].map(id => dig(id) ? Number(dig(id)) : "");
   if (!by) { $("rvmsg").textContent = "Please enter your name."; return; }
   try { localStorage.setItem("caricarz_name", by); } catch (err) {}
-  $("rvmsg").textContent = "Saving...";
+  $("rvmsg").innerHTML = '<span class="spin"></span> Saving...';
   const q = new URLSearchParams({ act: "review", key: pinGet(), plate: c.plate, by: by, cin: nums[0], ucd: nums[1], rsp: nums[2], note: note });
   fetch(API_URL + "?" + q, { credentials: "omit", cache: "no-store" }).then(r => r.json()).then(d => {
     if (!d || !d.ok) { $("rvmsg").textContent = (d && d.error === "locked") ? "Passcode changed. Lock and unlock again." : "Not saved: " + ((d && d.error) || "error"); return; }
@@ -844,7 +861,7 @@ const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov
 $("sumbtn").onclick = () => {
   const t = new Date(), opts = []; for (let i = 0; i < 12; i++) { const d = new Date(t.getFullYear(), t.getMonth() - i, 1); opts.push([d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"), MONTHS[d.getMonth()] + " " + d.getFullYear()]); }
   fill("summ", opts); $("sumov").classList.add("on"); document.body.style.overflow = "hidden";
-  if (!DATA.past) { $("sumbody").innerHTML = '<div class="card" style="padding:16px">Loading sold &amp; returned data...</div>'; DATA.past = lsGet("past"); load("past"); }
+  if (!DATA.past) { $("sumbody").innerHTML = '<div class="card">' + LD("Loading sold & returned data...") + '</div>'; DATA.past = lsGet("past"); load("past"); }
   renderSummary();
 };
 $("summ").onchange = () => renderSummary();
@@ -901,8 +918,8 @@ function pdfjs() {
     sc.onerror = () => { PDFJS = null; bad(new Error("Could not load the PDF viewer. Check the connection and try again.")); }; document.head.appendChild(sc); });
 }
 function openDoc(c, n) {
-  const d = c.docs[n], msg = t => { $("docbody").innerHTML = `<div class="msg">${esc(t)}</div>`; };
-  $("doct").textContent = c.plate + " \u00b7 " + d[0]; DOC = null; msg("Loading\u2026"); $("docov").classList.add("on");
+  const d = c.docs[n], msg = (t, busy) => { $("docbody").innerHTML = busy ? LD(t) : `<div class="msg">${esc(t)}</div>`; };
+  $("doct").textContent = c.plate + " \u00b7 " + d[0]; DOC = null; msg("Opening document...", 1); $("docov").classList.add("on");
   const show = r => {
     if (!r || r.error) { if (r && r.error === "locked") { closeDoc(); doLock(); } else msg((r && r.error) || "Could not open the document."); return; }
     const bin = atob(r.b64), bytes = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
@@ -962,8 +979,17 @@ const lsName = v => v === "past" ? (pinGet() ? LS.past : LS.pastpub) : (pinGet()
 const lsGet = v => { try { const x = localStorage.getItem(lsName(v)); return x ? JSON.parse(x) : null; } catch (e) { return null; } };
 const lsSet = (v, d) => { try { localStorage.setItem(d.full && v === "stock" ? LS.stockfull : v === "past" ? (d.full ? LS.past : LS.pastpub) : LS.stock, JSON.stringify(d)); } catch (e) {} };
 const lsClearInternal = () => { try { localStorage.removeItem(LS.stockfull); localStorage.removeItem(LS.past); } catch (e) {} };
-const note = (msg) => { $("note").textContent = msg || ""; $("note").classList.toggle("on", !!msg); };
-const loading = () => { $("kpis").innerHTML = '<div class="card kpi">Loading cars...</div>'; $("rows").innerHTML = ""; $("count").textContent = ""; };
+const note = (msg, busy) => { $("note").innerHTML = msg ? (busy ? '<span class="spin"></span>' : "") + esc(msg) : ""; $("note").classList.toggle("on", !!msg); $("note").classList.toggle("busy", !!busy); };
+const SK = (h, w, m) => `<div class="skel" style="height:${h}px;width:${w}%;margin:${m || 0}"></div>`;
+const LD = t => `<div class="ld"><span class="spin"></span>${esc(t)}</div>`;
+const loading = () => {                                              // first visit: skeleton tiles instead of a blank page
+  $("kpis").innerHTML = `<div class="kmain">${[0, 1, 2, 3].map(() => `<div class="card kt">${SK(11, 55)}${SK(28, 35, "10px 0")}${SK(10, 75)}</div>`).join("")}</div>`;
+  $("rows").innerHTML = ""; $("count").innerHTML = LD("Loading cars...");
+};
+// thin bar at the very top while anything talks to the server
+let BUSY = 0; const _fetch = window.fetch.bind(window);
+window.fetch = (u, o) => { const api = String(u).indexOf(API_URL) === 0; if (!api) return _fetch(u, o);
+  BUSY++; $("topbar").classList.add("on"); return _fetch(u, o).finally(() => { if (--BUSY <= 0) { BUSY = 0; $("topbar").classList.remove("on"); } }); };
 const fetching = {};
 function load(view) {
   if (fetching[view]) return; fetching[view] = true;
@@ -1013,7 +1039,7 @@ const submitPin = () => {
   const v = $("pin").value.trim(); if (!v) return;
   pinSet(v); closePin(); showSeg(true);
   DATA.stock = null; fetching.stock = false; DATA.past = null; fetching.past = false;   // drop the public sold list
-  if (MODE === "stock") { note("Unlocking internal view..."); load("stock"); } else switchView("stock");
+  if (MODE === "stock") { note("Unlocking internal view...", 1); load("stock"); } else switchView("stock");
 };
 const doLock = () => { pinSet(""); lsClearInternal(); location.reload(); };
 // ---------- in-app guide: staff guide for everyone, internal guide only when unlocked ----------
@@ -1071,7 +1097,7 @@ function switchView(view) {
   $("q").value = ""; $("fPrice").value = ""; $("fBody").value = ""; $("fBrand").value = ""; $("fFuel").value = ""; $("fPhase").value = ""; $("sort").value = "new";
   if (DATA[view] && DATA[view]._fresh) { note(""); init(DATA[view]); return; }   // already loaded this session
   const have = DATA[view] || lsGet(view);
-  if (have) { have.view = view; init(have); note("Updating..."); } else { note(""); loading(); }
+  if (have) { have.view = view; init(have); note("Updating to the latest data...", 1); } else { note(""); loading(); }
   load(view);
 }
 (function start() {
@@ -1079,7 +1105,7 @@ function switchView(view) {
   showSeg(true);                                                       // Sold & Returned is open to all (public = 7-day sold + returned, no price)
   if (location.hash === "#manager" && !pinGet()) setTimeout(() => askPin(), 300);
   const old = lsGet("stock");
-  if (old) { old.view = "stock"; init(old); note("Updating..."); } else loading();
+  if (old) { old.view = "stock"; init(old); note("Updating to the latest data...", 1); } else loading();
   load("stock");
 })();
 </script>
