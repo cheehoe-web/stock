@@ -272,7 +272,12 @@
   .kpl{display:inline-flex;align-items:center;gap:6px;background:#eef2ff;border-radius:999px;padding:6px 6px 6px 12px;font-size:13px}
   .kpl:not(:has(button)){padding-right:12px}
   .kpl button{border:0;background:#fff;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:15px;line-height:1}
-  .kchk{width:22px;height:22px;flex:0 0 auto}
+  .kgrp{margin-top:8px}
+  .kgrp+.kgrp{margin-top:14px}
+  .kgh{display:flex;align-items:center;gap:8px;padding:6px 0 4px;border-bottom:1px solid var(--line)}
+  .kgh .btn{margin-left:auto;padding:6px 12px;font-size:13px}
+  .kgrp.mine{background:#eff6ff;border-radius:12px;padding:6px 12px 2px;margin:8px -4px 0}
+  .kgrp.mine .kgh{border-bottom-color:#bfdbfe}
   .ksug{display:grid;gap:4px;margin-top:-6px}
   .ksug:empty{display:none}
   .ksug button{text-align:left;border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 10px;font:inherit;font-size:14px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -450,7 +455,7 @@ function classify(c) {
   c.days = c.inDt && end ? Math.max(0, Math.round((end - c.inDt) / 864e5)) : null;   // days in stock
   c.thisMonth = !!c.outDt && c.outDt.getFullYear() === TODAY.getFullYear() && c.outDt.getMonth() === TODAY.getMonth();
   c.band = (BANDS.find(b => c.price >= b[1] && c.price < b[2]) || [""])[0];
-  c.hay = [c.plate, c.model, c.brand, c.status, c.remark, c.year, c.body, c.color, c.fuel, c.mileage, c.phase, Object.values(c.info || {}).join(" "), c.price, rm(c.price), fmtDate(c.carIn), c.carIn, c.listed, fmtDate(c.listed), c.adId, c.bdc, c.pr && c.pr.length ? "reduced price drop" : "", c.rdue ? "review due" : "", c.rupd ? "update price master" : "", fmtDate(c.outDate), c.outNote, FULL && c.x ? c.x.join(" ") : ""].join(" ").toLowerCase();
+  c.hay = [c.plate, c.model, c.brand, c.status, c.remark, c.year, c.body, c.color, c.fuel, c.mileage, c.phase, Object.values(c.info || {}).join(" "), c.price, rm(c.price), fmtDate(c.carIn), c.carIn, c.listed, fmtDate(c.listed), c.adId, FULL ? c.bdc : "", c.pr && c.pr.length ? "reduced price drop" : "", c.rdue ? "review due" : "", c.rupd ? "update price master" : "", fmtDate(c.outDate), c.outNote, FULL && c.x ? c.x.join(" ") : ""].join(" ").toLowerCase();
 }
 
 function init(res) {
@@ -469,7 +474,7 @@ function init(res) {
   fill("fStatus", past && res.lite ? [["__all","All returned"],["retm","Returned this month"]] : past ? [["__all","All sold / returned / other"],["sold","Sold"],["returned","Returned"],["other","Other (e.g. Severe)"],["soldm","Sold this month"],["retm","Returned this month"]]
                        : [["__sell","Sellable (Available + V.B.A.O)"],["__all","All cars"],["ready","Available only"],["vbao","V.B.A.O only"],["vexp","V.B.A.O expired (60+ days)"],["booked","Booked"],["aging","Aging stock"],["fresh","New arrivals (14 days)"]].concat(FULL ? [["rdue","Price review due"],["rupd","Reviewed price not yet in Master"]] : []));
   document.querySelectorAll(".psub").forEach(x => x.textContent = past ? "(sold & returned)" : "(sellable)");
-  $("thDate").textContent = past ? "Sold / returned" : "Car in";
+  $("thDate").textContent = past ? "Sold / returned" : FULL ? "Car in" : "Days in stock";
   $("sortNew").textContent = past ? "Sort: latest sold / returned" : "Sort: newest in";
   fill("fPrice", [["","All prices"]].concat(BANDS.map(b => [b[0], b[0]])));
   fill("fBody", [["","All body types"]].concat(uniq("body").map(v => [v, v])));
@@ -562,7 +567,7 @@ function renderTable() {
       .map(l => `<a href="${esc(l[1])}" target="_blank" rel="noopener">${l[0]}</a>`).join("") || '<span class="sub">-</span>';
     const dateCell = MODE === "past"
       ? (c.outDate ? fmtDate(c.outDate) : '<span class="sub">no date</span>') + (c.days != null ? ` <span class="days">${c.days}d</span>` : "") + (c.outNote ? `<div class="sub">${hi(c.outNote, terms)}</div>` : "")
-      : fmtDate(c.carIn) + (c.days != null ? ` <span class="days ${c.days > 120 ? "old" : ""}">${c.days}d</span>` : "");
+      : (FULL ? fmtDate(c.carIn) + " " : "") + (c.days != null ? `<span class="days ${c.days > 120 ? "old" : ""}">${c.days}d</span>` : "");
     const phasePill = (c.phase ? `<span class="pill ${phaseCls(c.phase)}">${hi(c.phase, terms)}</span>` : "") + (c.rdue ? ` <span class="pill b-red" title="Price review due">Review due</span>` : "") + (c.rupd ? ` <span class="pill b-amber" title="Reviewed price not yet updated in Master">Update price</span>` : "");
     const mDays = MODE === "past"
       ? (c.outDate ? `<span class="sub">${esc(c.status)} ${fmtDate(c.outDate)}</span>` : "") + (c.days != null ? ` <span class="days">${c.days}d</span>` : "")
@@ -635,8 +640,8 @@ function openCar(i) {
     ${row("Principal warranty", yn(inf.warranty), 1)}${row("Under loan / settlement", yn(inf.settlement), 1)}</div></div>`;
   const notes = [["Current status", inf.curStatus], ["Selling point", inf.sellingPoint], MODE === "past" ? ["Return remark", c.outNote] : null].filter(n => n && val(n[1]));
   if (notes.length) h += `<div class="vsec"><h4>Notes</h4>${notes.map(n => `<div class="vnote"><span>${n[0]}</span>${esc(val(n[1]))}</div>`).join("")}</div>`;
-  const dates = [["Car in", fmtDate(c.carIn)], MODE === "past" ? [c.status === "Sold" ? "Sold" : "Out", fmtDate(c.outDate)] : null].filter(d => d && d[1]);
-  if (c.bdc || dates.length) h += `<div class="vsec"><h4>${lite ? "Dates" : "Handled by"}</h4><div class="vlist">${c.bdc ? `<div><span class="vpic"><i>${esc(c.bdc.trim().charAt(0).toUpperCase())}</i></span><b style="margin-right:auto;align-self:center">${esc(c.bdc)}</b><span style="align-self:center">BDC PIC</span></div>` : ""}${dates.map(d => row(d[0], d[1])).join("")}</div></div>`;
+  const dates = [FULL ? ["Car in", fmtDate(c.carIn)] : null, MODE === "past" ? [c.status === "Sold" ? "Sold" : "Returned", fmtDate(c.outDate)] : null].filter(d => d && d[1]);
+  if ((FULL && c.bdc) || dates.length) h += `<div class="vsec"><h4>${FULL ? "Handled by" : "Dates"}</h4><div class="vlist">${FULL && c.bdc ? `<div><span class="vpic"><i>${esc(c.bdc.trim().charAt(0).toUpperCase())}</i></span><b style="margin-right:auto;align-self:center">${esc(c.bdc)}</b><span style="align-self:center">BDC PIC</span></div>` : ""}${dates.map(d => row(d[0], d[1])).join("")}</div></div>`;
   h += `<div class="vsec"><h4>Key &amp; VOC</h4><div class="vkey" id="vkey">${keyCardHtml(c)}</div></div>`;
   if (FULL && c.rv && c.rv.s) h += `<div class="vsec"><h4>Price review (every 10 days)</h4>${reviewHtml(c)}</div>`;
   const links = [["CariCarz", c.caricarz], ["Carlist", c.carlist], ["Mudah", c.mudah], ["Facebook", c.fb]].filter(l => l[1]);
@@ -678,7 +683,7 @@ function keyCardHtml(c) {
   const outs = KEYS ? KEYS.out.filter(r => r.plate.replace(/\s/g, "").toUpperCase() === c.plate.replace(/\s/g, "").toUpperCase()) : [];
   const st = !KEYS ? '<span class="sub">Sign in to Keys to see who has it.</span>' : outs.length
     ? outs.map(r => `<div class="${kLate(r.t) ? "neg" : ""}"><b>${esc(r.item)} out</b> with ${esc(r.by)} &middot; ${esc(r.reason)} &middot; ${kTime(r.t)}${kLate(r.t) ? " &middot; not returned" : ""}</div>`).join("") : '<b class="yes">All in</b>';
-  return st + `<div class="btns"><button class="btn" data-kact="Out">Take key / VOC</button>${outs.length ? '<button class="btn" data-kact="In">Return</button>' : ""}<button class="btn" data-kact="hist">History</button></div><div class="khist" id="khist"></div>`;
+  return st + `<div class="btns"><button class="btn" data-kact="Out">Take key / VOC</button>${outs.length ? '<button class="btn" data-kact="In">Return</button>' : ""}${FULL ? '<button class="btn" data-kact="hist">History</button>' : ""}</div><div class="khist" id="khist"></div>`;
 }
 $("vbody").addEventListener("click", e => {
   const b = e.target.closest("[data-kact]"); if (!b) return;
@@ -726,7 +731,7 @@ document.addEventListener("click", e => {
   const as = e.target.closest("[data-kas]"); if (as && KFORM && !as.disabled) { const n = as.dataset.kas, i = KFORM.assets.indexOf(n);
     if (i < 0) KFORM.assets.push(n); else KFORM.assets.splice(i, 1); const keepNote = $("knote") ? $("knote").value : ""; renderKeyForm(); if ($("knote")) $("knote").value = keepNote; }
   const rt = e.target.closest("[data-kret]"); if (rt) { const r = KEYS.out[Number(rt.dataset.kret)]; KFORM = { action: "In", keys: [{ plate: r.plate, item: r.item }] }; renderKeyForm(); }
-  if (e.target.id === "kretsel") { const sel = [...document.querySelectorAll("[data-ksel]:checked")].map(x => KEYS.out[Number(x.dataset.ksel)]);
+  const rg = e.target.closest("[data-kretg]"); if (rg) { const sel = KEYS_GROUPS[rg.dataset.kretg] || [];
     if (sel.length) { KFORM = { action: "In", keys: sel.map(r => ({ plate: r.plate, item: r.item })) }; renderKeyForm(); } }
   const rm1 = e.target.closest("[data-krm]"); if (rm1 && KFORM) { KFORM.plates.splice(Number(rm1.dataset.krm), 1); drawPlates(); }
   const ch = e.target.closest(".kchips button"); if (ch && KFORM && ch.parentNode.dataset.k) { const k = ch.parentNode.dataset.k, was = KFORM.item; KFORM[k] = ch.dataset.v; ch.parentNode.querySelectorAll("button").forEach(b => b.classList.toggle("on", b === ch));
@@ -738,15 +743,20 @@ function kIcon(r) {
   const a = ((KEYS && KEYS.assets) || []).find(x => x.name === r.plate), t = (a ? a.type : r.plate).toLowerCase();
   return /battery|booster/.test(t) ? "&#128267;" : /trade|plate/.test(t) ? "&#127991;" : /buggy/.test(t) ? "&#128763;" : "&#129520;";
 }
-function renderKeyList() {
+function renderKeyList() {                                         // mine first, then grouped by person; "Return all" per group
   if (!KUSER) return;
-  const out = KEYS ? KEYS.out : [], late = out.filter(r => kLate(r.t)).length;
+  const out = KEYS ? KEYS.out : [], late = out.filter(r => kLate(r.t)).length, me = KUSER.name.trim().toLowerCase();
+  const row = r => { const i = out.indexOf(r); return `<div class="krow ${kLate(r.t) ? "late" : ""}"><span class="kic ${r.item === "Equipment" ? "eq" : ""}">${kIcon(r)}</span><div class="km"><span class="kp">${esc(r.plate)}</span> <span class="ktag ${r.item === "Equipment" ? "te" : ""}">${esc(r.item)}</span><div class="sub">${esc(r.reason)}${r.note ? " &middot; " + esc(r.note) : ""} &middot; ${kTime(r.t)}</div></div><button class="btn" data-kret="${i}">Return</button></div>`; };
+  const groups = {}, label = {}; out.forEach(r => { const n = r.by.trim(), k = n.toLowerCase() === me ? "~me" : n.toLowerCase(); if (!label[k] || label[k] === label[k].toLowerCase()) label[k] = n; (groups[k] = groups[k] || []).push(r); });
+  const order = Object.keys(groups).sort((a, b) => a === "~me" ? -1 : b === "~me" ? 1 : groups[b].length - groups[a].length || a.localeCompare(b));
+  const sec = k => { const g = groups[k], mine = k === "~me";
+    return `<div class="kgrp ${mine ? "mine" : ""}"><div class="kgh"><b>${mine ? "Mine" : esc(label[k])}</b> <span class="sub">${g.length} out</span>${g.length > 1 ? `<button class="btn ${mine ? "pri" : ""}" data-kretg="${esc(k)}">Return all (${g.length})</button>` : ""}</div>${g.map(row).join("")}</div>`; };
   $("keybody").innerHTML = `<button class="btn pri" id="ktake" style="width:100%;padding:14px;margin-bottom:12px">Take</button>
     <div class="kcard"><h3>Out now: ${out.length}${late ? ` <span class="neg">&middot; ${late} not returned by 6:20pm</span>` : ""}</h3>
-    ${out.length ? out.map((r, i) => `<div class="krow ${kLate(r.t) ? "late" : ""}">${out.length > 1 ? `<input type="checkbox" class="kchk" data-ksel="${i}" aria-label="Select to return together">` : ""}<span class="kic ${r.item === "Equipment" ? "eq" : ""}">${kIcon(r)}</span><div class="km"><span class="kp">${esc(r.plate)}</span> <span class="ktag ${r.item === "Equipment" ? "te" : ""}">${esc(r.item)}</span><div class="sub">${esc(r.by)} &middot; ${esc(r.reason)}${r.note ? " &middot; " + esc(r.note) : ""} &middot; ${kTime(r.t)}</div></div><button class="btn" data-kret="${i}">Return</button></div>`).join("") : '<div class="sub">Everything is in.</div>'}
-    ${out.length > 1 ? '<button class="btn pri" id="kretsel" style="width:100%;margin-top:10px;display:none">Return selected</button>' : ""}</div>`;
-  document.querySelectorAll("[data-ksel]").forEach(x => x.onchange = () => { const n = document.querySelectorAll("[data-ksel]:checked").length; const b = $("kretsel"); if (b) { b.style.display = n ? "" : "none"; b.textContent = "Return selected (" + n + ")"; } });
+    ${out.length ? (groups["~me"] ? "" : '<div class="sub" style="margin-bottom:6px">You have nothing out.</div>') + order.map(sec).join("") : '<div class="sub">Everything is in.</div>'}</div>`;
+  KEYS_GROUPS = groups;
 }
+let KEYS_GROUPS = {};
 function renderKeyForm() {
   const f = KFORM, items = (KEYS && KEYS.items) || ["Key", "Spare key", "VOC"], reasons = (KEYS && KEYS.reasons) || ["Viewing / test drive", "Photo / video", "Car care", "Workshop / checking", "Puspakom", "Move car", "Handover (car leaves)", "Loan / documents", "Other"];
   const chips = (k, list, cur) => `<div class="kchips" data-k="${k}">${list.map(v => `<button type="button" data-v="${esc(v)}" class="${v === cur ? "on" : ""}">${esc(v)}</button>`).join("")}</div>`;
