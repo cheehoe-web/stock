@@ -321,12 +321,11 @@
     .tools input[type=search]{flex:1 1 0;min-width:0}
     .scroll{max-height:none;overflow:visible}
     thead{display:none}
-    table,tbody,tr,td{display:block}
-    tr{padding:12px 14px;border-bottom:1px solid var(--line)}
-    tr{padding:0;border-bottom:8px solid var(--bg)}
-    tr td{display:none}
-    tr td.mcard{display:block;padding:12px 14px;border:0}
-    tr:hover td{background:none}
+    .scroll table,#rows,#rows tr,#rows td{display:block}                /* car list only: other tables (summary) stay tables */
+    #rows tr{padding:0;border-bottom:8px solid var(--bg)}
+    #rows tr td{display:none}
+    #rows tr td.mcard{display:block;padding:12px 14px;border:0}
+    #rows tr:hover td{background:none}
     .mc1{display:flex;align-items:center;gap:6px}
     .mc1 .plate{font-size:15px}
     .mcp{margin-left:auto;font-size:16px;font-weight:800}
