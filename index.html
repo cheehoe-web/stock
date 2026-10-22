@@ -742,8 +742,8 @@ document.addEventListener("submit", e => {
     fetch(API_URL + "?" + new URLSearchParams({ act: "keyme", name: name, pin: pin }), { credentials: "omit", cache: "no-store" }).then(r => r.json()).then(d => {
       if (!d.ok) { $("kmsg").textContent = d.error || "Wrong name or PIN."; return; }
       KUSER = { name: d.name, pin: pin, role: d.role || "sales" }; try { localStorage.setItem("caricarz_keyuser", JSON.stringify(KUSER)); } catch (err) {}
-      if (KUSER.role === "broker" && !pinGet()) { closeKeys(); brokerMode(); return; }
-      if (GATE) { GATE = false; document.body.classList.remove("gated"); closeKeys(); loading(); load("stock"); setTimeout(() => loadKeys(true), 1500); return; }
+      if (KUSER.role === "broker" && !pinGet()) { openKeys(KFORM); brokerMode(); return; }   // dealer: same list, now with their keys
+      if (DEALER || GATE) { lsClearAll(); location.reload(); return; }                     // sales / internal: open their view
       openKeys(KFORM);
     }).catch(() => { $("kmsg").textContent = "No connection. Try again."; });
   }
@@ -1067,9 +1067,9 @@ function load(view) {
   const fail = e => {
     fetching[view] = false;
     if (e && e.message === "paused") { note("Too many wrong PIN tries on this name. Please try again in 15 minutes."); return; }
-    if (e && e.message === "signin") { gate(KUSER ? "Your name or PIN has changed. Please sign in again." : ""); return; }
+    if (e && e.message === "signin") { if (view === "past") { DATA.past = { cars: [] }; return; } if (KUSER) gate("Your name or PIN has changed. Please sign in again."); else landing(); return; }
     if (e && e.message === "broker") { if (view === "past") { DATA.past = { cars: [] }; if (MODE === "past") switchView("stock"); }
-      else { document.body.classList.add("gated"); $("landbtn").textContent = "Open Keys"; $("landmsg").textContent = "Signed in as " + (KUSER ? KUSER.name : "") + ". Take or return keys here."; }   // older server: keys only
+      else landing();                                                 // older server: keys only
       return; }
     if (view === "past" && e && e.message === "locked" && pinGet()) { pinSet(""); DATA.past = null; lsClearInternal(); switchView("stock"); askPin("Wrong or changed passcode. Please try again."); return; }
     if (MODE !== view) return;
@@ -1093,18 +1093,21 @@ const authQ = () => new URLSearchParams(Object.assign(pinGet() ? { key: pinGet()
 const isInt = () => !!pinGet() || !!(KUSER && KUSER.role === "internal");   // internal: passcode, or Staff Role = Internal
 let GATE = false;
 const lsClearAll = () => { try { Object.values(LS).forEach(k => localStorage.removeItem(k)); } catch (e) {} };
-function gate(msg) {                                                 // nothing to see until signed in
-  GATE = true; KUSER = null; KEYS = null; DATA.stock = DATA.past = null; CARS = [];
+function gate(msg) {                                                 // signed out: dealer view; Keys button signs in
+  KUSER = null; KEYS = null; DATA.stock = DATA.past = null; CARS = [];
   try { localStorage.removeItem("caricarz_keyuser"); } catch (e) {} lsClearAll();
-  document.body.classList.add("gated"); $("rows").innerHTML = ""; $("kpis").innerHTML = ""; note("");
-  $("landt").textContent = "Keys"; $("landbtn").textContent = "Sign in";
-  $("landmsg").textContent = msg || "Sign in with your name and PIN to take or return keys.";
+  brokerMode(); if (msg) note(msg);
+}
+function landing(msg) {                                              // fallback when the server sends no cars at all
+  GATE = true; document.body.classList.add("gated"); $("rows").innerHTML = ""; $("kpis").innerHTML = "";
+  $("landt").textContent = "Keys"; $("landbtn").textContent = KUSER ? "Open Keys" : "Sign in";
+  $("landmsg").textContent = msg || (KUSER ? "Signed in as " + KUSER.name + ". Take or return keys here." : "Sign in with your name and PIN to take or return keys.");
 }
 function brokerMode() {                                              // dealer view: sellable cars only (server strips status, aging, booking)
   GATE = false; DATA.past = null; lsClearAll(); MODE = "stock";
   document.body.classList.remove("gated"); document.body.classList.add("dealer", "broker"); note("");
   if (!DATA.stock || !DATA.stock.dealer) { DATA.stock = null; CARS = []; loading(); fetching.stock = false; load("stock"); }
-  setTimeout(() => loadKeys(true), 1500);
+  if (KUSER) setTimeout(() => loadKeys(true), 1500);
 }
 const pinGet = () => { try { return localStorage.getItem("caricarz_pin") || ""; } catch (e) { return PIN_MEM; } };
 let PIN_MEM = "";
@@ -1204,7 +1207,7 @@ function kRoleCheck(force) {
 (function start() {
   setTimeout(() => kRoleCheck(), 2500);
   if (!pinGet() && KUSER && KUSER.role === "broker") { brokerMode(); return; }
-  if (!pinGet() && !KUSER) { gate(); return; }                         // sign in once per phone
+  if (!pinGet() && !KUSER) { brokerMode(); return; }                   // not signed in: dealer view; Keys button signs in
   if (KUSER || pinGet()) setTimeout(() => loadKeys(true), 1500);       // fills the Keys badge
   showSeg(true);                                                       // Sold & Returned is open to all (public = 7-day sold + returned, no price)
   if (location.hash === "#manager" && !pinGet()) setTimeout(() => askPin(), 300);
