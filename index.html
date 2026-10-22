@@ -656,6 +656,7 @@ function openCar(i) {
   document.querySelector(".vc").classList.toggle("hasimg", !!c.photo);
   $("vbody").innerHTML = h; $("vbody").scrollTop = 0;
   if (KUSER || pinGet()) loadKeys().then(() => { if (CUR === c && $("vkey")) $("vkey").innerHTML = keyCardHtml(c); });
+  if (FULL && c.docs && c.docs.length) { fetchDoc(c, 0).catch(() => {}); pdfjs().catch(() => {}); }   // VOC ready by the time it is tapped
   $("cl").onclick = closeCar;
   CUR = c;
   $("sh").style.display = navigator.share ? "" : "none";
@@ -931,26 +932,39 @@ function pdfjs() {
     sc.onload = () => { pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; ok(pdfjsLib); };
     sc.onerror = () => { PDFJS = null; bad(new Error("Could not load the PDF viewer. Check the connection and try again.")); }; document.head.appendChild(sc); });
 }
+// documents: fetched once per session (and prefetched when an internal car card opens), PDF viewer preloaded in the background
+const DOCC = {};
+function fetchDoc(c, n) {
+  const k = c.plate + "|" + n; if (DOCC[k]) return DOCC[k];
+  const ctl = typeof AbortController !== "undefined" ? new AbortController() : null, timer = setTimeout(() => ctl && ctl.abort(), 60000);
+  return DOCC[k] = fetch(API_URL + "?doc=" + encodeURIComponent(c.plate) + "&n=" + n + "&key=" + encodeURIComponent(pinGet()), { credentials: "omit", cache: "no-store", signal: ctl ? ctl.signal : undefined })
+    .then(r => r.json()).then(r => { clearTimeout(timer); if (!r || r.error) delete DOCC[k]; return r; })
+    .catch(e => { clearTimeout(timer); delete DOCC[k]; throw e; });
+}
+let DOCREQ = 0;
 function openDoc(c, n) {
-  const d = c.docs[n], msg = (t, busy) => { $("docbody").innerHTML = busy ? LD(t) : `<div class="msg">${esc(t)}</div>`; };
-  $("doct").textContent = c.plate + " \u00b7 " + d[0]; DOC = null; msg("Opening document...", 1); $("docov").classList.add("on");
-  const show = r => {
-    if (!r || r.error) { if (r && r.error === "locked") { closeDoc(); doLock(); } else msg((r && r.error) || "Could not open the document."); return; }
+  const d = c.docs[n], req = ++DOCREQ, live = () => req === DOCREQ && $("docov").classList.contains("on");
+  const msg = (t, busy, retry) => { if (!live()) return; $("docbody").innerHTML = busy ? LD(t) : `<div class="msg">${esc(t)}${retry ? '<div style="margin-top:12px"><button class="btn pri" id="docretry">Try again</button></div>' : ""}</div>`;
+    if (retry) $("docretry").onclick = () => openDoc(c, n); };
+  $("doct").textContent = c.plate + " \u00b7 " + d[0]; DOC = null; $("docov").classList.add("on"); msg("Opening document...", 1);
+  const show = r => { if (!live()) return;
+    if (!r || r.error) { if (r && r.error === "locked") { closeDoc(); doLock(); } else msg((r && r.error) || "Could not open the document.", 0, 1); return; }
     const bin = atob(r.b64), bytes = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
     DOC = { name: r.name, blob: new Blob([bytes], { type: r.mime }) };
     if (/^image\//.test(r.mime)) { $("docbody").innerHTML = ""; const im = new Image(); im.src = URL.createObjectURL(DOC.blob); $("docbody").appendChild(im); return; }
     if (!/pdf/.test(r.mime)) { msg("Preview not available for this file type. Use Download."); return; }
-    pdfjs().then(lib => lib.getDocument({ data: bytes }).promise).then(async pdf => {
-      $("docbody").innerHTML = ""; const w = Math.min($("docbody").clientWidth - 20, 860), dpr = window.devicePixelRatio || 1;
-      for (let i = 1; i <= pdf.numPages; i++) {
+    msg("Showing document...", 1);
+    pdfjs().then(lib => lib.getDocument({ data: bytes.slice() }).promise).then(async pdf => {
+      if (!live()) return;
+      $("docbody").innerHTML = ""; const w = Math.min($("docbody").clientWidth - 20, 860), dpr = Math.min(window.devicePixelRatio || 1, 2);
+      for (let i = 1; i <= pdf.numPages; i++) { if (!live()) return;
         const pg = await pdf.getPage(i), v0 = pg.getViewport({ scale: 1 }), vp = pg.getViewport({ scale: w / v0.width * dpr });
         const cv = document.createElement("canvas"); cv.width = vp.width; cv.height = vp.height; cv.style.maxWidth = w + "px";
         $("docbody").appendChild(cv); await pg.render({ canvasContext: cv.getContext("2d"), viewport: vp }).promise;
       }
-    }).catch(e => msg(e.message || "Could not show the PDF. Use Download."));
+    }).catch(e => msg(e.message || "Could not show the PDF. Use Download.", 0, 1));
   };
-  fetch(API_URL + "?doc=" + encodeURIComponent(c.plate) + "&n=" + n + "&key=" + encodeURIComponent(pinGet()), { credentials: "omit", cache: "no-store" })
-    .then(r => r.json()).then(show).catch(() => msg("Could not load. Check the connection and try again."));
+  fetchDoc(c, n).then(show).catch(() => msg("Could not load. Check the connection and try again.", 0, 1));
 }
 $("wa").onclick = () => { window.open("https://wa.me/?text=" + encodeURIComponent(tgText(CUR)), "_blank"); };
 $("sh").onclick = () => { navigator.share({ text: tgText(CUR) }).catch(() => {}); };
