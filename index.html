@@ -1217,17 +1217,19 @@ const doLock = () => { pinSet(""); lsClearInternal();                  // Intern
 // ---------- in-app guide: staff guide for everyone, internal guide only when unlocked ----------
 const gstep = (n, title, text, demo) => `<div class="gs"><div class="gn">${n}</div><div class="gc"><b>${title}</b><div class="gt">${text}</div>${demo ? `<div class="gd">${demo}</div>` : ""}</div></div>`;
 const GUIDE_STAFF = [
-  gstep(1, "Find a car", "Type a plate, model or colour. Tap a tile to filter, tap again to clear.",
+  gstep(1, "Sign in once", "Tap <b>Keys</b> and enter your name and PIN (from the Inventory Team). The phone remembers you. Not signed in = car list only, no status.",
+    `<div class="gsearch" style="display:flex;justify-content:space-between"><span>Your name</span><span>PIN &bull;&bull;&bull;&bull;</span></div>`),
+  gstep(2, "Find a car", "Type a plate, model or colour. Tap a tile to filter, tap again to clear.",
     `<div class="gsearch">&#128269; vios 2020</div>`),
-  gstep(2, "Check the status", "Only offer cars that are Available or V.B.A.O.",
+  gstep(3, "Check the status", "Only offer cars that are Available or V.B.A.O.",
     `<span class="pill b-green">Available</span> <span class="pill b-amber">V.B.A.O</span> <span class="pill b-blue">Booked</span> <span class="drop">&darr;2k</span><div class="gcap">V.B.A.O = view by appointment &middot; &darr; = price reduced</div>`),
-  gstep(3, "Send to a customer", "Tap the car, then Copy or WhatsApp. Photo, price and details are all in the card.",
+  gstep(4, "Send to a customer", "Tap the car, then Copy or WhatsApp. Photo, price and details are all in the card.",
     `<div class="gbtns"><span class="btn pri">Copy</span><span class="btn wa">WhatsApp</span></div>`),
-  gstep(4, "Car not in the list?", "Sold cars disappear on their own. If it was returned to the owner, a tag shows under your search. Buyer still keen? Ask the <b>Consign Team</b>.",
+  gstep(5, "Car not in the list?", "Sold cars disappear on their own. If it was returned to the owner, a tag shows under your search. Buyer still keen? Ask the <b>Consign Team</b>.",
     `<span class="pasthit" style="cursor:default">1 returned to owner: ABC1234 &rsaquo;</span>`),
-  gstep(5, "Take a key", "Tap Keys, sign in once with your name and PIN (from the Inventory Team). Choose what you take, pick a reason, snap one photo, Save.",
+  gstep(6, "Take a key", "Tap Keys &rarr; Take. Choose what you take, pick a reason, snap one photo, Save. Handing a sold car to the buyer? Pick item <b>Delivery</b> (key + spare key, no return needed).",
     `<div class="kseg" style="max-width:330px"><button type="button" class="on">&#128663; Car key / VOC</button><button type="button">&#128477;&#65039; All keys</button><button type="button">&#129520; Equipment</button></div><div class="kphoto" style="margin-top:8px;padding:10px">&#128247; Photo required</div>`),
-  gstep(6, "Return it", "Tap Return and take a photo. Not back by <b>6:20pm</b>? It turns red and Telegram is told.",
+  gstep(7, "Return it", "Your keys are at the top. Tap <b>Return</b> (or <b>Return all</b>, &times; to leave one out) and take a photo. Not back by <b>6:20pm</b>? It turns red and Telegram is told.",
     `<div class="krow late" style="margin:0;border-radius:10px"><span class="kic">&#128273;</span><div class="km"><span class="kp">ABC1234</span> <span class="sub">Key &middot; Test drive</span></div><span class="btn" style="padding:6px 12px">Return</span></div>`)
 ].join("");
 const GUIDE_INTERNAL = `<div class="gtip">&#128274; Internal only. Don't share screenshots of this view with sales or customers.</div>` + [
@@ -1239,9 +1241,10 @@ const GUIDE_INTERNAL = `<div class="gtip">&#128274; Internal only. Don't share s
     `<span class="pill b-red">Review due</span> <span class="pill b-amber">Update price</span><div class="gcap">"Update price" = reviewed price not yet changed in Master</div>`),
   gstep(4, "After a price change, do all in one go", "",
     `<div class="gflow"><span>Master</span>&rarr;<span>CariCarz / Carlist / Mudah / FB</span>&rarr;<span>My Promotion</span>&rarr;<span>Ads upgrade</span>&rarr;<span>Price tag</span></div>`),
-  gstep(5, "Sold & Returned, Summary", "Full history with prices, and the monthly management summary button at the top.",
+  gstep(5, "Sold & Returned, Summary", "Full history with prices. <b>Summary</b> (top): this month vs last month, sales / tele sales, BDC / tele consign, stock health, returned, 6-month trend. Pick how Sold is counted (delivery, invoice or disbursement date); Copy gives the WhatsApp text.",
     `<span class="sumbtn on" style="cursor:default">Summary</span>`),
-  gstep(6, "Staff and equipment", "New staff or new equipment: add a row in the <b>Staff</b> or <b>Assets</b> tab of the sheet. Someone left? Set Active to <b>No</b>.", "")
+  gstep(6, "Staff, roles and equipment", "Add people in the <b>Staff</b> tab (name, PIN, Active, Role) and equipment in the <b>Assets</b> tab. Someone left? Set Active to <b>No</b>.",
+    `<table class="sumt st2"><tr><th>Role</th><th>Sees</th></tr><tr><td>Internal</td><td>Everything here</td></tr><tr><td>Sales</td><td>Stock, booking, aging, keys</td></tr><tr><td>(blank)</td><td>Dealer: cars + own keys</td></tr></table>`)
 ].join("");
 let GTAB = "staff";
 function openGuide(tab) {
