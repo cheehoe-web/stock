@@ -254,6 +254,17 @@
   .gflow{display:flex;flex-wrap:wrap;align-items:center;gap:5px;font-size:12px;color:var(--mut)}
   .gflow span{background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px 8px;color:var(--ink);font-weight:600}
   .gbody .gtip{background:#f6f7fb;border-radius:10px;padding:9px 12px;margin:10px 0;font-size:13.5px}
+  .retbtn{border:1px solid #c7d2fe;background:#eef2ff;color:#3730a3;border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+  .retbtn b{background:#4f46e5;color:#fff;border-radius:999px;padding:0 6px;margin-left:2px}.retbtn b:empty{display:none}
+  .rcard{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px;background:#fff}
+  .rtop{display:flex;align-items:center;gap:8px}
+  .rtrack{display:flex;margin:10px 0 4px}.rtrack div{flex:1;text-align:center;position:relative;font-size:11px;color:var(--mut)}
+  .rtrack div:before{content:"";position:absolute;top:11px;left:-50%;width:100%;height:2px;background:var(--line);z-index:0}.rtrack div:first-child:before{display:none}
+  .rtrack div.ok:before{background:var(--green)}
+  .rtrack i{position:relative;z-index:1;display:grid;place-items:center;width:22px;height:22px;margin:0 auto 2px;border-radius:50%;background:#fff;border:2px solid var(--line);font-style:normal;font-size:12px;color:#fff}
+  .rtrack .ok i{background:var(--green);border-color:var(--green)}.rtrack span{display:block;font-weight:700}.rtrack em{display:block;font-style:normal;font-size:10px}
+  .rbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.rbtns .btn{flex:1;text-align:center;text-decoration:none}
+  .rchk{display:flex;align-items:center;gap:8px;font-weight:700}.rchk input{width:22px;height:22px}
   .keybtn{border:1px solid #fde68a;background:#fffbeb;color:#92400e;border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
   #keyov{z-index:12;padding:0}
   .kfab{display:none}
@@ -373,6 +384,7 @@
     <div class="hright">
       <div class="seg hide" id="seg"><button data-view="stock" class="on">In stock</button><button data-view="past">Sold &amp; Returned</button></div>
       <button class="keybtn" id="keybtn" type="button">&#128273; Keys</button>
+      <button class="retbtn" id="retbtn" type="button" style="display:none">&#8617; Returns <b id="retn"></b></button>
       <button class="sumbtn" id="sumbtn" type="button">Summary</button>
       <button class="gbtn" id="gbtn" type="button">&#10067; Guide</button>
       <span class="ichip" id="ichip">Internal view <button id="lockbtn" type="button">Lock</button></span>
@@ -449,6 +461,7 @@
 </div></div>
 <button class="kfab" id="kfab" type="button" aria-label="Keys"><span class="kfi">&#128273;</span><span>Keys</span><b class="kbadge" id="kbadge"></b></button>
 <div class="ov" id="keyov"><div class="sumw"><div class="sumh"><b>Keys &amp; equipment</b><span class="sub" id="kwho"></span><button class="vx" id="keyx" aria-label="Close" style="margin:0">&times;</button></div><div class="sumb" id="keybody"></div></div></div>
+<div class="ov" id="retov" style="z-index:12;padding:0"><div class="sumw"><div class="sumh"><b>Returns to consignor</b><button class="vx" id="retx" aria-label="Close" style="margin:0">&times;</button></div><div class="sumb" id="retbody" style="max-width:640px"></div></div></div>
 <div class="ov" id="sumov"><div class="sumw"><div class="sumh"><b>Management summary</b><select id="summ"></select><button class="btn" id="sumcp">Copy</button><button class="vx" id="sumx" aria-label="Close" style="margin:0">&times;</button></div><div class="sumb" id="sumbody"></div></div></div>
 <div class="ov" id="docov"><div class="docw"><div class="doch"><b id="doct"></b><button class="btn" id="docdl">Download</button><button class="vx" id="docx" aria-label="Close" style="margin:0">&times;</button></div><div id="docbody"></div></div></div>
 <div class="ov" id="ov"><div class="dlg vc"><div class="vbody" id="vbody"></div>
@@ -682,6 +695,7 @@ function openCar(i) {
   const dates = [FULL ? ["Car in", fmtDate(c.carIn)] : null, MODE === "past" ? [c.status === "Sold" ? "Sold" : "Returned", fmtDate(c.outDate)] : null].filter(d => d && d[1]);
   if ((FULL && c.bdc) || dates.length) h += `<div class="vsec"><h4>${FULL ? "Handled by" : "Dates"}</h4><div class="vlist">${FULL && c.bdc ? `<div><span class="vpic"><i>${esc(c.bdc.trim().charAt(0).toUpperCase())}</i></span><b style="margin-right:auto;align-self:center">${esc(c.bdc)}</b><span style="align-self:center">BDC PIC</span></div>` : ""}${dates.map(d => row(d[0], d[1])).join("")}</div></div>`;
   h += `<div class="vsec"><h4>Key &amp; VOC</h4><div class="vkey" id="vkey">${keyCardHtml(c)}</div></div>`;
+  if (canRet()) h += retCardHtml(c);
   if (FULL && c.rv && c.rv.s) h += `<div class="vsec"><h4>Price review (every 10 days)</h4>${reviewHtml(c)}</div>`;
   const links = [["CariCarz", c.caricarz], ["Carlist", c.carlist], ["Mudah", c.mudah], ["Facebook", c.fb]].filter(l => l[1]);
   if (links.length) h += `<div class="vsec"><h4>Listings</h4><div class="vlinks">${links.map(l => `<a href="${esc(l[1])}" target="_blank" rel="noopener">${l[0]} &#8599;</a>`).join("")}</div></div>`;
@@ -891,6 +905,141 @@ function submitKey(force) {
     loadKeys(true).then(() => { if (!KFORM && $("keyov").classList.contains("on")) renderKeyList(); });
   }).catch(() => { $("kmsg").textContent = "Not saved: no connection. Try again."; kUnbusy(); });
 }
+// ---------- returns to consignor: Hold For Return -> Documents ready -> PDI done -> Handed over (Returns.gs) ----------
+let RETS = null, RFORM = null;
+const canRet = () => isInt() || !!(KUSER && KUSER.role === "fleet");
+const RSTEPS = [["req", "Hold"], ["docs", "Docs"], ["pdi", "PDI"], ["hand", "Handed"]];
+const retNext = r => !r.docs[0] ? "docs" : !r.pdi[0] ? "pdi" : !r.hand[0] ? "handover" : "";
+const retOf = plate => RETS && RETS.open.find(r => pkey(r.plate) === pkey(plate));
+const pkey = p => String(p || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+function loadRets() {
+  if (!canRet()) return Promise.resolve(null);
+  return fetch(API_URL + "?act=rets&" + authQ(), { credentials: "omit", cache: "no-store" }).then(r => r.json())
+    .then(d => { if (d && d.open) { RETS = d; retBadge(); } return RETS; }).catch(() => RETS);
+}
+function retBadge() { const n = RETS ? RETS.open.length : 0; $("retbtn").style.display = canRet() ? "" : "none"; $("retn").textContent = n || ""; }
+function retTrack(r) {
+  return `<div class="rtrack">${RSTEPS.map(([k, l]) => { const v = r[k] && r[k][0]; return `<div class="${v ? "ok" : ""}"><i>${v ? "&#10003;" : ""}</i><span>${l}</span>${v ? `<em>${esc(String(v).slice(5, 16).replace("-", "/"))}${r[k][1] ? " &middot; " + esc(r[k][1]) : ""}</em>` : ""}</div>`; }).join("")}</div>`;
+}
+function retCard(r, open) {
+  const nx = retNext(r), who = isInt(), fleet = KUSER && KUSER.role === "fleet";
+  const btn = !open ? "" : nx === "docs" && who ? `<button class="btn pri" data-rgo="docs" data-rp="${esc(r.plate)}">Prepare documents</button>`
+    : nx === "pdi" && (who || fleet) ? `<button class="btn pri" data-rgo="pdi" data-rp="${esc(r.plate)}">Mark PDI done</button>`
+    : nx === "handover" && who ? `<button class="btn pri" data-rgo="handover" data-rp="${esc(r.plate)}">Hand over to consignor</button>` : "";
+  return `<div class="rcard"><div class="rtop"><span class="kp">${esc(r.plate)}</span>${r.refund ? '<span class="pill b-amber">RM200 refund</span>' : ""}<span class="sub" style="margin-left:auto">${r.collect ? "Collect " + esc(r.collect.slice(5).replace("-", "/")) : ""}</span></div>
+    <div class="sub">${esc(r.model)}${r.consignor ? " &middot; " + esc(r.consignor) : ""}</div><div class="sub">${esc(r.reason)}${r.days ? " &middot; " + esc(r.days) + " days in stock" : ""}</div>
+    ${retTrack(r)}${r.pdi[2] ? `<div class="sub">PDI note: ${esc(r.pdi[2])}</div>` : ""}<div class="rbtns">${btn}${open && who ? `<button class="btn" data-rletter="${esc(r.plate)}" ${r.refund ? "" : 'style="display:none"'}>Letter of request</button>` : ""}${r.photo ? `<a class="btn" href="${esc(r.photo)}" target="_blank" rel="noopener">Photo</a>` : ""}</div></div>`;
+}
+function openRets() {
+  $("retov").classList.add("on"); document.body.style.overflow = "hidden"; RFORM = null;
+  $("retbody").innerHTML = '<div class="kcard">' + LD("Loading returns...") + "</div>";
+  loadRets().then(renderRets);
+}
+function renderRets() {
+  if (RFORM) return renderRetForm();
+  const o = RETS ? RETS.open : [], d = RETS ? RETS.done : [];
+  $("retbody").innerHTML = (isInt() ? '<button class="btn pri" id="rnew" style="width:100%;padding:14px;margin-bottom:12px">Hold a car for return</button>' : "") +
+    `<div class="kcard"><h3>In progress: ${o.length}</h3>${o.length ? o.map(r => retCard(r, true)).join("") : '<div class="sub">No car waiting to be returned.</div>'}</div>` +
+    (d.length ? `<details class="kcard" style="margin-top:12px"><summary><b>Recently returned (${d.length})</b></summary>${d.map(r => retCard(r, false)).join("")}</details>` : "");
+}
+function renderRetForm() {
+  const f = RFORM, r = retOf(f.plate) || {}, chips = (k, list) => `<div class="kchips" data-rk="${k}">${list.map(v => `<button type="button" data-v="${esc(v)}" class="${f[k] === v ? "on" : ""}">${esc(v)}</button>`).join("")}</div>`;
+  const title = { request: "Hold for return", docs: "Prepare documents", pdi: "PDI done", handover: "Hand over to consignor" }[f.step];
+  let h = `<div class="kcard"><h3>${title}</h3><form class="kform" id="rform">`;
+  if (f.step === "request") {
+    const cars = (DATA.stock && DATA.stock.cars) || [];
+    h += `<label>Plate<input id="rplate" autocapitalize="characters" autocomplete="off" value="${esc(f.plate || "")}" placeholder="Type plate"></label><div class="ksug" id="rsug"></div>
+      <label>Reason</label>${chips("reason", ["Owner keep", "Sold outside", "Price too low", "Owner request", "Other"])}
+      <label>Note<input id="rnote" placeholder="Optional (required for Other)"></label>
+      <label>Consignor collects on<input id="rcollect" type="date"></label>`;
+  } else {
+    h += `<div class="rcard" style="margin:0 0 10px">${retCard(r, false)}</div>`;
+    if (f.step === "docs") h += `<label class="rchk"><input type="checkbox" id="rkeys"> Key set ready (key, spare key, VOC)</label>
+      <div class="sub">Saving makes the return form PDF (print 2 copies: Carrealm + consignor) and posts it to Telegram.${r.refund ? " Also print the <b>letter of request</b> for the RM200 refund." : ""}</div>`;
+    if (f.step === "pdi") h += `<label>Note<input id="rnote" placeholder="Optional, e.g. tyre, battery"></label>`;
+    if (f.step === "handover") h += `<label>Photo (required)</label><div class="kphoto" id="rshot" role="button" tabindex="0">${kShotEmpty("the car with the consignor")}</div><input type="file" id="rfile" accept="image/*" capture="environment" style="display:none">${r.refund ? '<div class="sub">RM200 refund: make sure the consignor signed the letter of request.</div>' : ""}`;
+  }
+  h += `<button class="btn pri" type="submit" style="padding:12px">${{ request: "Save, hold for return", docs: "Documents ready", pdi: "PDI done", handover: "Save, returned" }[f.step]}</button><div class="kmsg" id="rmsg"></div>
+    ${f.step !== "request" && isInt() ? '<button class="btn" type="button" id="rcancel" style="color:var(--red)">Cancel this return</button>' : ""}<button class="btn" type="button" id="rback">Back</button></form></div>`;
+  $("retbody").innerHTML = h;
+  if (f.step === "request") {
+    const cars = (DATA.stock && DATA.stock.cars) || [];
+    $("rplate").oninput = () => { const q = pkey($("rplate").value); $("rsug").innerHTML = !q ? "" : cars.filter(c => pkey(c.plate).includes(q)).slice(0, 6).map(c => `<button type="button" data-rpl="${esc(c.plate)}"><b>${esc(c.plate)}</b> <span class="sub">${esc(c.model)}</span></button>`).join(""); };
+    $("rsug").onclick = e => { const b = e.target.closest("[data-rpl]"); if (b) { $("rplate").value = b.dataset.rpl; $("rsug").innerHTML = ""; } };
+  }
+  if (f.step === "handover") {
+    if (f.photo) rShotDone(f.photo);
+    $("rshot").onclick = () => $("rfile").click();
+    $("rfile").onchange = () => { const file = $("rfile").files[0]; if (!file) return; $("rshot").innerHTML = LD("Preparing photo...");
+      shrinkPhoto(file).then(u => { f.photo = u; rShotDone(u); }).catch(() => { $("rshot").innerHTML = kShotEmpty("again"); }); $("rfile").value = ""; };
+  }
+}
+function rShotDone(u) { $("rshot").classList.add("has"); $("rshot").innerHTML = `<img src="${u}" alt=""><div class="kok"><span>&#10003; Photo added</span><span class="kre">Retake</span></div>`; }
+function retSubmit(step) {
+  const f = RFORM, body = Object.assign({ kind: "ret", step: step || f.step, name: KUSER ? KUSER.name : "", pin: KUSER ? KUSER.pin : "", key: pinGet() }, f.extra || {});
+  if (!KUSER) { $("rmsg").textContent = "Sign in with Keys first (your name goes on the record)."; return; }
+  if (body.step === "request") { body.plate = $("rplate").value.trim(); body.reason = f.reason; body.note = $("rnote").value.trim(); body.collect = $("rcollect").value;
+    if (!body.plate) { $("rmsg").textContent = "Type the plate."; return; } if (!body.reason) { $("rmsg").textContent = "Pick a reason."; return; }
+    if (body.reason === "Other" && !body.note) { $("rmsg").textContent = "Write a note for Other."; return; } }
+  else body.plate = f.plate;
+  if (body.step === "docs") { body.keysReady = $("rkeys").checked; if (!body.keysReady) { $("rmsg").textContent = "Tick key set ready first."; return; } }
+  if (body.step === "pdi") body.note = $("rnote").value.trim();
+  if (body.step === "handover") { if (!f.photo) { $("rmsg").textContent = "Take a photo first."; return; } body.photo = f.photo; }
+  const sb = $("rform").querySelector("[type=submit]"); sb.disabled = true; sb.dataset.t = sb.dataset.t || sb.textContent; sb.innerHTML = '<span class="spin w"></span>Saving...';
+  fetch(API_URL, { method: "POST", credentials: "omit", body: JSON.stringify(body) }).then(r => r.json()).then(d => {
+    if (!d.ok) { $("rmsg").textContent = d.error || "Not saved."; sb.disabled = false; sb.textContent = sb.dataset.t; return; }
+    if (d.list) { RETS = d.list; retBadge(); }
+    const plate = body.plate; RFORM = null; renderRets();
+    if (d.pdf) { const bin = atob(d.pdf), b = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);
+      const url = URL.createObjectURL(new Blob([b], { type: "application/pdf" }));
+      $("retbody").insertAdjacentHTML("afterbegin", `<div class="kcard" style="margin-bottom:12px"><b>Return form ready</b><div class="sub">Print 2 copies (Carrealm + consignor). Also sent to the Telegram Returns topic.</div><div class="rbtns"><a class="btn pri" href="${url}" target="_blank" rel="noopener">Open return form (PDF)</a></div></div>`); }
+    if (d.warn) note(d.warn);
+    if (body.step === "request" || body.step === "handover") { DATA.stock = null; fetching.stock = false; load("stock"); }   // status changed in Master
+  }).catch(() => { $("rmsg").textContent = "Not saved: no connection. Try again."; sb.disabled = false; sb.textContent = sb.dataset.t; });
+}
+// letter of request (RM200 inspection-fee refund), filled in, printed for the consignor to sign
+function retLetter(plate) {
+  const r = retOf(plate); if (!r) return;
+  const w = window.open("", "_blank"); if (!w) { note("Allow pop-ups to print the letter."); return; }
+  const t = new Date(), dt = String(t.getDate()).padStart(2, "0") + "." + String(t.getMonth() + 1).padStart(2, "0") + "." + t.getFullYear();
+  const line = l => `<div class="ln"><span>${l}</span><i></i></div>`;
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Letter of request ${esc(plate)}</title><style>
+    body{font:15px/1.6 Arial,sans-serif;color:#000;max-width:720px;margin:40px auto;padding:0 24px}.top{display:flex;justify-content:space-between}
+    .ln{display:flex;gap:8px;margin:6px 0;align-items:flex-end}.ln span{white-space:nowrap}.ln i{flex:1;border-bottom:1px solid #000;height:18px}
+    h3{margin:28px 0 12px;font-size:16px}p{margin:12px 0;font-size:15px}.sig{margin-top:60px;width:260px;border-top:1px solid #000;padding-top:4px}
+    @media print{.noprint{display:none}body{margin:20px auto}}</style></head><body>
+    <div class="noprint" style="margin-bottom:16px"><button onclick="print()" style="padding:10px 18px;font-size:15px">Print</button></div>
+    <div class="top"><div style="flex:1;max-width:60%"><b>${esc(r.consignor || "")}</b>${line("IC / Company No:")}${line("Contact No:")}</div><div>${dt}</div></div>
+    <p style="margin-top:28px">To Caricarz Automall,</p><h3>Subject: Consignment Cancellation and Refund Request</h3><p>Dear Sir/Madam,</p>
+    <p>1. I would like to formally request the cancellation of my vehicle consignment for the ${esc(r.model || "")} registration number <b>${esc(r.plate)}</b>${r.carIn ? ", consigned on " + esc(String(r.carIn).slice(0, 10).split("-").reverse().join(".")) : ""}.</p>
+    <p>2. I kindly request a refund of the inspection fee paid, <b>RM200.00</b> in total, as the vehicle was not sold within 90 days of consignment.</p>
+    <p>3. Please process the refund at your earliest convenience to the account details below. Thank you for your understanding.</p>
+    ${line("Account number:")}${line("Account holder:")}${line("Bank:")}
+    <p style="margin-top:28px">Yours sincerely,</p><div class="sig">${esc(r.consignor || "")}</div></body></html>`);
+  w.document.close();
+}
+$("retbtn").onclick = openRets;
+$("retx").onclick = () => { $("retov").classList.remove("on"); if (!$("ov").classList.contains("on")) document.body.style.overflow = ""; };
+$("retbody").addEventListener("click", e => {
+  if (e.target.id === "rnew") { RFORM = { step: "request" }; renderRetForm(); return; }
+  if (e.target.id === "rback") { RFORM = null; renderRets(); return; }
+  if (e.target.id === "rcancel") { retSubmit("cancel"); return; }
+  const g = e.target.closest("[data-rgo]"); if (g) { RFORM = { step: g.dataset.rgo, plate: g.dataset.rp }; renderRetForm(); return; }
+  const l = e.target.closest("[data-rletter]"); if (l) { retLetter(l.dataset.rletter); return; }
+  const ch = e.target.closest("[data-rk] button"); if (ch && RFORM) { RFORM[ch.parentNode.dataset.rk] = ch.dataset.v; ch.parentNode.querySelectorAll("button").forEach(b => b.classList.toggle("on", b === ch)); }
+});
+document.addEventListener("submit", e => { if (e.target.id === "rform") { e.preventDefault(); retSubmit(); } });
+function retCardHtml(c) {                                          // section in the car card
+  const r = retOf(c.plate);
+  if (r) return `<div class="vsec"><h4>Return to consignor</h4>${retCard(r, true)}</div>`;
+  if (isInt() && !/^(sold|returned|booked)/i.test(c.remark || "")) return `<div class="vsec"><h4>Return to consignor</h4><button class="btn" data-rhold="${esc(c.plate)}">Hold for return</button></div>`;
+  return "";
+}
+$("vbody").addEventListener("click", e => {
+  const h = e.target.closest("[data-rhold]"); if (h) { openRets(); RFORM = { step: "request", plate: h.dataset.rhold }; setTimeout(renderRetForm, 0); return; }
+  const g = e.target.closest("[data-rgo]"); if (g) { $("retov").classList.add("on"); RFORM = { step: g.dataset.rgo, plate: g.dataset.rp }; renderRetForm(); return; }
+  const l = e.target.closest("[data-rletter]"); if (l) retLetter(l.dataset.rletter);
+});
 // ---------- price review: status in the card + "Mark reviewed" (writes to the Price Review Log tab) ----------
 const curPrices = c => ["Car-In Price", "UCD Price", "Retail Selling Price"].map(h => c.x && XI[h] !== undefined && typeof c.x[XI[h]] === "number" ? c.x[XI[h]] : "");
 function reviewHtml(c) {
@@ -1291,6 +1440,7 @@ function kRoleCheck(force) {
   if (!pinGet() && KUSER && KUSER.role === "broker") { brokerMode(); return; }
   if (!pinGet() && !KUSER) { brokerMode(); return; }                   // not signed in: dealer view; Keys button signs in
   if (KUSER || pinGet()) setTimeout(() => loadKeys(true), 1500);       // fills the Keys badge
+  setTimeout(() => loadRets(), 2200);                                  // returns badge (Internal / Fleet)
   showSeg(true);                                                       // Sold & Returned is open to all (public = 7-day sold + returned, no price)
   if (location.hash === "#manager" && !pinGet()) setTimeout(() => askPin(), 300);
   const old = lsGet("stock");
