@@ -195,12 +195,25 @@
   .sumg .card{padding:14px 16px}
   .sumg h3{margin:0 0 8px;font-size:14px}
   .sumt{width:100%;border-collapse:collapse;font-size:13px}
-  .sumsales{margin-bottom:14px;padding:14px 16px}
-  .sumsales h4{margin:0 0 6px;font-size:13px;color:var(--mut)}
-  .sstat{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
-  .sstat div{background:#f6f7fb;border-radius:12px;padding:10px 8px;text-align:center}
-  .sstat b{display:block;font-size:24px;line-height:1.1}
-  .sstat span{font-size:12px;color:var(--mut);font-weight:600}
+  .ssec{padding:14px 16px;margin-bottom:12px}
+  .ssec h3{margin:0 0 10px;font-size:15px;display:flex;align-items:center;gap:8px}
+  .ssec .tag{font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px;background:#f3f4f6;color:var(--mut)}
+  .shead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}.shead h3{margin:0;flex:1}
+  .sb{font-size:12px;color:var(--mut);font-weight:600;display:flex;align-items:center;gap:6px}.sb select{font:inherit;font-size:13px;border:1px solid var(--line);border-radius:8px;padding:5px 6px;background:#fff;color:var(--ink)}
+  .sk{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .sk div{background:var(--bg);border-radius:12px;padding:9px 10px}.sk span{display:block;font-size:12px;color:var(--mut);font-weight:600}.sk b{display:block;font-size:22px;line-height:1.2}
+  .sk .d{display:inline;font-size:12px;font-weight:700;margin-left:4px;color:var(--mut)}.sk .d.up{color:var(--green)}.sk .d.dn{color:var(--red)}
+  @media(max-width:720px){.sk{grid-template-columns:1fr 1fr}}
+  .pace{margin-top:10px;font-size:13px;background:#eff6ff;color:#1d4ed8;border-radius:10px;padding:8px 10px;font-weight:600}.pace.bad{background:#fef2f2;color:var(--red)}
+  .seg3{display:flex;background:var(--bg);border-radius:10px;padding:3px;margin-bottom:8px}.seg3 button{flex:1;border:0;background:none;padding:7px;font:inherit;font-weight:700;font-size:13px;color:var(--mut);border-radius:8px;cursor:pointer}.seg3 button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.1)}
+  .st2 th{font-size:11px;color:var(--mut);text-align:right;font-weight:700;padding:4px 0;position:static;background:none;border:0;letter-spacing:0}.st2 th:first-child{text-align:left}.st2 td{text-align:right}.st2 td:first-child{text-align:left;font-weight:600}
+  .cap{font-size:12px;color:var(--mut);margin-top:8px}
+  .sbar{display:flex;align-items:center;gap:8px;margin:7px 0;font-size:13px}.sbar span{width:92px;flex:0 0 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sbar i{display:block;height:10px;border-radius:6px}.sbar b{margin-left:auto;font-size:13px;white-space:nowrap}
+  .trend{display:flex;align-items:flex-end;gap:10px;height:120px;margin-top:14px}.trend div{flex:1;display:flex;align-items:flex-end;gap:2px;height:100%}
+  .trend i{flex:1;border-radius:4px 4px 0 0;position:relative}.trend em{position:absolute;top:-15px;left:0;right:0;text-align:center;font-style:normal;font-size:9px;color:var(--mut)}
+  .mon{display:flex;gap:10px;font-size:11px;color:var(--mut);margin-top:4px}.mon span{flex:1;text-align:center}
+  .leg{display:flex;gap:12px;font-size:12px;color:var(--mut);margin-top:8px}.leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+
   .sumt td{padding:5px 0;border-top:1px solid var(--line)}
   .sumt td:last-child{text-align:right;font-weight:700}
   @media(max-width:720px){.sumh{padding:10px 12px}.sumb{padding:10px}.sumg{grid-template-columns:1fr}}
@@ -923,54 +936,102 @@ $("summ").onchange = () => renderSummary();
 const closeSum = () => { $("sumov").classList.remove("on"); document.body.style.overflow = ""; };
 $("sumx").onclick = closeSum;
 let SUMTXT = "";
+// management summary (internal): built on the phone from data already loaded (stock + sold/returned + orders/invoices); no money figures
+let SUMTAB = { s: "sales", c: "bdc" }, SUMBASIS = "delivery";
+try { SUMBASIS = localStorage.getItem("caricarz_sumbasis") || "delivery"; } catch (e) {}
 function renderSummary() {
   const st = DATA.stock, ps = DATA.past; if (!st || !st.full) return;
-  const m = $("summ").value, inM = s => !!s && s.slice(0, 7) === m;
+  const m = $("summ").value, [Y, Mo] = m.split("-").map(Number), pm = Mo === 1 ? (Y - 1) + "-12" : Y + "-" + String(Mo - 1).padStart(2, "0");
+  const now = new Date(), dom = now.getDate(), isCur = m === now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+  const mName = mm => MONTHS[Number(mm.slice(5, 7)) - 1] + " " + mm.slice(0, 4), label = mName(m), plabel = mName(pm);
+  const inMon = (s, mm) => !!s && s.slice(0, 7) === mm, upTo = (s, mm) => inMon(s, mm) && Number(s.slice(8, 10)) <= dom;
   const xf = (st.xf || []).map(f => f[1]), xi = n => xf.indexOf(n), xv = (c, n) => c.x && xi(n) >= 0 ? c.x[xi(n)] : "";
-  const stock = st.cars, past = ps && ps.cars ? ps.cars : [];
-  const R = (c) => (c.remark || "").trim().toLowerCase();
-  const all = stock.concat(past);
-  const carIn = all.filter(c => inM(c.carIn));
-  const sold = past.filter(c => /^sold/.test(R(c)) && inM(c.outDate)), ret = past.filter(c => /^returned/.test(R(c)) && inM(c.outDate));
-  const dd = c => c.carIn && c.outDate ? Math.round((parseIso(c.outDate) - parseIso(c.carIn)) / 864e5) : null;
-  const avgD = l => { const d = l.map(dd).filter(x => x != null); return d.length ? Math.round(d.reduce((a, b) => a + b, 0) / d.length) : "-"; };
-  const sum = (l, f) => l.reduce((s, c) => s + (typeof f(c) === "number" ? f(c) : 0), 0);
-  const group = (l, f) => { const g = {}; l.forEach(c => { const k = String(f(c) || "(blank)").trim() || "(blank)"; g[k] = (g[k] || 0) + 1; }); return Object.entries(g).sort((a, b) => b[1] - a[1]); };
-  const tbl = rows => rows.length ? `<table class="sumt">${rows.map(r => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join("")}</table>` : '<div class="sub">None.</div>';
-  const now = { total: stock.length, avail: stock.filter(c => !R(c)).length, vbao: stock.filter(c => /^v\.?b\.?a\.?o/.test(R(c))).length,
-    booked: stock.filter(c => /^booked/.test(R(c))).length, aging: stock.filter(c => /aging/i.test(c.phase || "")).length,
-    rdue: stock.filter(c => c.rv && c.rv.s === "due").length };
-  const k = [["CAR IN", carIn.length, "c-purple"], ["SOLD", sold.length, "c-green"], ["RETURNED", ret.length, "c-ink"],
-    ["SOLD VALUE", "RM " + (sum(sold, c => c.price) / 1e6).toFixed(2) + "M", "c-green"], ["EST. MARGIN (SOLD)", "RM " + money(Math.round(sum(sold, c => xv(c, "Est. Margin")))), "c-blue"], ["AVG DAYS TO SELL", avgD(sold), "c-amber"]];
-  const label = $("summ").selectedOptions[0].textContent;
-  // sales (Lark Sales Admin Base via Order Tracking / Lark Orders, Invoice Summary)
+  const stock = st.cars, past = ps && ps.cars ? ps.cars : [], all = stock.concat(past), R = c => (c.remark || "").trim().toLowerCase();
+  const pk = p => String(p || "").toUpperCase().replace(/[^A-Z0-9]/g, ""), byPlate = {};
+  all.forEach(c => { if (!byPlate[pk(c.plate)]) byPlate[pk(c.plate)] = c; });
   const od = ps && ps.orders && !ps.orders.error ? ps.orders : null;
-  const bk = od ? od.o.filter(r => inM(r[0])) : [], cx = od ? od.o.filter(r => inM(r[1])) : [], dv = od ? od.iv.filter(r => inM(r[3])).map(r => [r[3], r[1], r[2]]) : [], iv = od ? od.iv.filter(r => inM(r[0])) : [];   // delivered: Invoice Summary delivery date
-  const openO = od ? od.o.filter(r => !/deliver|cancel/i.test(r[2])) : [];
-  const bySE = (() => { const m = {}, nm = {}, key = n => String(n || "(blank)").toLowerCase().replace(/\s+/g, " ").trim();   // Lark "Naim" = Invoice "NAIM"
-    const add = (n, i) => { const k = key(n); if (!nm[k] || nm[k] === nm[k].toUpperCase()) nm[k] = String(n || "(blank)").trim(); (m[k] = m[k] || [0, 0])[i]++; };
-    bk.forEach(r => add(r[3], 0)); dv.forEach(r => add(r[1], 1));
-    return Object.entries(m).sort((a, b) => b[1][1] - a[1][1] || b[1][0] - a[1][0]).map(([k, v]) => [nm[k], v[0] + " booked · " + v[1] + " delivered"]); })();
-  const salesHtml = od ? `<div class="card sumsales"><h3>Sales &middot; ${esc(label)}</h3><div class="sstat">${[["Booking", bk.length, "c-blue"], ["Delivered", dv.length, "c-green"], ["Invoiced", iv.length, "c-purple"], ["Cancelled", cx.length, "c-red"]]
-      .map(x => `<div><b class="${x[2]}">${x[1]}</b><span>${x[0]}</span></div>`).join("")}</div>
-      <div class="sumg" style="margin-top:12px"><div><h4>By sales person</h4>${tbl(bySE)}</div><div><h4>Open orders now (${openO.length})</h4>${tbl(group(openO, r => r[2]))}</div></div></div>`
-    : ps ? '<div class="card sumsales"><h3>Sales</h3><div class="sub">Sales figures will appear after the next data refresh (up to 15 min). To get them now: sheet menu Stock Site &rarr; Show latest data now.</div></div>' : "";
-  $("sumbody").innerHTML = (ps ? "" : '<div class="note on">Sold &amp; returned data still loading; sold / returned figures will fill in shortly.</div>') +
-    salesHtml + `<div class="grid6">${k.map(x => `<div class="card kpi" style="cursor:default"><div class="top ${x[2]}">${x[0]}</div><div class="num ${x[2]}" style="font-size:24px">${x[1]}</div><div class="foot">${label}</div></div>`).join("")}</div>
-    <div class="sumg">
-      <div class="card"><h3>Car in by acquisition type</h3>${tbl(group(carIn, c => xv(c, "Acquisition Type")))}</div>
-      <div class="card"><h3>Car in by BDC</h3>${tbl(group(carIn, c => c.bdc))}</div>
-      <div class="card"><h3>Car in by consignment type</h3>${tbl(group(carIn, c => xv(c, "Consignment Type")))}</div>
-      <div class="card"><h3>Sold by brand</h3>${tbl(group(sold, c => c.brand))}</div>
-      <div class="card"><h3>Returned: reason</h3>${tbl(group(ret, c => c.outNote))}</div>
-      <div class="card"><h3>Inventory now</h3>${tbl([["In inventory", now.total], ["Available", now.avail], ["V.B.A.O", now.vbao], ["Booked", now.booked], ["Aging (120+ days)", now.aging], ["Price review due", now.rdue]])}</div>
-    </div>`;
-  const lines = g => g.map(x => "  - " + x[0] + ": " + x[1]).join("\n");
-  SUMTXT = ["*Automall summary: " + label + "*", "", "Car in: " + carIn.length, lines(group(carIn, c => xv(c, "Acquisition Type"))), "",
-    "Sold: " + sold.length + " (RM " + (sum(sold, c => c.price) / 1e6).toFixed(2) + "M, avg " + avgD(sold) + " days)", "Returned: " + ret.length, "",
-    "Inventory now: " + now.total + " (Available " + now.avail + ", V.B.A.O " + now.vbao + ", Booked " + now.booked + ", Aging " + now.aging + ")"]
-    .concat(od ? ["", "Sales: booking " + bk.length + ", delivered " + dv.length + ", invoiced " + iv.length + ", cancelled " + cx.length, lines(bySE)] : []).join("\n");
+  const soldDate = r => SUMBASIS === "invoice" ? r[0] : SUMBASIS === "disburse" ? (r[4] || r[3]) : r[3];   // cash deals: no disbursement, use delivery
+  const set = (mm, f) => ({ carIn: all.filter(c => f(c.carIn, mm)), booked: od ? od.o.filter(r => f(r[0], mm)) : [], sold: od ? od.iv.filter(r => f(soldDate(r), mm)) : [],
+    invoiced: od ? od.iv.filter(r => f(r[0], mm)) : [], cancelled: od ? od.o.filter(r => f(r[1], mm)) : [], returned: past.filter(c => /^returned/.test(R(c)) && f(c.outDate, mm)) });
+  const cur = set(m, inMon), prev = set(pm, inMon);
+  const tidy = n => String(n || "").replace(/\s+/g, " ").trim(), key = n => tidy(n).toLowerCase() || "(blank)";
+  const table = (heads, rowsObj) => {                                // rowsObj: {key: {name, vals[]}}, sorted by first column
+    const rows = Object.values(rowsObj).sort((a, b) => b.v.reduce((s, x) => s + x, 0) - a.v.reduce((s, x) => s + x, 0));
+    return rows.length ? `<table class="sumt st2"><tr>${heads.map(h => `<th>${h}</th>`).join("")}</tr>${rows.map(r => `<tr><td>${esc(r.n)}</td>${r.v.map(x => `<td>${x}</td>`).join("")}</tr>`).join("")}</table>` : '<div class="sub">None this month.</div>';
+  };
+  const tally = (cols) => { const o = {}; cols.forEach((list, i) => list.forEach(([name]) => { const k = key(name);
+    if (!o[k]) o[k] = { n: tidy(name) || "(none)", v: cols.map(() => 0) }; else if (o[k].n === o[k].n.toUpperCase()) o[k].n = tidy(name) || o[k].n; o[k].v[i]++; })); return o; };
+  // order row for a sold plate (latest booking), for tele sales PIC
+  const orderOf = {}; if (od) od.o.forEach(r => { const k = pk(r[4]); if (!orderOf[k] || r[0] > orderOf[k][0]) orderOf[k] = r; });
+  const carOf = r => byPlate[pk(r[2])];
+  // ---- 1. this month vs last month
+  const d = (a, b, badUp) => { const x = a - b; if (!x) return '<span class="d">=</span>'; const good = badUp ? x < 0 : x > 0; return `<span class="d ${good ? "up" : "dn"}">${x > 0 ? "&#9650;" : "&#9660;"} ${Math.abs(x)}</span>`; };
+  const basisName = { delivery: "delivery date", invoice: "invoice date", disburse: "disbursement date" }[SUMBASIS];
+  const tiles = [["Car in", cur.carIn.length, prev.carIn.length], ["Booked", cur.booked.length, prev.booked.length], ["Sold", cur.sold.length, prev.sold.length],
+    ["Invoiced", cur.invoiced.length, prev.invoiced.length], ["Cancelled", cur.cancelled.length, prev.cancelled.length, 1], ["Returned", cur.returned.length, prev.returned.length, 1]];
+  let pace = "";
+  if (isCur) { const a = set(m, upTo), b = set(pm, upTo), ok = a.booked.length >= b.booked.length;
+    pace = `<div class="pace ${ok ? "" : "bad"}">${ok ? "On track" : "Behind"}: ${a.booked.length} bookings &amp; ${a.sold.length} sold by ${dom} ${MONTHS[Mo - 1]} vs ${b.booked.length} &amp; ${b.sold.length} by ${dom} ${MONTHS[(Mo + 10) % 12]}</div>`; }
+  let h = `<div class="card ssec"><div class="shead"><h3>${esc(label)} <span class="tag">vs ${esc(plabel)}</span></h3>
+      <label class="sb">Sold by <select id="sumbasis"><option value="delivery">Delivery date</option><option value="invoice">Invoice date</option><option value="disburse">Disbursement date</option></select></label></div>
+    <div class="sk">${tiles.map(t => `<div><span>${t[0]}</span><b>${t[1]}${d(t[1], t[2], t[3])}</b></div>`).join("")}</div>${pace}
+    ${od ? "" : '<div class="sub" style="margin-top:8px">Booked / sold / invoiced appear after the next data refresh (or sheet menu Stock Site &rarr; Show latest data now).</div>'}</div>`;
+  // ---- 2. sales team
+  const soldRows = cur.sold.map(r => [r[1]]), teleSold = cur.sold.map(r => [(orderOf[pk(r[2])] || [])[6] || ""]);
+  const salesT = SUMTAB.s === "tele" ? table(["Tele sales", "Booked", "Sold", "Cancel"], tally([cur.booked.map(r => [r[6]]), teleSold, cur.cancelled.map(r => [r[6]])]))
+    : table(["Sales", "Booked", "Sold", "Cancel"], tally([cur.booked.map(r => [r[3]]), soldRows, cur.cancelled.map(r => [r[3]])]));
+  const src = {}; cur.booked.forEach(r => { const k = tidy(r[7]) || "(blank)"; src[k] = (src[k] || 0) + 1; });
+  const srcTxt = Object.entries(src).sort((a, b) => b[1] - a[1]).map(([k, v]) => esc(k) + " " + v).join(" &middot; ");
+  h += `<div class="card ssec"><h3>Sales team</h3><div class="seg3" data-st="s"><button class="${SUMTAB.s === "sales" ? "on" : ""}" data-v="sales">Sales</button><button class="${SUMTAB.s === "tele" ? "on" : ""}" data-v="tele">Tele sales</button></div>
+    ${salesT}${SUMTAB.s === "sales" && srcTxt ? `<div class="cap">Buyer came from: ${srcTxt}</div>` : ""}</div>`;
+  // ---- 3. consign team (BDC / Tele consign from Master)
+  const who = c => SUMTAB.c === "tele" ? xv(c, "Tele") : c.bdc;
+  const consT = table([SUMTAB.c === "tele" ? "Tele consign" : "BDC", "Car in", "Sold", "Returned", "In stock"],
+    tally([cur.carIn.map(c => [who(c)]), cur.sold.map(r => [carOf(r) ? who(carOf(r)) : "(not in Master)"]), cur.returned.map(c => [who(c)]), stock.map(c => [who(c)])]));
+  h += `<div class="card ssec"><h3>Consign team</h3><div class="seg3" data-st="c"><button class="${SUMTAB.c === "bdc" ? "on" : ""}" data-v="bdc">BDC</button><button class="${SUMTAB.c === "tele" ? "on" : ""}" data-v="tele">Tele consign</button></div>${consT}</div>`;
+  // ---- 4. stock health (now)
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()), bands = [["0-30 days", 0, 30, "var(--green)"], ["31-60 days", 31, 60, "var(--blue)"], ["61-90 days", 61, 90, "var(--amber)"], ["90+ days", 91, 1e9, "var(--red)"]];
+  const age = c => c.carIn ? Math.round((today - parseIso(c.carIn)) / 864e5) : null;
+  const bd = bands.map(b => { const l = stock.filter(c => { const a = age(c); return a != null && a >= b[1] && a <= b[2]; }); return [b[0], l.length, l.reduce((s, c) => s + (c.price || 0), 0), b[3]]; });
+  const bmax = Math.max(1, ...bd.map(b => b[1]));
+  const drops = all.map(c => (c.pr || []).filter(p => inMon(p[2], m)).map(p => p[0] - p[1])).filter(l => l.length), dropN = drops.length, dropAvg = dropN ? Math.round(drops.flat().reduce((a, b) => a + b, 0) / drops.flat().length) : 0;
+  const withRv = stock.filter(c => c.rv && c.rv.s), due = withRv.filter(c => c.rv.s === "due").length, onTime = withRv.length ? Math.round((withRv.length - due) / withRv.length * 100) : null;
+  h += `<div class="card ssec"><h3>Stock health <span class="tag">now &middot; ${stock.length} cars</span></h3>
+    ${bd.map(b => `<div class="sbar"><span>${b[0]}</span><i style="width:${Math.max(4, b[1] / bmax * 100) * .55}%;background:${b[3]}"></i><b>${b[1]} &middot; RM${(b[2] / 1e6).toFixed(1)}M</b></div>`).join("")}
+    <div class="sk" style="margin-top:10px"><div><span>Price drops in ${esc(MONTHS[Mo - 1])}</span><b>${dropN}${dropN ? `<span class="d">avg RM${money(dropAvg)}</span>` : ""}</b></div>
+    <div><span>Price reviews up to date</span><b>${onTime == null ? "-" : onTime + "%"}${due ? `<span class="d dn">${due} due</span>` : ""}</b></div></div></div>`;
+  // ---- 5. returned
+  const retN = cur.returned.length, soldN = cur.sold.length, early = cur.returned.filter(c => c.carIn && c.outDate && (parseIso(c.outDate) - parseIso(c.carIn)) / 864e5 <= 30).length;
+  const reasons = group(cur.returned, c => c.outNote).slice(0, 6), rmax = Math.max(1, ...reasons.map(r => r[1]));
+  h += `<div class="card ssec"><h3>Returned</h3><div class="sk"><div><span>Return rate</span><b>${retN + soldN ? Math.round(retN / (retN + soldN) * 100) + "%" : "-"}</b><span>${retN} returned vs ${soldN} sold</span></div>
+    <div><span>Within 30 days</span><b>${early}</b><span>of ${retN} returned</span></div></div>
+    ${reasons.length ? `<div class="cap" style="margin:12px 0 2px;font-weight:700">Reasons</div>${reasons.map(r => `<div class="sbar"><span>${esc(r[0])}</span><i style="width:${r[1] / rmax * 55}%;background:var(--mut)"></i><b>${r[1]}</b></div>`).join("")}` : ""}</div>`;
+  // ---- 6. 6-month trend
+  const months = []; for (let i = 5; i >= 0; i--) { const dt = new Date(Y, Mo - 1 - i, 1); months.push(dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0")); }
+  const tr = months.map(mm => { const s = set(mm, inMon); return [mm, s.carIn.length, s.booked.length, s.sold.length]; }), tmax = Math.max(1, ...tr.map(t => Math.max(t[1], t[2], t[3])));
+  h += `<div class="card ssec"><h3>6-month trend</h3><div class="trend">${tr.map(t => `<div title="${mName(t[0])}: car in ${t[1]}, booked ${t[2]}, sold ${t[3]}">${[1, 2, 3].map(i => `<i style="height:${Math.max(2, t[i] / tmax * 100)}%;background:${["", "var(--purple)", "var(--blue)", "var(--green)"][i]}"><em>${t[i]}</em></i>`).join("")}</div>`).join("")}</div>
+    <div class="mon">${tr.map(t => `<span>${MONTHS[Number(t[0].slice(5)) - 1]}</span>`).join("")}</div>
+    <div class="leg"><span><i style="background:var(--purple)"></i>Car in</span><span><i style="background:var(--blue)"></i>Booked</span><span><i style="background:var(--green)"></i>Sold</span></div></div>`;
+  // ---- more
+  const soldCars = cur.sold.map(carOf).filter(Boolean);
+  h += `<div class="sumg"><div class="card"><h3>Car in by acquisition type</h3>${tbl(group(cur.carIn, c => xv(c, "Acquisition Type")))}</div>
+    <div class="card"><h3>Car in by consignment type</h3>${tbl(group(cur.carIn, c => xv(c, "Consignment Type")))}</div>
+    <div class="card"><h3>Sold by brand</h3>${tbl(group(soldCars, c => c.brand))}</div></div>`;
+  $("sumbody").innerHTML = (ps ? "" : '<div class="note on">Sold &amp; returned data still loading; figures will fill in shortly.</div>') + h;
+  $("sumbasis").value = SUMBASIS;
+  // copy text (WhatsApp)
+  const lines = o => Object.values(o).sort((a, b) => b.v[0] - a.v[0]).map(r => "  - " + r.n + ": " + r.v.join(" / ")).join("\n");
+  SUMTXT = ["*Automall summary: " + label + "*", "",
+    "Car in " + cur.carIn.length + " | Booked " + cur.booked.length + " | Sold " + soldN + " (by " + basisName + ") | Invoiced " + cur.invoiced.length + " | Cancelled " + cur.cancelled.length + " | Returned " + retN,
+    "vs " + plabel + ": car in " + prev.carIn.length + ", booked " + prev.booked.length + ", sold " + prev.sold.length, "",
+    "Sales (booked / sold / cancel):", lines(tally([cur.booked.map(r => [r[3]]), soldRows, cur.cancelled.map(r => [r[3]])])), "",
+    "BDC (car in / sold / returned / in stock):", lines(tally([cur.carIn.map(c => [c.bdc]), cur.sold.map(r => [carOf(r) ? carOf(r).bdc : "(not in Master)"]), cur.returned.map(c => [c.bdc]), stock.map(c => [c.bdc])])), "",
+    "Stock now: " + stock.length + " (" + bd.map(b => b[0] + " " + b[1]).join(", ") + ")"].join("\n");
 }
+function group(l, f) { const g = {}; l.forEach(c => { const k = String(f(c) || "(blank)").trim() || "(blank)"; g[k] = (g[k] || 0) + 1; }); return Object.entries(g).sort((a, b) => b[1] - a[1]); }
+function tbl(rows) { return rows.length ? `<table class="sumt">${rows.map(r => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join("")}</table>` : '<div class="sub">None.</div>'; }
+$("sumbody").addEventListener("click", e => { const b = e.target.closest(".seg3 button"); if (!b) return; SUMTAB[b.parentNode.dataset.st] = b.dataset.v; renderSummary(); });
+$("sumbody").addEventListener("change", e => { if (e.target.id !== "sumbasis") return; SUMBASIS = e.target.value; try { localStorage.setItem("caricarz_sumbasis", SUMBASIS); } catch (x) {} renderSummary(); });
 $("sumcp").onclick = () => fallbackCopy(SUMTXT, () => { $("sumcp").textContent = "Copied \u2713"; setTimeout(() => $("sumcp").textContent = "Copy", 1500); });
 function fallbackCopy(t, done) { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, () => fallback(t, done)); else fallback(t, done); }
 // ---------- documents (VOC / JomCheck): fetched only with the passcode, shown inside the page ----------
