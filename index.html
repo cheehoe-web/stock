@@ -926,9 +926,9 @@ function retCard(r, open) {
   const btn = !open ? "" : nx === "docs" && who ? `<button class="btn pri" data-rgo="docs" data-rp="${esc(r.plate)}">Prepare documents</button>`
     : nx === "pdi" && (who || fleet) ? `<button class="btn pri" data-rgo="pdi" data-rp="${esc(r.plate)}">Mark PDI done</button>`
     : nx === "handover" && who ? `<button class="btn pri" data-rgo="handover" data-rp="${esc(r.plate)}">Hand over to consignor</button>` : "";
-  return `<div class="rcard"><div class="rtop"><span class="kp">${esc(r.plate)}</span>${r.refund ? '<span class="pill b-amber">RM200 refund</span>' : ""}<span class="sub" style="margin-left:auto">${r.collect ? "Collect " + esc(r.collect.slice(5).replace("-", "/")) : ""}</span></div>
+  return `<div class="rcard"><div class="rtop"><span class="kp">${esc(r.plate)}</span>${r.refund ? '<span class="pill b-amber">RM200 reward</span>' : ""}<span class="sub" style="margin-left:auto">${r.collect ? "Collect " + esc(r.collect.slice(5).replace("-", "/")) : ""}</span></div>
     <div class="sub">${esc(r.model)}${r.consignor ? " &middot; " + esc(r.consignor) : ""}</div><div class="sub">${esc(r.reason)}${r.days ? " &middot; " + esc(r.days) + " days in stock" : ""}</div>
-    ${retTrack(r)}${r.pdi[2] ? `<div class="sub">PDI note: ${esc(r.pdi[2])}</div>` : ""}<div class="rbtns">${btn}${open && who ? `<button class="btn" data-rletter="${esc(r.plate)}" ${r.refund ? "" : 'style="display:none"'}>Letter of request</button>` : ""}${r.photo ? `<a class="btn" href="${esc(r.photo)}" target="_blank" rel="noopener">Photo</a>` : ""}</div></div>`;
+    ${retTrack(r)}${r.pdi[2] ? `<div class="sub">PDI note: ${esc(r.pdi[2])}</div>` : ""}<div class="rbtns">${btn}${open && who ? `<button class="btn" data-rletter="${esc(r.plate)}" ${r.refund ? "" : 'style="display:none"'}>Reward claim form</button>` : ""}${r.photo ? `<a class="btn" href="${esc(r.photo)}" target="_blank" rel="noopener">Photo</a>` : ""}</div></div>`;
 }
 function openRets() {
   $("retov").classList.add("on"); document.body.style.overflow = "hidden"; RFORM = null;
@@ -955,9 +955,9 @@ function renderRetForm() {
   } else {
     h += `<div class="rcard" style="margin:0 0 10px">${retCard(r, false)}</div>`;
     if (f.step === "docs") h += `<label class="rchk"><input type="checkbox" id="rkeys"> Key set ready (key, spare key, VOC)</label>
-      <div class="sub">Saving makes the return form PDF (print 2 copies: Carrealm + consignor) and posts it to Telegram.${r.refund ? " Also print the <b>letter of request</b> for the RM200 refund." : ""}</div>`;
+      <div class="sub">Saving makes the return form PDF (print 2 copies: Carrealm + consignor) and posts it to Telegram.${r.refund ? " Also print the <b>reward claim form</b> (RM200 Day-90 reward) for the consignor to sign at handover." : ""}</div>`;
     if (f.step === "pdi") h += `<label>Note<input id="rnote" placeholder="Optional, e.g. tyre, battery"></label>`;
-    if (f.step === "handover") h += `<label>Photo (required)</label><div class="kphoto" id="rshot" role="button" tabindex="0">${kShotEmpty("the car with the consignor")}</div><input type="file" id="rfile" accept="image/*" capture="environment" style="display:none">${r.refund ? '<div class="sub">RM200 refund: make sure the consignor signed the letter of request.</div>' : ""}`;
+    if (f.step === "handover") h += `<label>Photo (required)</label><div class="kphoto" id="rshot" role="button" tabindex="0">${kShotEmpty("the car with the consignor")}</div><input type="file" id="rfile" accept="image/*" capture="environment" style="display:none">${r.refund ? '<div class="sub">RM200 reward: make sure the consignor signed the reward claim form.</div>' : ""}`;
   }
   h += `<button class="btn pri" type="submit" style="padding:12px">${{ request: "Save, hold for return", docs: "Documents ready", pdi: "PDI done", handover: "Save, returned" }[f.step]}</button><div class="kmsg" id="rmsg"></div>
     ${f.step !== "request" && isInt() ? '<button class="btn" type="button" id="rcancel" style="color:var(--red)">Cancel this return</button>' : ""}<button class="btn" type="button" id="rback">Back</button></form></div>`;
@@ -997,25 +997,34 @@ function retSubmit(step) {
     if (body.step === "request" || body.step === "handover") { DATA.stock = null; fetching.stock = false; load("stock"); }   // status changed in Master
   }).catch(() => { $("rmsg").textContent = "Not saved: no connection. Try again."; sb.disabled = false; sb.textContent = sb.dataset.t; });
 }
-// letter of request (RM200 inspection-fee refund), filled in, printed for the consignor to sign
+// Day-90 reward claim form (Consignment Agreement Cl. 2.2), filled in and printed for the consignor to sign at handover
 function retLetter(plate) {
   const r = retOf(plate); if (!r) return;
-  const w = window.open("", "_blank"); if (!w) { note("Allow pop-ups to print the letter."); return; }
-  const t = new Date(), dt = String(t.getDate()).padStart(2, "0") + "." + String(t.getMonth() + 1).padStart(2, "0") + "." + t.getFullYear();
-  const line = l => `<div class="ln"><span>${l}</span><i></i></div>`;
-  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Letter of request ${esc(plate)}</title><style>
-    body{font:15px/1.6 Arial,sans-serif;color:#000;max-width:720px;margin:40px auto;padding:0 24px}.top{display:flex;justify-content:space-between}
-    .ln{display:flex;gap:8px;margin:6px 0;align-items:flex-end}.ln span{white-space:nowrap}.ln i{flex:1;border-bottom:1px solid #000;height:18px}
-    h3{margin:28px 0 12px;font-size:16px}p{margin:12px 0;font-size:15px}.sig{margin-top:60px;width:260px;border-top:1px solid #000;padding-top:4px}
-    @media print{.noprint{display:none}body{margin:20px auto}}</style></head><body>
-    <div class="noprint" style="margin-bottom:16px"><button onclick="print()" style="padding:10px 18px;font-size:15px">Print</button></div>
-    <div class="top"><div style="flex:1;max-width:60%"><b>${esc(r.consignor || "")}</b>${line("IC / Company No:")}${line("Contact No:")}</div><div>${dt}</div></div>
-    <p style="margin-top:28px">To Caricarz Automall,</p><h3>Subject: Consignment Cancellation and Refund Request</h3><p>Dear Sir/Madam,</p>
-    <p>1. I would like to formally request the cancellation of my vehicle consignment for the ${esc(r.model || "")} registration number <b>${esc(r.plate)}</b>${r.carIn ? ", consigned on " + esc(String(r.carIn).slice(0, 10).split("-").reverse().join(".")) : ""}.</p>
-    <p>2. I kindly request a refund of the inspection fee paid, <b>RM200.00</b> in total, as the vehicle was not sold within 90 days of consignment.</p>
-    <p>3. Please process the refund at your earliest convenience to the account details below. Thank you for your understanding.</p>
-    ${line("Account number:")}${line("Account holder:")}${line("Bank:")}
-    <p style="margin-top:28px">Yours sincerely,</p><div class="sig">${esc(r.consignor || "")}</div></body></html>`);
+  const w = window.open("", "_blank"); if (!w) { note("Allow pop-ups to print the claim form."); return; }
+  const t = new Date(), dmy = d => d ? String(d).slice(0, 10).split("-").reverse().join("/") : "";
+  const today = String(t.getDate()).padStart(2, "0") + "/" + String(t.getMonth() + 1).padStart(2, "0") + "/" + t.getFullYear();
+  const row = (l, v) => `<tr><th>${l}</th><td>${v || ""}</td></tr>`;
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reward claim ${esc(plate)}</title><style>
+    @page{size:A4;margin:16mm}body{font:13px/1.5 Arial,sans-serif;color:#000;max-width:760px;margin:24px auto;padding:0 20px}
+    .hd{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #000;padding-bottom:8px}.hd b{font-size:15px}
+    h1{font-size:18px;margin:16px 0 2px;letter-spacing:.5px}.sub{color:#444;margin:0 0 12px}
+    h2{font-size:13px;margin:16px 0 6px;background:#eee;padding:4px 8px}
+    table{width:100%;border-collapse:collapse}th,td{border:1px solid #999;padding:6px 8px;text-align:left;vertical-align:top}th{width:38%;font-weight:600;background:#fafafa}
+    td.w{height:22px}.sig{display:flex;gap:24px;margin-top:10px}.sig div{flex:1}.sig i{display:block;border-bottom:1px solid #000;height:46px}
+    .amt{font-size:16px;font-weight:700}p{margin:6px 0}@media print{.noprint{display:none}body{margin:0 auto}}</style></head><body>
+    <div class="noprint" style="margin-bottom:12px"><button onclick="print()" style="padding:10px 18px;font-size:15px">Print</button></div>
+    <div class="hd"><div><b>CARREALM AUTOMALL SDN. BHD.</b><br>Caricarz Automall</div><div>Ref: RW-${esc(pkey(plate))}<br>Date: ${today}</div></div>
+    <h1>CONSIGNMENT REWARD CLAIM FORM</h1><p class="sub">Day-90 Reward under Clause 2.2 (Reward Program) of the Consignment Agreement</p>
+    <h2>A. Vehicle and consignment</h2><table>${row("Registration number", `<b>${esc(plate)}</b>`)}${row("Vehicle", esc(r.model || ""))}${row("Consignor", esc(r.consignor || ""))}
+      ${row("Consignment start (car in)", esc(dmy(r.carIn)))}${row("Days on consignment", esc(String(r.days || "")))}${row("Reward amount", '<span class="amt">RM 200.00</span>')}</table>
+    <h2>B. Consignor declaration</h2>
+    <p>I, the Consignor named above, confirm that the vehicle above was consigned to Carrealm Automall Sdn. Bhd. for more than 90 days without being sold and is being returned to me.
+    In accordance with Clause 2.2 (Reward Program) of the Consignment Agreement, I claim the Day-90 Reward of <b>RM200.00</b>, to be paid to the account below.
+    I confirm that I have received the vehicle and the items listed in the Vehicle Return Form.</p>
+    <h2>C. Payment details (consignor to fill in)</h2><table>${row("Account holder name", "")}${row("Bank", "")}${row("Account number", "")}${row("IC / Company registration no.", "")}${row("Contact number", "")}</table>
+    <div class="sig"><div>Consignor signature<i></i>Name:<br>Date:</div><div>Received by (Carrealm)<i></i>Name:<br>Date:</div></div>
+    <h2>D. For office use</h2><table>${row("Checked by (BDC / consign admin)", "")}${row("Approved by", "")}${row("Paid on / reference", "")}</table>
+    </body></html>`);
   w.document.close();
 }
 $("retbtn").onclick = openRets;
