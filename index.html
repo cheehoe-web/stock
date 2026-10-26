@@ -1032,7 +1032,7 @@ function renderRetForm() {
     if (f.step === "handover") {
       const vb = f.outcome === "vbao";
       h += `<label>What happened?</label><div class="kseg rseg"><button type="button" data-rout="ret" class="${vb ? "" : "on"}">&#9989; Returned to consignor</button><button type="button" data-rout="vbao" class="${vb ? "on" : ""}">&#127968; Returned, list as V.B.A.O</button></div>
-        <div class="sub">${vb ? "Car and keys go back to the consignor, but the ad stays up as V.B.A.O. Master Remark becomes V.B.A.O; change the ads status to V.B.A.O too" + (r.refund ? ". No RM200 reward (V.B.A.O)" : "") + "." : "Car and keys leave with the consignor. Master becomes Returned; keys still out are closed."}</div>
+        <div class="sub">${vb ? "Car and keys go back to the consignor, but the ad stays up as V.B.A.O. Master Remark becomes V.B.A.O and the Return Date is set" + (r.refund ? ". No RM200 reward (V.B.A.O)" : "") + "." : "Car and keys leave with the consignor. Master becomes Returned; keys still out are closed."}</div>
         <label>Note<input id="rnote" placeholder="Optional"></label>
         ${shot("the car with the consignor")}
         ${r.refund && !vb ? '<div class="rinfo">&#127873; RM200 reward: get the consignor to sign the reward claim form.</div>' : ""}`;
