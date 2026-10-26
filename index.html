@@ -977,7 +977,7 @@ function retCard(r, open) {
   const waiting = open && nx && !btn ? `<div class="rwait">Waiting for <b>${RNEXT[nx][0]}</b>: ${RNEXT[nx][1]}</div>` : "";
   const links = [["Forms", r.forms, "&#128206;"], ["Docs photo", r.docsPhoto, "&#128247;"], ["PDI photo", r.pdiPhoto, "&#128247;"], [r.outcome === "V.B.A.O" ? "Photo" : "Handover photo", r.photo, "&#128247;"]]
     .filter(l => l[1]).map(l => `<a class="rlink" href="${esc(l[1])}" target="_blank" rel="noopener">${l[2]} ${l[0]}</a>`).join("");
-  const tag = !open ? (r.outcome === "V.B.A.O" ? '<span class="pill b-amber">Kept as V.B.A.O</span>' : '<span class="pill b-grey">Returned</span>') : "";
+  const tag = !open ? (r.outcome === "V.B.A.O" ? '<span class="pill b-amber">Returned, listed V.B.A.O</span>' : '<span class="pill b-grey">Returned</span>') : "";
   return `<div class="rcard ${open ? "" : "rdone"}"><div class="rtop"><span class="kp">${esc(r.plate)}</span>${tag}${r.refund ? '<span class="pill b-purple">&#127873; RM200 reward</span>' : ""}<span class="sub" style="margin-left:auto">${r.collect && open ? "&#128197; " + esc(r.collect.slice(8, 10) + "/" + r.collect.slice(5, 7)) : ""}</span></div>
     <div class="rmodel">${esc(r.model)}</div><div class="sub">${r.consignor ? esc(r.consignor) + " &middot; " : ""}${esc(r.reason)}${r.days ? " &middot; " + esc(r.days) + " days" : ""}</div>
     ${retTrack(r)}${r.kit ? `<div class="sub">&#9989; ${esc(r.kit)}</div>` : ""}${r.pdi[2] ? `<div class="sub">PDI note: ${esc(r.pdi[2])}</div>` : ""}${waiting}
@@ -1020,7 +1020,7 @@ function renderRetForm() {
       <label>Note<input id="rnote" placeholder="Optional (required for Other)"></label>
       <label>Consignor collects on<input id="rcollect" type="date"></label>`; sub = "Save, hold for return";
   } else {
-    h += retCard(r, false).replace('class="rcard rdone"', 'class="rcard rmini"').replace(/<span class="pill b-grey">Returned<\/span>|<span class="pill b-amber">Kept as V.B.A.O<\/span>/, "");
+    h += retCard(r, false).replace('class="rcard rdone"', 'class="rcard rmini"').replace(/<span class="pill b-grey">Returned<\/span>|<span class="pill b-amber">Returned, listed V.B.A.O<\/span>/, "");
     if (f.step === "docs") {
       const k = f.kit = f.kit || retKit(f.plate); f.ticks = f.ticks || {};
       h += `<label>Checklist <span class="sub" style="font-weight:400">from Master: Spare Key / VOC</span></label><div class="rkit">${k.items.map((it, n) => `<label class="rchk"><input type="checkbox" data-rt="${n}" ${f.ticks[n] ? "checked" : ""}> ${esc(it)}</label>`).join("")}
@@ -1031,12 +1031,12 @@ function renderRetForm() {
     if (f.step === "pdi") { h += `<label>Note<input id="rnote" placeholder="Optional, e.g. tyre, battery"></label>${shot("the car after PDI")}`; sub = "PDI done"; }
     if (f.step === "handover") {
       const vb = f.outcome === "vbao";
-      h += `<label>What happened?</label><div class="kseg rseg"><button type="button" data-rout="ret" class="${vb ? "" : "on"}">&#9989; Returned to consignor</button><button type="button" data-rout="vbao" class="${vb ? "on" : ""}">&#128257; Keep as V.B.A.O</button></div>
-        <div class="sub">${vb ? "Consignor agreed to leave the car with us. It goes back on the stock list as V.B.A.O and the return closes" + (r.refund ? " (no RM200 reward)" : "") + "." : "Car and keys leave with the consignor. Master becomes Returned; keys still out are closed."}</div>
+      h += `<label>What happened?</label><div class="kseg rseg"><button type="button" data-rout="ret" class="${vb ? "" : "on"}">&#9989; Returned to consignor</button><button type="button" data-rout="vbao" class="${vb ? "on" : ""}">&#127968; Returned, list as V.B.A.O</button></div>
+        <div class="sub">${vb ? "Car and keys go back to the consignor, but the ad stays up as V.B.A.O. Master Remark becomes V.B.A.O; change the ads status to V.B.A.O too" + (r.refund ? ". No RM200 reward (V.B.A.O)" : "") + "." : "Car and keys leave with the consignor. Master becomes Returned; keys still out are closed."}</div>
         <label>Note<input id="rnote" placeholder="Optional"></label>
-        ${vb ? `<label>Photo (optional)</label><div class="kphoto" id="rshot" role="button" tabindex="0">${kShotEmpty("optional")}</div><input type="file" id="rfile" accept="image/*" capture="environment" style="display:none">` : shot("the car with the consignor")}
+        ${shot("the car with the consignor")}
         ${r.refund && !vb ? '<div class="rinfo">&#127873; RM200 reward: get the consignor to sign the reward claim form.</div>' : ""}`;
-      sub = vb ? "Save, keep as V.B.A.O" : "Save, returned";
+      sub = vb ? "Save, returned + V.B.A.O" : "Save, returned";
     }
   }
   h += `<button class="btn pri" type="submit" style="padding:12px">${sub}</button><div class="kmsg" id="rmsg"></div>
@@ -1067,7 +1067,7 @@ function retSubmit(step) {
   if (body.step === "docs") { const k = f.kit; body.kit = k.items.map(x => x.replace(/ \(if any; not filled in Master\)$/, "")); body.info = k.info; body.kitDone = k.items.every((x, n) => f.ticks[n]);
     if (!body.kitDone) return err("Tick every item on the checklist first."); }
   if (body.step === "handover") body.outcome = f.outcome === "vbao" ? "vbao" : "returned";
-  if (["docs", "pdi"].indexOf(body.step) >= 0 || (body.step === "handover" && body.outcome === "returned")) { if (!f.photo) return err("Take a photo first."); }
+  if (["docs", "pdi", "handover"].indexOf(body.step) >= 0 && !f.photo) return err("Take a photo first.");
   if (f.photo && body.step !== "request") body.photo = f.photo;
   if (body.step === "cancel") { body.photo = undefined; }
   const sb = $("rform").querySelector("[type=submit]"); sb.disabled = true; sb.dataset.t = sb.dataset.t || sb.textContent; sb.innerHTML = '<span class="spin w"></span>' + (body.step === "docs" ? "Making forms and sending photo..." : "Saving...");
@@ -1476,7 +1476,7 @@ const GUIDE_INTERNAL = `<div class="gtip">&#128274; Internal only. Don't share s
     `<div class="gflow"><span>Master</span>&rarr;<span>CariCarz / Carlist / Mudah / FB</span>&rarr;<span>My Promotion</span>&rarr;<span>Ads upgrade</span>&rarr;<span>Price tag</span></div>`),
   gstep(5, "Sold & Returned, Summary", "Full history with prices. <b>Summary</b> (top): this month vs last month, sales / tele sales, BDC / tele consign, stock health, returned, 6-month trend. Pick how Sold is counted (delivery, invoice or disbursement date); Copy gives the WhatsApp text.",
     `<span class="hb" style="cursor:default"><i>&#128202;</i>Summary</span>`),
-  gstep(6, "Return a car to the consignor", "Open the car &rarr; <b>Hold for return</b>, or use <b>Returns</b> at the top. Each step needs a photo and posts to the Telegram Returns topic. Inventory ticks the checklist (from Master: key, spare key, VOC) and prints the forms. The last step: <b>Returned</b>, or <b>Keep as V.B.A.O</b> if the owner leaves it with us.",
+  gstep(6, "Return a car to the consignor", "Open the car &rarr; <b>Hold for return</b>, or use <b>Returns</b> at the top. Each step needs a photo and posts to the Telegram Returns topic. Inventory ticks the checklist (from Master: key, spare key, VOC) and prints the forms. The last step: <b>Returned</b>, or <b>Returned, list as V.B.A.O</b> (car goes home, ad stays up). Both need a photo.",
     `<div class="gflow"><span>Hold</span>&rarr;<span>Docs (Inventory)</span>&rarr;<span>PDI (Fleet)</span>&rarr;<span>Returned / V.B.A.O</span></div><div class="gcap">&#127873; RM200 reward: Private Consignment over 90 days (not V.B.A.O). The claim form prints with the return form.</div>`),
   gstep(7, "Staff, roles and equipment", "Add people in the <b>Staff</b> tab (name, PIN, Active, Role) and equipment in the <b>Assets</b> tab. Someone left? Set Active to <b>No</b>.",
     `<table class="sumt st2"><tr><th>Role</th><th>Sees</th></tr><tr><td>Internal</td><td>Everything here</td></tr><tr><td>Fleet</td><td>Sales view + Returns (PDI), key history, return keys for others</td></tr><tr><td>Sales</td><td>Stock, booking, aging, own keys</td></tr><tr><td>(blank)</td><td>Dealer: cars + own keys</td></tr></table>`)
