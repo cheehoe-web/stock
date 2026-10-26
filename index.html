@@ -61,7 +61,7 @@
   .bar{height:9px;background:#eef0f6;border-radius:99px;overflow:hidden}
   .bar i{display:block;height:100%;border-radius:99px}
   .tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
-  .tools input[type=search]{flex:1 1 100%;min-width:260px;font-size:15px;padding:9px 12px}
+  #q{flex:1 1 100%;min-width:260px;font-size:15px;padding:9px 12px}
   .count{padding:8px 14px;font-size:13px;color:var(--mut)}
   .pasthit{display:inline-block;margin:6px 0 0;padding:6px 10px;border:1px solid var(--line,#e5e7eb);border-radius:999px;background:#fff7ed;color:#9a3412;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer}
   table{width:100%;border-collapse:collapse}
@@ -76,6 +76,8 @@
   tbody tr{cursor:pointer}
   .ov{position:fixed;inset:0;background:rgba(17,24,39,.55);display:none;align-items:center;justify-content:center;padding:14px;z-index:9}
   .ov.on{display:flex}
+  html.noscroll,html.noscroll body{overflow:hidden;overscroll-behavior:none}
+  .ov,.dlg,.sumw,#docbody,.vc .vbody{overscroll-behavior:contain}
   .dlg{background:#fff;border-radius:14px;max-width:460px;width:100%;max-height:92vh;overflow:auto;padding:18px 20px}
   .dlg pre{white-space:pre-wrap;font:14px/1.6 inherit;font-family:inherit;margin:0 0 14px}
   .dlg .btns{display:flex;gap:8px;flex-wrap:wrap}
@@ -117,10 +119,9 @@
   .xsec h5{margin:10px 0 4px;font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
   .xgrid{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:13px}
   .xgrid span:nth-child(odd){color:var(--mut)}
-  .ichip{display:none;font-size:12px;font-weight:600;color:var(--purple);background:#ede9fe;border-radius:8px;padding:6px 10px}
-  .ichip.on{display:inline-flex;gap:8px;align-items:center}
+  .ichip{display:none}
 
-  .ichip button{border:0;background:#fff;color:var(--purple);font:inherit;font-weight:700;border-radius:6px;padding:2px 8px;cursor:pointer}
+
   /* vehicle card */
   .vc{max-width:520px;padding:0;display:flex;flex-direction:column;overflow:hidden}
   .vc .vbody{overflow:auto;padding:18px 20px 8px;flex:1}
@@ -183,8 +184,7 @@
   .vrev label{display:grid;gap:3px}
   .vrev input{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 10px;font:inherit;font-size:16px}
   .vrev .btn{margin-top:8px}
-  .sumbtn{border:1px solid #ddd6fe;background:#f5f3ff;color:var(--purple);border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer;display:none}
-  .sumbtn.on{display:inline-block}
+
   #sumov{z-index:10;padding:0}
   .sumw{background:var(--bg);width:100%;height:100%;overflow:auto}
   .sumh{position:sticky;top:0;z-index:1;display:flex;align-items:center;gap:10px;padding:12px 18px;background:#fff;border-bottom:1px solid var(--line)}
@@ -217,7 +217,7 @@
   .sumt td{padding:5px 0;border-top:1px solid var(--line)}
   .sumt td:last-child{text-align:right;font-weight:700}
   @media(max-width:720px){.sumh{padding:10px 12px}.sumb{padding:10px}.sumg{grid-template-columns:1fr}}
-  body.gated .wrap > :not(.head):not(#landing), body.gated #kfab, body.gated .hright > :not(#gbtn), body.broker #gbtn{display:none !important}
+  body.gated .wrap > :not(.head):not(#landing), body.gated #kfab, body.gated .hright > :not(.htools), body.gated .htools > :not(#gbtn), body.broker #gbtn{display:none !important}
   #landing{display:none;text-align:center;padding:28px 20px}
   body.gated #landing{display:block}
   /* dealer view: cars only, no status / aging / booking / phase / days */
@@ -229,7 +229,7 @@
   #landing h3{margin:0 0 6px;font-size:18px}
   #landing .btn{margin-top:14px;padding:13px 22px;font-size:15px;width:100%;max-width:320px}
   body.broker .kseg{grid-template-columns:1fr 1fr}
-  .gbtn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+
   #gov{z-index:14}
   #gov .dlg{max-width:620px;padding:0}
   .gh{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);padding:14px 18px 10px;z-index:1}
@@ -254,8 +254,45 @@
   .gflow{display:flex;flex-wrap:wrap;align-items:center;gap:5px;font-size:12px;color:var(--mut)}
   .gflow span{background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px 8px;color:var(--ink);font-weight:600}
   .gbody .gtip{background:#f6f7fb;border-radius:10px;padding:9px 12px;margin:10px 0;font-size:13.5px}
-  .retbtn{border:1px solid #c7d2fe;background:#eef2ff;color:#3730a3;border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
-  .retbtn b{background:#4f46e5;color:#fff;border-radius:999px;padding:0 6px;margin-left:2px}.retbtn b:empty{display:none}
+  .htools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .hb{display:inline-flex;align-items:center;gap:6px;height:34px;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:10px;padding:0 12px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+  .hb:hover{border-color:#c7d2fe;background:#f8faff}.hb i{font-style:normal;font-size:15px;line-height:1}
+  .hb.sumbtn{display:none}.hb.sumbtn.on{display:inline-flex}
+  .retbtn b{background:var(--blue);color:#fff;border-radius:999px;padding:0 7px;font-size:11.5px;line-height:18px}.retbtn b:empty{display:none}
+  .ichip{height:34px;border-radius:10px;padding:0 4px 0 12px;background:#f5f3ff;border:1px solid #ddd6fe;color:var(--purple);font-size:13px;font-weight:700}
+  .ichip.on{display:inline-flex;align-items:center;gap:8px}
+  .idot{width:8px;height:8px;border-radius:50%;background:var(--purple);box-shadow:0 0 0 3px #ede9fe}
+  .ichip button{display:inline-flex;align-items:center;gap:5px;height:26px;border:1px solid #ddd6fe;background:#fff;color:var(--purple);font:inherit;font-size:12px;font-weight:700;border-radius:8px;padding:0 9px;cursor:pointer}
+  .cdlg{max-width:360px;text-align:center;padding:22px 20px 18px}.cdlg h3{margin:8px 0 6px;font-size:17px}.cdlg .sub{font-size:13.5px;line-height:1.5;margin-bottom:16px}
+  .cdlg .btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cdlg .btn{padding:11px}
+  .cic{width:52px;height:52px;border-radius:50%;background:#f3f4f6;display:grid;place-items:center;margin:0 auto;font-size:24px}
+  .btn.red{background:var(--red);border-color:var(--red);color:#fff}
+  @media(max-width:720px){
+    .hright{width:100%;gap:8px}.hright .seg{width:100%;display:grid;grid-template-columns:1fr 1fr}.hright .seg.hide{display:none}
+    .htools{width:100%;gap:6px}.hb{padding:0 10px}
+    .hb,.ichip{flex:0 0 auto}#refreshed{width:100%}
+    .sumh .lg{display:none}
+  }
+  /* returns */
+  .rsec{margin-bottom:14px}.rsec h3,.rsec summary h3{margin:0 0 8px;font-size:15px;display:flex;align-items:center;gap:8px}.rsec summary{list-style:none;cursor:pointer}.rsec summary::-webkit-details-marker{display:none}
+  .rsec .tag{font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px;background:#e5e7eb;color:#374151}
+  details.rsec summary h3:after{content:"\25BE";color:var(--mut);font-size:12px}details.rsec[open] summary h3:after{content:"\25B4"}
+  .rempty{background:#fff;border:1px dashed var(--line);border-radius:12px;padding:22px;text-align:center;color:var(--mut)}
+  .rcard .kp{font-size:16px}.rmodel{font-weight:600;margin-top:3px}
+  .rcard.rdone{opacity:.92;background:#fafafa}.rcard.rmini{margin:0 0 4px;background:#f9fafb}
+  .rtrack div.now i{border-color:var(--blue);color:var(--blue);background:#eff6ff}.rtrack div.now span{color:var(--blue)}
+  .rtrack i{color:var(--mut);font-weight:700}.rtrack .ok i{color:#fff}
+  .rwait{margin-top:8px;font-size:12.5px;background:#f3f4f6;border-radius:8px;padding:7px 10px;color:#374151}
+  .rlinks{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .rlink{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 10px;font-size:12.5px;font-weight:600;color:var(--ink);text-decoration:none}
+  .rlink:hover{border-color:#c7d2fe;background:#f8faff}
+  .rkit{display:grid;gap:6px}
+  .kform label.rchk{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-size:14px;cursor:pointer;background:#fff}
+  .kform label.rchk:has(input:checked){border-color:#86efac;background:#f0fdf4}
+  .rchk input{width:20px;height:20px;margin:0;accent-color:var(--green);flex:0 0 auto}
+  .rinfo{font-size:13px;background:#f3f4f6;border-radius:10px;padding:8px 12px;color:#374151}.rinfo.bad{background:#fef2f2;color:#b91c1c;font-weight:600}
+  .rforms{position:relative;border-color:#bbf7d0;background:#f0fdf4;padding-right:46px}.rfx{position:absolute;top:10px;right:10px;width:30px;height:30px;font-size:16px}
+  .rseg{grid-template-columns:1fr 1fr !important}.rseg button{padding:11px 6px}
   .rcard{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:10px;background:#fff}
   .rtop{display:flex;align-items:center;gap:8px}
   .rtrack{display:flex;margin:10px 0 4px}.rtrack div{flex:1;text-align:center;position:relative;font-size:11px;color:var(--mut)}
@@ -348,7 +385,7 @@
     .wrap{padding:10px}.head{padding:12px 14px}.title{font-size:18px}.three{display:none}
     .grid6{gap:8px}.kpi{padding:10px 12px}.kpi .num{font-size:26px}.kpi .lbl{font-size:12px}
     .tools{padding:10px}.tools select{flex:1 1 45%}
-    .tools input[type=search]{flex:1 1 0;min-width:0}
+    #q{flex:1 1 0;min-width:0}
     .scroll{max-height:none;overflow:visible}
     thead{display:none}
     .scroll table,#rows,#rows tr,#rows td{display:block}                /* car list only: other tables (summary) stay tables */
@@ -364,7 +401,7 @@
     .mc2{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:9px}
     .mc2 .links{margin-left:auto;display:flex;gap:6px}
     .mc2 .links a{padding:6px 10px;font-size:12px;margin:0}
-    input,select,.tools input[type=search]{font-size:16px}          /* stops iPhone zooming in when typing */
+    input,select,#q{font-size:16px}          /* stops iPhone zooming in when typing */
     .grid6{display:flex;overflow-x:auto;gap:8px;margin:0 -10px 12px;padding:0 10px 4px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
     .grid6::-webkit-scrollbar{display:none}
     .grid6 .kpi{flex:0 0 112px;padding:9px 11px;gap:2px;scroll-snap-align:start}
@@ -384,10 +421,12 @@
     <div class="hright">
       <div class="seg hide" id="seg"><button data-view="stock" class="on">In stock</button><button data-view="past">Sold &amp; Returned</button></div>
       <button class="keybtn" id="keybtn" type="button">&#128273; Keys</button>
-      <button class="retbtn" id="retbtn" type="button" style="display:none">&#8617; Returns <b id="retn"></b></button>
-      <button class="sumbtn" id="sumbtn" type="button">Summary</button>
-      <button class="gbtn" id="gbtn" type="button">&#10067; Guide</button>
-      <span class="ichip" id="ichip">Internal view <button id="lockbtn" type="button">Lock</button></span>
+      <div class="htools">
+      <button class="hb retbtn" id="retbtn" type="button" style="display:none"><i>&#8617;&#65039;</i>Returns <b id="retn"></b></button>
+      <button class="hb sumbtn" id="sumbtn" type="button"><i>&#128202;</i>Summary</button>
+      <button class="hb gbtn" id="gbtn" type="button"><i>&#128214;</i>Guide</button>
+      <span class="ichip" id="ichip"><span class="idot"></span>Internal<button id="lockbtn" type="button" aria-label="Lock internal view"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Lock</button></span>
+      </div>
       <span class="sub" id="refreshed"></span>
     </div>
   </div>
@@ -406,7 +445,7 @@
 
   <div class="card">
     <div class="tools fold" id="tools">
-      <input type="search" id="q" placeholder="Search anything: plate, ads ID, model, brand, color, year, price, remark..." autofocus>
+      <input type="text" id="q" inputmode="text" enterkeyhint="search" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Search anything: plate, ads ID, model, brand, color, year, price, remark...">
       <button class="ftog" id="ftog" type="button">Filters</button>
       <select id="fStatus"></select>
       <select id="fPrice"></select>
@@ -434,20 +473,20 @@
   </div>
 </div>
 
-<div class="ov" id="lockov"><div class="dlg" style="max-width:340px">
-  <h3 style="margin:0 0 6px">Lock internal view?</h3>
-  <div class="sub" style="margin-bottom:14px">Cost, VOC and price review will be hidden on this device. To see them again you'll need to sign in (or the passcode).</div>
-  <div class="btns"><button class="btn" id="lockno">Cancel</button><button class="btn" id="lockyes" style="background:var(--red);border-color:var(--red);color:#fff">Lock</button></div>
+<div class="ov" id="lockov"><div class="dlg cdlg">
+  <div class="cic">&#128274;</div><h3>Lock the internal view?</h3>
+  <div class="sub">Cost, margin, VOC, Summary and Returns are hidden on this phone. The car list stays (dealer view). Sign in again with your name and PIN to unlock.</div>
+  <div class="btns"><button class="btn" id="lockno">Cancel</button><button class="btn red" id="lockyes">Lock</button></div>
 </div></div>
-<div class="ov" id="kcov" style="z-index:13"><div class="dlg" style="max-width:340px">
-  <h3 style="margin:0 0 6px">Return someone else's key?</h3>
-  <div class="sub" id="kcmsg" style="margin-bottom:14px"></div>
+<div class="ov" id="kcov" style="z-index:13"><div class="dlg cdlg">
+  <div class="cic">&#128273;</div><h3>Return someone else's key?</h3>
+  <div class="sub" id="kcmsg"></div>
   <div class="btns"><button class="btn" id="kcno">Cancel</button><button class="btn pri" id="kcyes">Yes, return</button></div>
 </div></div>
-<div class="ov" id="swov" style="z-index:13"><div class="dlg" style="max-width:340px">
-  <h3 style="margin:0 0 6px">Switch user?</h3>
-  <div class="sub" id="swmsg" style="margin-bottom:14px">You will be signed out of Keys on this phone and need a name and PIN to sign in again.</div>
-  <div class="btns"><button class="btn" id="swno">Cancel</button><button class="btn" id="swyes" style="background:var(--red);border-color:var(--red);color:#fff">Switch user</button></div>
+<div class="ov" id="swov" style="z-index:13"><div class="dlg cdlg">
+  <div class="cic">&#128100;</div><h3>Switch user?</h3>
+  <div class="sub" id="swmsg">You will be signed out of Keys on this phone and need a name and PIN to sign in again.</div>
+  <div class="btns"><button class="btn" id="swno">Cancel</button><button class="btn red" id="swyes">Switch user</button></div>
 </div></div>
 <div class="ov" id="gov"><div class="dlg">
   <div class="gh"><div style="display:flex;align-items:center;justify-content:space-between"><h3>Stock List guide</h3><button class="vx" id="gx" aria-label="Close">&times;</button></div>
@@ -461,8 +500,8 @@
 </div></div>
 <button class="kfab" id="kfab" type="button" aria-label="Keys"><span class="kfi">&#128273;</span><span>Keys</span><b class="kbadge" id="kbadge"></b></button>
 <div class="ov" id="keyov"><div class="sumw"><div class="sumh"><b>Keys &amp; equipment</b><span class="sub" id="kwho"></span><button class="vx" id="keyx" aria-label="Close" style="margin:0">&times;</button></div><div class="sumb" id="keybody"></div></div></div>
-<div class="ov" id="retov" style="z-index:12;padding:0"><div class="sumw"><div class="sumh"><b>Returns to consignor</b><button class="vx" id="retx" aria-label="Close" style="margin:0">&times;</button></div><div class="sumb" id="retbody" style="max-width:640px"></div></div></div>
-<div class="ov" id="sumov"><div class="sumw"><div class="sumh"><b>Management summary</b><select id="summ"></select><button class="btn" id="sumcp">Copy</button><button class="vx" id="sumx" aria-label="Close" style="margin:0">&times;</button></div><div class="sumb" id="sumbody"></div></div></div>
+<div class="ov" id="retov" style="z-index:12;padding:0"><div class="sumw"><div class="sumh"><b>&#8617;&#65039; Returns to consignor</b><button class="vx" id="retx" aria-label="Close" style="margin:0">&times;</button></div><div class="sumb" id="retbody" style="max-width:640px"></div></div></div>
+<div class="ov" id="sumov"><div class="sumw"><div class="sumh"><b><span class="lg">Management </span>Summary</b><select id="summ"></select><button class="btn" id="sumcp">Copy</button><button class="vx" id="sumx" aria-label="Close" style="margin:0">&times;</button></div><div class="sumb" id="sumbody"></div></div></div>
 <div class="ov" id="docov"><div class="docw"><div class="doch"><b id="doct"></b><button class="btn" id="docdl">Download</button><button class="vx" id="docx" aria-label="Close" style="margin:0">&times;</button></div><div id="docbody"></div></div></div>
 <div class="ov" id="ov"><div class="dlg vc"><div class="vbody" id="vbody"></div>
   <div class="vact"><button class="btn pri" id="cp">Copy</button><button class="btn wa" id="wa">WhatsApp</button><button class="btn" id="sh" style="display:none">Share</button></div></div></div>
@@ -472,6 +511,7 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbxK3dH9IGl1elK3v13cEVAB3PWadJJalPtc76pj3KK0u2loSdpkgDMTrt4gDalGy9Ib/exec";
 
 const $ = id => document.getElementById(id);
+function reloadPage() { RELOADING = true; location.reload(); }      // pop-ups must not undo a reload with history.back()
 const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const parseIso = s => { if (!s) return null; const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d); };
 const fmtDate = s => { const d = parseIso(s); return d ? String(d.getDate()).padStart(2,"0") + "/" + String(d.getMonth()+1).padStart(2,"0") + "/" + d.getFullYear() : ""; };
@@ -714,7 +754,7 @@ function openCar(i) {
   CUR = c;
   $("sh").style.display = navigator.share ? "" : "none";
   document.querySelector(".vact").style.display = lite ? "none" : "";
-  $("cp").textContent = "Copy"; $("ov").classList.add("on"); document.body.style.overflow = "hidden";
+  $("cp").textContent = "Copy"; $("ov").classList.add("on");
 }
 let CUR = null, DOC = null;
 // ---------- keys & VOC (replaces the WhatsApp keys group): staff name + PIN, photo on take and return ----------
@@ -737,7 +777,7 @@ function keyCardHtml(c) {
   const outs = KEYS ? KEYS.out.filter(r => r.plate.replace(/\s/g, "").toUpperCase() === c.plate.replace(/\s/g, "").toUpperCase()) : [];
   const st = !KEYS ? '<span class="sub">Sign in to Keys to see who has it.</span>' : outs.length
     ? outs.map(r => `<div class="${kLate(r.t) ? "neg" : ""}"><b>${esc(r.item)} out</b> with ${esc(r.by)} &middot; ${esc(r.reason)} &middot; ${kTime(r.t)}${kLate(r.t) ? " &middot; not returned" : ""}</div>`).join("") : '<b class="yes">All in</b>';
-  return st + `<div class="btns"><button class="btn" data-kact="Out">Take key / VOC</button>${outs.length ? '<button class="btn" data-kact="In">Return</button>' : ""}${FULL ? '<button class="btn" data-kact="hist">History</button>' : ""}</div><div class="khist" id="khist"></div>`;
+  return st + `<div class="btns"><button class="btn" data-kact="Out">Take key / VOC</button>${outs.length ? '<button class="btn" data-kact="In">Return</button>' : ""}${FULL || isFleet() ? '<button class="btn" data-kact="hist">History</button>' : ""}</div><div class="khist" id="khist"></div>`;
 }
 $("vbody").addEventListener("click", e => {
   const b = e.target.closest("[data-kact]"); if (!b) return;
@@ -745,17 +785,17 @@ $("vbody").addEventListener("click", e => {
   if (a === "hist") { if (!KUSER && !pinGet()) { openKeys(); return; } $("khist").innerHTML = LD("Loading history..."); kGet("keyhist", { plate: c.plate }).then(d => {
       $("khist").innerHTML = d.rows && d.rows.length ? d.rows.map(r => `<div><b>${r.a === "Out" ? "Out" : r.a === "Delivered" ? "Delivered" : "In"}</b> ${esc(r.item)} &middot; ${esc(r.by)}${r.reason ? " &middot; " + esc(r.reason) : ""}${r.note ? " &middot; " + esc(r.note) : ""} &middot; ${kTime(r.t)}${r.photo ? ` &middot; <a href="${esc(r.photo)}" target="_blank" rel="noopener">photo</a>` : ""}</div>`).join("") : (d.error ? esc(d.error) : "No key records yet."); }); return; }
   const mine = KEYS ? KEYS.out.filter(r => r.plate.replace(/\s/g, "").toUpperCase() === c.plate.replace(/\s/g, "").toUpperCase()) : [];
-  if (a === "In") kConfirmReturn(mine, () => openKeys({ action: "In", keys: mine.map(r => ({ plate: r.plate, item: r.item })) }));
+  if (a === "In") kConfirmReturn(mine, l => openKeys({ action: "In", keys: (l || mine).map(r => ({ plate: r.plate, item: r.item })) }));
   else openKeys({ action: "Out", plates: [c.plate], item: "Key" });
 });
-const closeKeys = () => { $("keyov").classList.remove("on"); if (!$("ov").classList.contains("on")) document.body.style.overflow = ""; if (CUR && $("vkey")) $("vkey").innerHTML = keyCardHtml(CUR); };
+const closeKeys = () => { $("keyov").classList.remove("on"); if (CUR && $("vkey")) $("vkey").innerHTML = keyCardHtml(CUR); };
 $("keybtn").onclick = $("kfab").onclick = $("landbtn").onclick = () => openKeys();
 function keyBadge() {                                                // phone button: how many keys are out (red if any missed 6:20pm)
   const out = KEYS ? KEYS.out : [], b = $("kbadge"); b.textContent = out.length; b.classList.toggle("on", out.length > 0); b.classList.toggle("late", out.some(r => kLate(r.t)));
 }
 $("keyx").onclick = closeKeys;
 function openKeys(form) {
-  $("keyov").classList.add("on"); document.body.style.overflow = "hidden"; KFORM = form || null;
+  $("keyov").classList.add("on"); KFORM = form || null;
   if (!KUSER) { renderSignIn(); return; }
   $("kwho").innerHTML = `${esc(KUSER.name)} &middot; <a href="#" id="kswitch">Switch user</a>`;
   if (KFORM) { renderKeyForm(); loadKeys(); } else { $("keybody").innerHTML = '<div class="kcard">' + LD("Loading keys...") + '</div>'; loadKeys(true).then(renderKeyList); }
@@ -775,7 +815,7 @@ document.addEventListener("submit", e => {
       if (!d.ok) { $("kmsg").textContent = d.error || "Wrong name or PIN."; return; }
       KUSER = { name: d.name, pin: pin, role: d.role || "sales" }; try { localStorage.setItem("caricarz_keyuser", JSON.stringify(KUSER)); } catch (err) {}
       if (KUSER.role === "broker" && !pinGet()) { openKeys(KFORM); brokerMode(); return; }   // dealer: same list, now with their keys
-      if (DEALER || GATE) { lsClearAll(); location.reload(); return; }                     // sales / internal: open their view
+      if (DEALER || GATE) { lsClearAll(); reloadPage(); return; }                     // sales / internal: open their view
       openKeys(KFORM);
     }).catch(() => { $("kmsg").textContent = "No connection. Try again."; });
   }
@@ -789,7 +829,7 @@ document.addEventListener("click", e => {
     if (i < 0) KFORM.assets.push(n); else KFORM.assets.splice(i, 1); const keepNote = $("knote") ? $("knote").value : ""; renderKeyForm(); if ($("knote")) $("knote").value = keepNote; }
   const rt = e.target.closest("[data-kret]"); if (rt) { const r = KEYS.out[Number(rt.dataset.kret)]; kConfirmReturn([r], () => { KFORM = { action: "In", keys: [{ plate: r.plate, item: r.item }] }; renderKeyForm(); }); }
   const rg = e.target.closest("[data-kretg]"); if (rg) { const sel = KEYS_GROUPS[rg.dataset.kretg] || [];
-    if (sel.length) kConfirmReturn(sel, () => { KFORM = { action: "In", keys: sel.map(r => ({ plate: r.plate, item: r.item })) }; renderKeyForm(); }); }
+    if (sel.length) kConfirmReturn(sel, l => { KFORM = { action: "In", keys: (l || sel).map(r => ({ plate: r.plate, item: r.item })) }; renderKeyForm(); }); }
   const ur = e.target.closest("[data-kunret]"); if (ur && KFORM && KFORM.keys.length > 1) { const n = $("knote") ? $("knote").value : ""; KFORM.keys.splice(Number(ur.dataset.kunret), 1); renderKeyForm(); if ($("knote")) $("knote").value = n; }
   const rm1 = e.target.closest("[data-krm]"); if (rm1 && KFORM) { KFORM.plates.splice(Number(rm1.dataset.krm), 1); drawPlates(); }
   const ch = e.target.closest(".kchips button"); if (ch && KFORM && ch.parentNode.dataset.k) { const k = ch.parentNode.dataset.k, was = KFORM.item; KFORM[k] = ch.dataset.v; ch.parentNode.querySelectorAll("button").forEach(b => b.classList.toggle("on", b === ch));
@@ -805,6 +845,9 @@ function kIcon(r) {
 function kConfirmReturn(rows, go) {
   const me = KUSER ? KUSER.name.trim().toLowerCase() : "", nm = {}; rows.forEach(r => { const n = r.by.trim(), k = n.toLowerCase(); if (me && k !== me && (!nm[k] || nm[k] === nm[k].toLowerCase())) nm[k] = n; }); const others = Object.values(nm);
   if (!others.length) { go(); return; }
+  if (!canOthers()) { const mine = rows.filter(r => r.by.trim().toLowerCase() === me);
+    if (mine.length) { go(mine); return; }
+    note("Only the person who took it, Fleet or Inventory can return " + rows.map(r => r.plate + " " + r.item).join(", ") + " (with " + others.join(", ") + ")."); return; }
   const what = rows.filter(r => r.by.trim().toLowerCase() !== me).map(r => r.plate + " " + r.item);
   $("kcmsg").textContent = (what.length > 3 ? what.slice(0, 3).join(", ") + " and " + (what.length - 3) + " more" : what.join(", ")) + (what.length > 1 ? " were" : " was") + " taken by " + others.join(", ") + ". Return " + (what.length > 1 ? "them" : "it") + " on their behalf?";
   $("kcov").classList.add("on");
@@ -814,12 +857,12 @@ $("kcno").onclick = () => $("kcov").classList.remove("on");
 $("kcov").addEventListener("click", e => { if (e.target === $("kcov")) $("kcov").classList.remove("on"); });
 function renderKeyList() {                                         // mine first, then grouped by person; "Return all" per group
   if (!KUSER) return;
-  const out = KEYS ? KEYS.out : [], late = out.filter(r => kLate(r.t)).length, me = KUSER.name.trim().toLowerCase();
-  const row = r => { const i = out.indexOf(r); return `<div class="krow ${kLate(r.t) ? "late" : ""}"><span class="kic ${r.item === "Equipment" ? "eq" : ""}">${kIcon(r)}</span><div class="km"><span class="kp">${esc(r.plate)}</span> <span class="ktag ${r.item === "Equipment" ? "te" : ""}">${esc(r.item)}</span><div class="sub">${esc(r.reason)}${r.note ? " &middot; " + esc(r.note) : ""} &middot; ${kTime(r.t)}</div></div><button class="btn" data-kret="${i}">Return</button></div>`; };
+  const out = KEYS ? KEYS.out : [], late = out.filter(r => kLate(r.t)).length, me = KUSER.name.trim().toLowerCase(), mineR = r => r.by.trim().toLowerCase() === me;
+  const row = r => { const i = out.indexOf(r); return `<div class="krow ${kLate(r.t) ? "late" : ""}"><span class="kic ${r.item === "Equipment" ? "eq" : ""}">${kIcon(r)}</span><div class="km"><span class="kp">${esc(r.plate)}</span> <span class="ktag ${r.item === "Equipment" ? "te" : ""}">${esc(r.item)}</span><div class="sub">${esc(r.reason)}${r.note ? " &middot; " + esc(r.note) : ""} &middot; ${kTime(r.t)}</div></div>${mineR(r) || canOthers() ? `<button class="btn" data-kret="${i}">Return</button>` : ""}</div>`; };
   const groups = {}, label = {}; out.forEach(r => { const n = r.by.trim(), k = n.toLowerCase() === me ? "~me" : n.toLowerCase(); if (!label[k] || label[k] === label[k].toLowerCase()) label[k] = n; (groups[k] = groups[k] || []).push(r); });
   const order = Object.keys(groups).sort((a, b) => a === "~me" ? -1 : b === "~me" ? 1 : groups[b].length - groups[a].length || a.localeCompare(b));
   const sec = k => { const g = groups[k], mine = k === "~me";
-    return `<div class="kgrp ${mine ? "mine" : ""}"><div class="kgh"><b>${mine ? "Mine" : esc(label[k])}</b> <span class="sub">${g.length} out</span>${g.length > 1 ? `<button class="btn ${mine ? "pri" : ""}" data-kretg="${esc(k)}">Return all (${g.length})</button>` : ""}</div>${g.map(row).join("")}</div>`; };
+    return `<div class="kgrp ${mine ? "mine" : ""}"><div class="kgh"><b>${mine ? "Mine" : esc(label[k])}</b> <span class="sub">${g.length} out</span>${g.length > 1 && (mine || canOthers()) ? `<button class="btn ${mine ? "pri" : ""}" data-kretg="${esc(k)}">Return all (${g.length})</button>` : ""}</div>${g.map(row).join("")}</div>`; };
   $("keybody").innerHTML = `<button class="btn pri" id="ktake" style="width:100%;padding:14px;margin-bottom:12px">Take</button>
     <div class="kcard"><h3>Out now: ${out.length}${late ? ` <span class="neg">&middot; ${late} not returned by 6:20pm</span>` : ""}</h3>
     ${out.length ? (groups["~me"] ? "" : '<div class="sub" style="margin-bottom:6px">You have nothing out.</div>') + order.map(sec).join("") : '<div class="sub">Everything is in.</div>'}</div>`;
@@ -843,7 +886,7 @@ function renderKeyForm() {
       ? `<label>Equipment (tap one or more)</label><div class="kchips">${assets.length ? assets.map(a => { const b = busy(a.name);
           return `<button type="button" data-kas="${esc(a.name)}" class="${f.assets.indexOf(a.name) >= 0 ? "on" : ""} ${b ? "kbusy" : ""}" ${b ? "disabled" : ""}>${esc(a.name)}${b ? " &middot; with " + esc(b.by) : ""}</button>`; }).join("")
           : '<span class="sub">No equipment yet. Add rows to the Assets tab in the sheet.</span>'}</div>`
-      : `<label>Plates (add one or more)<input id="kplate" autocapitalize="characters" autocomplete="off" placeholder="Type plate or model, tap to add"></label><div class="ksug" id="ksug"></div><div class="kpls" id="kpls"></div>
+      : `<label>Plates (add one or more)<input id="kplate" type="text" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done" placeholder="Type plate or model, tap to add"></label><div class="ksug" id="ksug"></div><div class="kpls" id="kpls"></div>
     <label>Item</label>${chips("item", items, f.item)}`)}
     ${dlv ? `<div class="sub" style="margin:2px 0 4px">&#128666; Sold car handed to the buyer: records <b>Key + Spare key</b> as gone with the car (not VOC). No return needed.</div>` : f.action === "Out" ? `<label>Reason</label>${chips("reason", rs, f.reason)}` : ""}
     <label>Note<input id="knote" placeholder="${f.action === "Out" ? "Optional (required for Other)" : "Optional"}"></label>
@@ -907,11 +950,14 @@ function submitKey(force) {
 }
 // ---------- returns to consignor: Hold For Return -> Documents ready -> PDI done -> Handed over (Returns.gs) ----------
 let RETS = null, RFORM = null;
-const canRet = () => isInt() || !!(KUSER && KUSER.role === "fleet");
-const RSTEPS = [["req", "Hold"], ["docs", "Docs"], ["pdi", "PDI"], ["hand", "Handed"]];
+const isFleet = () => !!(KUSER && KUSER.role === "fleet");
+const canRet = () => isInt() || isFleet();
+const canOthers = () => isInt() || isFleet() || !!(KEYS && KEYS.others);   // Sales / dealers return only their own keys
+const RSTEPS = [["req", "Hold"], ["docs", "Docs"], ["pdi", "PDI"], ["hand", "Done"]];
 const retNext = r => !r.docs[0] ? "docs" : !r.pdi[0] ? "pdi" : !r.hand[0] ? "handover" : "";
 const retOf = plate => RETS && RETS.open.find(r => pkey(r.plate) === pkey(plate));
 const pkey = p => String(p || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+const RNEXT = { docs: ["Inventory", "prepare documents + key set"], pdi: ["Fleet", "PDI"], handover: ["Consign team", "hand over or change to V.B.A.O"] };
 function loadRets() {
   if (!canRet()) return Promise.resolve(null);
   return fetch(API_URL + "?act=rets&" + authQ(), { credentials: "omit", cache: "no-store" }).then(r => r.json())
@@ -919,47 +965,81 @@ function loadRets() {
 }
 function retBadge() { const n = RETS ? RETS.open.length : 0; $("retbtn").style.display = canRet() ? "" : "none"; $("retn").textContent = n || ""; }
 function retTrack(r) {
-  return `<div class="rtrack">${RSTEPS.map(([k, l]) => { const v = r[k] && r[k][0]; return `<div class="${v ? "ok" : ""}"><i>${v ? "&#10003;" : ""}</i><span>${l}</span>${v ? `<em>${esc(String(v).slice(5, 16).replace("-", "/"))}${r[k][1] ? " &middot; " + esc(r[k][1]) : ""}</em>` : ""}</div>`; }).join("")}</div>`;
+  const nx = retNext(r), vb = r.outcome === "V.B.A.O";
+  return `<div class="rtrack">${RSTEPS.map(([k, l], i) => { const v = r[k] && r[k][0], now = !v && ["", "docs", "pdi", "handover"][i] === nx;
+    return `<div class="${v ? "ok" : now ? "now" : ""}"><i>${v ? "&#10003;" : i + 1}</i><span>${k === "hand" && vb ? "V.B.A.O" : l}</span>${v ? `<em>${esc(String(v).slice(8, 10) + "/" + String(v).slice(5, 7))}${r[k][1] ? " &middot; " + esc(String(r[k][1]).split(" ")[0]) : ""}</em>` : ""}</div>`; }).join("")}</div>`;
 }
 function retCard(r, open) {
   const nx = retNext(r), who = isInt(), fleet = KUSER && KUSER.role === "fleet";
   const btn = !open ? "" : nx === "docs" && who ? `<button class="btn pri" data-rgo="docs" data-rp="${esc(r.plate)}">Prepare documents</button>`
     : nx === "pdi" && (who || fleet) ? `<button class="btn pri" data-rgo="pdi" data-rp="${esc(r.plate)}">Mark PDI done</button>`
-    : nx === "handover" && who ? `<button class="btn pri" data-rgo="handover" data-rp="${esc(r.plate)}">Hand over to consignor</button>` : "";
-  return `<div class="rcard"><div class="rtop"><span class="kp">${esc(r.plate)}</span>${r.refund ? '<span class="pill b-amber">RM200 reward</span>' : ""}<span class="sub" style="margin-left:auto">${r.collect ? "Collect " + esc(r.collect.slice(5).replace("-", "/")) : ""}</span></div>
-    <div class="sub">${esc(r.model)}${r.consignor ? " &middot; " + esc(r.consignor) : ""}</div><div class="sub">${esc(r.reason)}${r.days ? " &middot; " + esc(r.days) + " days in stock" : ""}</div>
-    ${retTrack(r)}${r.pdi[2] ? `<div class="sub">PDI note: ${esc(r.pdi[2])}</div>` : ""}<div class="rbtns">${btn}${open && who ? `<button class="btn" data-rletter="${esc(r.plate)}" ${r.refund ? "" : 'style="display:none"'}>Reward claim form</button>` : ""}${r.photo ? `<a class="btn" href="${esc(r.photo)}" target="_blank" rel="noopener">Photo</a>` : ""}</div></div>`;
+    : nx === "handover" && who ? `<button class="btn pri" data-rgo="handover" data-rp="${esc(r.plate)}">Finish return</button>` : "";
+  const waiting = open && nx && !btn ? `<div class="rwait">Waiting for <b>${RNEXT[nx][0]}</b>: ${RNEXT[nx][1]}</div>` : "";
+  const links = [["Forms", r.forms, "&#128206;"], ["Docs photo", r.docsPhoto, "&#128247;"], ["PDI photo", r.pdiPhoto, "&#128247;"], [r.outcome === "V.B.A.O" ? "Photo" : "Handover photo", r.photo, "&#128247;"]]
+    .filter(l => l[1]).map(l => `<a class="rlink" href="${esc(l[1])}" target="_blank" rel="noopener">${l[2]} ${l[0]}</a>`).join("");
+  const tag = !open ? (r.outcome === "V.B.A.O" ? '<span class="pill b-amber">Kept as V.B.A.O</span>' : '<span class="pill b-grey">Returned</span>') : "";
+  return `<div class="rcard ${open ? "" : "rdone"}"><div class="rtop"><span class="kp">${esc(r.plate)}</span>${tag}${r.refund ? '<span class="pill b-purple">&#127873; RM200 reward</span>' : ""}<span class="sub" style="margin-left:auto">${r.collect && open ? "&#128197; " + esc(r.collect.slice(8, 10) + "/" + r.collect.slice(5, 7)) : ""}</span></div>
+    <div class="rmodel">${esc(r.model)}</div><div class="sub">${r.consignor ? esc(r.consignor) + " &middot; " : ""}${esc(r.reason)}${r.days ? " &middot; " + esc(r.days) + " days" : ""}</div>
+    ${retTrack(r)}${r.kit ? `<div class="sub">&#9989; ${esc(r.kit)}</div>` : ""}${r.pdi[2] ? `<div class="sub">PDI note: ${esc(r.pdi[2])}</div>` : ""}${waiting}
+    ${btn || links ? `<div class="rbtns">${btn}</div>${links ? `<div class="rlinks">${links}</div>` : ""}` : ""}</div>`;
 }
 function openRets() {
-  $("retov").classList.add("on"); document.body.style.overflow = "hidden"; RFORM = null;
+  $("retov").classList.add("on"); RFORM = null;
   $("retbody").innerHTML = '<div class="kcard">' + LD("Loading returns...") + "</div>";
   loadRets().then(renderRets);
 }
 function renderRets() {
   if (RFORM) return renderRetForm();
   const o = RETS ? RETS.open : [], d = RETS ? RETS.done : [];
-  $("retbody").innerHTML = (isInt() ? '<button class="btn pri" id="rnew" style="width:100%;padding:14px;margin-bottom:12px">Hold a car for return</button>' : "") +
-    `<div class="kcard"><h3>In progress: ${o.length}</h3>${o.length ? o.map(r => retCard(r, true)).join("") : '<div class="sub">No car waiting to be returned.</div>'}</div>` +
-    (d.length ? `<details class="kcard" style="margin-top:12px"><summary><b>Recently returned (${d.length})</b></summary>${d.map(r => retCard(r, false)).join("")}</details>` : "");
+  $("retbody").innerHTML = (isInt() ? '<button class="btn pri" id="rnew" style="width:100%;padding:14px;margin-bottom:12px">&#8617; Hold a car for return</button>' : "") +
+    `<div class="rsec"><h3>In progress <span class="tag">${o.length}</span></h3>${o.length ? o.map(r => retCard(r, true)).join("") : '<div class="rempty">No car waiting to be returned.</div>'}</div>` +
+    (d.length ? `<details class="rsec"><summary><h3>Recently finished <span class="tag">${d.length}</span></h3></summary>${d.map(r => retCard(r, false)).join("")}</details>` : "") +
+    (RPDF ? "" : "");
+  if (RPDF) showForms(RPDF.plate, RPDF.pdfs);
+}
+// checklist for the documents step, from Master (Spare Key / VOC columns) + keys still out
+function retKit(plate) {
+  const c = ((DATA.stock && DATA.stock.cars) || []).find(x => pkey(x.plate) === pkey(plate)), i = (c && c.info) || {};
+  const val = v => { const t = String(v == null ? "" : v).trim(); return /^(n\/?a|-)?$/i.test(t) ? "" : t; }, sp = val(i.spareKey), vo = val(i.voc);
+  const items = ["Main key"], info = [];
+  if (!sp) items.push("Spare key (if any; not filled in Master)"); else if (/automall|^yes/i.test(sp)) items.push("Spare key");
+  else if (/owner/i.test(sp)) info.push("Spare key is with the owner"); else if (/^no/i.test(sp)) info.push("No spare key"); else items.push("Spare key (" + sp + ")");
+  if (!vo) items.push("VOC (if any; not filled in Master)"); else if (/ori|^yes/i.test(vo)) items.push("Original VOC");
+  else if (/copy/i.test(vo)) info.push("VOC: copy only, original not with us"); else if (/^no/i.test(vo)) info.push("No VOC with us"); else items.push("VOC (" + vo + ")");
+  const out = KEYS ? KEYS.out.filter(r => pkey(r.plate) === pkey(plate)) : [];
+  return { items, info, out };
 }
 function renderRetForm() {
   const f = RFORM, r = retOf(f.plate) || {}, chips = (k, list) => `<div class="kchips" data-rk="${k}">${list.map(v => `<button type="button" data-v="${esc(v)}" class="${f[k] === v ? "on" : ""}">${esc(v)}</button>`).join("")}</div>`;
-  const title = { request: "Hold for return", docs: "Prepare documents", pdi: "PDI done", handover: "Hand over to consignor" }[f.step];
-  let h = `<div class="kcard"><h3>${title}</h3><form class="kform" id="rform">`;
+  const title = { request: "Hold for return", docs: "Prepare documents", pdi: "PDI done", handover: "Finish return" }[f.step];
+  const shot = what => `<label>Photo (required)</label><div class="kphoto" id="rshot" role="button" tabindex="0">${kShotEmpty(what)}</div><input type="file" id="rfile" accept="image/*" capture="environment" style="display:none">`;
+  let h = `<div class="kcard"><h3>${title}</h3><form class="kform" id="rform">`, sub = "Save";
   if (f.step === "request") {
-    const cars = (DATA.stock && DATA.stock.cars) || [];
-    h += `<label>Plate<input id="rplate" autocapitalize="characters" autocomplete="off" value="${esc(f.plate || "")}" placeholder="Type plate"></label><div class="ksug" id="rsug"></div>
+    h += `<label>Plate<input id="rplate" type="text" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" value="${esc(f.plate || "")}" placeholder="Type plate"></label><div class="ksug" id="rsug"></div>
       <label>Reason</label>${chips("reason", ["Owner keep", "Sold outside", "Price too low", "Owner request", "Other"])}
       <label>Note<input id="rnote" placeholder="Optional (required for Other)"></label>
-      <label>Consignor collects on<input id="rcollect" type="date"></label>`;
+      <label>Consignor collects on<input id="rcollect" type="date"></label>`; sub = "Save, hold for return";
   } else {
-    h += `<div class="rcard" style="margin:0 0 10px">${retCard(r, false)}</div>`;
-    if (f.step === "docs") h += `<label class="rchk"><input type="checkbox" id="rkeys"> Key set ready (key, spare key, VOC)</label>
-      <div class="sub">Saving makes the return form PDF (print 2 copies: Carrealm + consignor) and posts it to Telegram.${r.refund ? " Also print the <b>reward claim form</b> (RM200 Day-90 reward) for the consignor to sign at handover." : ""}</div>`;
-    if (f.step === "pdi") h += `<label>Note<input id="rnote" placeholder="Optional, e.g. tyre, battery"></label>`;
-    if (f.step === "handover") h += `<label>Photo (required)</label><div class="kphoto" id="rshot" role="button" tabindex="0">${kShotEmpty("the car with the consignor")}</div><input type="file" id="rfile" accept="image/*" capture="environment" style="display:none">${r.refund ? '<div class="sub">RM200 reward: make sure the consignor signed the reward claim form.</div>' : ""}`;
+    h += retCard(r, false).replace('class="rcard rdone"', 'class="rcard rmini"').replace(/<span class="pill b-grey">Returned<\/span>|<span class="pill b-amber">Kept as V.B.A.O<\/span>/, "");
+    if (f.step === "docs") {
+      const k = f.kit = f.kit || retKit(f.plate); f.ticks = f.ticks || {};
+      h += `<label>Checklist <span class="sub" style="font-weight:400">from Master: Spare Key / VOC</span></label><div class="rkit">${k.items.map((it, n) => `<label class="rchk"><input type="checkbox" data-rt="${n}" ${f.ticks[n] ? "checked" : ""}> ${esc(it)}</label>`).join("")}
+        ${k.info.map(x => `<div class="rinfo">&#8505;&#65039; ${esc(x)}</div>`).join("")}${k.out.map(o => `<div class="rinfo bad">&#9888;&#65039; ${esc(o.item)} is out with ${esc(o.by)} (${esc(o.reason)}). Get it back first.</div>`).join("")}</div>
+        ${shot("the key set and documents")}
+        <div class="sub">Saving makes the Vehicle Return Form${r.refund ? " and the RM200 reward claim form" : ""} and posts them to the Telegram Returns topic. Print them right after.</div>`; sub = "Documents ready";
+    }
+    if (f.step === "pdi") { h += `<label>Note<input id="rnote" placeholder="Optional, e.g. tyre, battery"></label>${shot("the car after PDI")}`; sub = "PDI done"; }
+    if (f.step === "handover") {
+      const vb = f.outcome === "vbao";
+      h += `<label>What happened?</label><div class="kseg rseg"><button type="button" data-rout="ret" class="${vb ? "" : "on"}">&#9989; Returned to consignor</button><button type="button" data-rout="vbao" class="${vb ? "on" : ""}">&#128257; Keep as V.B.A.O</button></div>
+        <div class="sub">${vb ? "Consignor agreed to leave the car with us. It goes back on the stock list as V.B.A.O and the return closes" + (r.refund ? " (no RM200 reward)" : "") + "." : "Car and keys leave with the consignor. Master becomes Returned; keys still out are closed."}</div>
+        <label>Note<input id="rnote" placeholder="Optional"></label>
+        ${vb ? `<label>Photo (optional)</label><div class="kphoto" id="rshot" role="button" tabindex="0">${kShotEmpty("optional")}</div><input type="file" id="rfile" accept="image/*" capture="environment" style="display:none">` : shot("the car with the consignor")}
+        ${r.refund && !vb ? '<div class="rinfo">&#127873; RM200 reward: get the consignor to sign the reward claim form.</div>' : ""}`;
+      sub = vb ? "Save, keep as V.B.A.O" : "Save, returned";
+    }
   }
-  h += `<button class="btn pri" type="submit" style="padding:12px">${{ request: "Save, hold for return", docs: "Documents ready", pdi: "PDI done", handover: "Save, returned" }[f.step]}</button><div class="kmsg" id="rmsg"></div>
+  h += `<button class="btn pri" type="submit" style="padding:12px">${sub}</button><div class="kmsg" id="rmsg"></div>
     ${f.step !== "request" && isInt() ? '<button class="btn" type="button" id="rcancel" style="color:var(--red)">Cancel this return</button>' : ""}<button class="btn" type="button" id="rback">Back</button></form></div>`;
   $("retbody").innerHTML = h;
   if (f.step === "request") {
@@ -967,87 +1047,79 @@ function renderRetForm() {
     $("rplate").oninput = () => { const q = pkey($("rplate").value); $("rsug").innerHTML = !q ? "" : cars.filter(c => pkey(c.plate).includes(q)).slice(0, 6).map(c => `<button type="button" data-rpl="${esc(c.plate)}"><b>${esc(c.plate)}</b> <span class="sub">${esc(c.model)}</span></button>`).join(""); };
     $("rsug").onclick = e => { const b = e.target.closest("[data-rpl]"); if (b) { $("rplate").value = b.dataset.rpl; $("rsug").innerHTML = ""; } };
   }
-  if (f.step === "handover") {
+  if ($("rshot")) {
     if (f.photo) rShotDone(f.photo);
     $("rshot").onclick = () => $("rfile").click();
     $("rfile").onchange = () => { const file = $("rfile").files[0]; if (!file) return; $("rshot").innerHTML = LD("Preparing photo...");
       shrinkPhoto(file).then(u => { f.photo = u; rShotDone(u); }).catch(() => { $("rshot").innerHTML = kShotEmpty("again"); }); $("rfile").value = ""; };
   }
 }
-function rShotDone(u) { $("rshot").classList.add("has"); $("rshot").innerHTML = `<img src="${u}" alt=""><div class="kok"><span>&#10003; Photo added</span><span class="kre">Retake</span></div>`; }
+function rShotDone(u) { $("rshot").classList.add("has"); $("rshot").innerHTML = `<img src="${u}" alt=""><div class="kok"><span>&#10003; Photo added</span><span class="kre">${KCAM.replace('stroke="#fff"', 'stroke="currentColor"')} Retake</span></div>`; }
 function retSubmit(step) {
-  const f = RFORM, body = Object.assign({ kind: "ret", step: step || f.step, name: KUSER ? KUSER.name : "", pin: KUSER ? KUSER.pin : "", key: pinGet() }, f.extra || {});
-  if (!KUSER) { $("rmsg").textContent = "Sign in with Keys first (your name goes on the record)."; return; }
+  const f = RFORM, body = Object.assign({ kind: "ret", step: step || f.step, name: KUSER ? KUSER.name : "", pin: KUSER ? KUSER.pin : "", key: pinGet() });
+  const err = t => { $("rmsg").textContent = t; };
+  if (!KUSER) return err("Sign in with Keys first (your name goes on the record).");
   if (body.step === "request") { body.plate = $("rplate").value.trim(); body.reason = f.reason; body.note = $("rnote").value.trim(); body.collect = $("rcollect").value;
-    if (!body.plate) { $("rmsg").textContent = "Type the plate."; return; } if (!body.reason) { $("rmsg").textContent = "Pick a reason."; return; }
-    if (body.reason === "Other" && !body.note) { $("rmsg").textContent = "Write a note for Other."; return; } }
+    if (!body.plate) return err("Type the plate."); if (!body.reason) return err("Pick a reason.");
+    if (body.reason === "Other" && !body.note) return err("Write a note for Other."); }
   else body.plate = f.plate;
-  if (body.step === "docs") { body.keysReady = $("rkeys").checked; if (!body.keysReady) { $("rmsg").textContent = "Tick key set ready first."; return; } }
-  if (body.step === "pdi") body.note = $("rnote").value.trim();
-  if (body.step === "handover") { if (!f.photo) { $("rmsg").textContent = "Take a photo first."; return; } body.photo = f.photo; }
-  const sb = $("rform").querySelector("[type=submit]"); sb.disabled = true; sb.dataset.t = sb.dataset.t || sb.textContent; sb.innerHTML = '<span class="spin w"></span>Saving...';
+  if ($("rnote") && body.step !== "request") body.note = $("rnote").value.trim();
+  if (body.step === "docs") { const k = f.kit; body.kit = k.items.map(x => x.replace(/ \(if any; not filled in Master\)$/, "")); body.info = k.info; body.kitDone = k.items.every((x, n) => f.ticks[n]);
+    if (!body.kitDone) return err("Tick every item on the checklist first."); }
+  if (body.step === "handover") body.outcome = f.outcome === "vbao" ? "vbao" : "returned";
+  if (["docs", "pdi"].indexOf(body.step) >= 0 || (body.step === "handover" && body.outcome === "returned")) { if (!f.photo) return err("Take a photo first."); }
+  if (f.photo && body.step !== "request") body.photo = f.photo;
+  if (body.step === "cancel") { body.photo = undefined; }
+  const sb = $("rform").querySelector("[type=submit]"); sb.disabled = true; sb.dataset.t = sb.dataset.t || sb.textContent; sb.innerHTML = '<span class="spin w"></span>' + (body.step === "docs" ? "Making forms and sending photo..." : "Saving...");
   fetch(API_URL, { method: "POST", credentials: "omit", body: JSON.stringify(body) }).then(r => r.json()).then(d => {
-    if (!d.ok) { $("rmsg").textContent = d.error || "Not saved."; sb.disabled = false; sb.textContent = sb.dataset.t; return; }
+    if (!d.ok) { err(d.error || "Not saved."); sb.disabled = false; sb.textContent = sb.dataset.t; return; }
     if (d.list) { RETS = d.list; retBadge(); }
-    const plate = body.plate; RFORM = null; renderRets();
-    if (d.pdf) { const bin = atob(d.pdf), b = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);
-      const url = URL.createObjectURL(new Blob([b], { type: "application/pdf" }));
-      $("retbody").insertAdjacentHTML("afterbegin", `<div class="kcard" style="margin-bottom:12px"><b>Return form ready</b><div class="sub">Print 2 copies (Carrealm + consignor). Also sent to the Telegram Returns topic.</div><div class="rbtns"><a class="btn pri" href="${url}" target="_blank" rel="noopener">Open return form (PDF)</a></div></div>`); }
+    RFORM = null; RPDF = d.pdfs && d.pdfs.length ? { plate: body.plate, pdfs: d.pdfs } : null; renderRets();
     if (d.warn) note(d.warn);
     if (body.step === "request" || body.step === "handover") { DATA.stock = null; fetching.stock = false; load("stock"); }   // status changed in Master
-  }).catch(() => { $("rmsg").textContent = "Not saved: no connection. Try again."; sb.disabled = false; sb.textContent = sb.dataset.t; });
+  }).catch(() => { err("Not saved: no connection. Try again."); sb.disabled = false; sb.textContent = sb.dataset.t; });
 }
-// Day-90 reward claim form (Consignment Agreement Cl. 2.2), filled in and printed for the consignor to sign at handover
-function retLetter(plate) {
-  const r = retOf(plate); if (!r) return;
-  const w = window.open("", "_blank"); if (!w) { note("Allow pop-ups to print the claim form."); return; }
-  const t = new Date(), dmy = d => d ? String(d).slice(0, 10).split("-").reverse().join("/") : "";
-  const today = String(t.getDate()).padStart(2, "0") + "/" + String(t.getMonth() + 1).padStart(2, "0") + "/" + t.getFullYear();
-  const row = (l, v) => `<tr><th>${l}</th><td>${v || ""}</td></tr>`;
-  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reward claim ${esc(plate)}</title><style>
-    @page{size:A4;margin:16mm}body{font:13px/1.5 Arial,sans-serif;color:#000;max-width:760px;margin:24px auto;padding:0 20px}
-    .hd{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #000;padding-bottom:8px}.hd b{font-size:15px}
-    h1{font-size:18px;margin:16px 0 2px;letter-spacing:.5px}.sub{color:#444;margin:0 0 12px}
-    h2{font-size:13px;margin:16px 0 6px;background:#eee;padding:4px 8px}
-    table{width:100%;border-collapse:collapse}th,td{border:1px solid #999;padding:6px 8px;text-align:left;vertical-align:top}th{width:38%;font-weight:600;background:#fafafa}
-    td.w{height:22px}.sig{display:flex;gap:24px;margin-top:10px}.sig div{flex:1}.sig i{display:block;border-bottom:1px solid #000;height:46px}
-    .amt{font-size:16px;font-weight:700}p{margin:6px 0}@media print{.noprint{display:none}body{margin:0 auto}}</style></head><body>
-    <div class="noprint" style="margin-bottom:12px"><button onclick="print()" style="padding:10px 18px;font-size:15px">Print</button></div>
-    <div class="hd"><div><b>CARREALM AUTOMALL SDN. BHD.</b><br>Caricarz Automall</div><div>Ref: RW-${esc(pkey(plate))}<br>Date: ${today}</div></div>
-    <h1>CONSIGNMENT REWARD CLAIM FORM</h1><p class="sub">Day-90 Reward under Clause 2.2 (Reward Program) of the Consignment Agreement</p>
-    <h2>A. Vehicle and consignment</h2><table>${row("Registration number", `<b>${esc(plate)}</b>`)}${row("Vehicle", esc(r.model || ""))}${row("Consignor", esc(r.consignor || ""))}
-      ${row("Consignment start (car in)", esc(dmy(r.carIn)))}${row("Days on consignment", esc(String(r.days || "")))}${row("Reward amount", '<span class="amt">RM 200.00</span>')}</table>
-    <h2>B. Consignor declaration</h2>
-    <p>I, the Consignor named above, confirm that the vehicle above was consigned to Carrealm Automall Sdn. Bhd. for more than 90 days without being sold and is being returned to me.
-    In accordance with Clause 2.2 (Reward Program) of the Consignment Agreement, I claim the Day-90 Reward of <b>RM200.00</b>, to be paid to the account below.
-    I confirm that I have received the vehicle and the items listed in the Vehicle Return Form.</p>
-    <h2>C. Payment details (consignor to fill in)</h2><table>${row("Account holder name", "")}${row("Bank", "")}${row("Account number", "")}${row("IC / Company registration no.", "")}${row("Contact number", "")}</table>
-    <div class="sig"><div>Consignor signature<i></i>Name:<br>Date:</div><div>Received by (Carrealm)<i></i>Name:<br>Date:</div></div>
-    <h2>D. For office use</h2><table>${row("Checked by (BDC / consign admin)", "")}${row("Approved by", "")}${row("Paid on / reference", "")}</table>
-    </body></html>`);
-  w.document.close();
+// forms after "Documents ready": one PDF to print (return form + reward claim form), also kept in Telegram
+let RPDF = null, PDFLIB = null;
+const b64u8 = b => { const bin = atob(b), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
+function pdfLib() {
+  if (PDFLIB) return PDFLIB;
+  const add = src => new Promise((ok, bad) => { const sc = document.createElement("script"); sc.src = src; sc.onload = () => window.PDFLib ? ok(window.PDFLib) : bad(); sc.onerror = bad; document.head.appendChild(sc); });
+  return PDFLIB = add("https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js").catch(() => add("https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js")).catch(e => { PDFLIB = null; throw e; });
+}
+function showForms(plate, pdfs) {
+  const urls = pdfs.map(p => URL.createObjectURL(new Blob([b64u8(p.b64)], { type: "application/pdf" })));
+  $("retbody").insertAdjacentHTML("afterbegin", `<div class="kcard rforms" id="rforms"><b>&#128424;&#65039; Forms ready: ${esc(plate)}</b><div class="sub">Return form &times;2 (Carrealm + consignor)${pdfs.length > 1 ? " and reward claim form &times;1" : ""}. Also in the Telegram Returns topic.</div>
+    <div class="rbtns"><a class="btn pri" id="rprint" href="${urls[0]}" target="_blank" rel="noopener">${pdfs.length > 1 ? "Open all forms (1 PDF)" : "Open return form (PDF)"}</a></div>
+    ${pdfs.length > 1 ? `<div class="rlinks">${pdfs.map((p, i) => `<a class="rlink" href="${urls[i]}" target="_blank" rel="noopener">&#128196; ${esc(p.name.replace(/\.pdf$/, "").replace(" " + plate, ""))}</a>`).join("")}</div>` : ""}<button class="vx rfx" id="rfx" aria-label="Close">&times;</button></div>`);
+  $("rfx").onclick = () => { RPDF = null; $("rforms").remove(); };
+  if (pdfs.length > 1) pdfLib().then(async L => {                    // merge so one print covers everything
+    const out = await L.PDFDocument.create();
+    for (const p of pdfs) { const src = await L.PDFDocument.load(b64u8(p.b64)); (await out.copyPages(src, src.getPageIndices())).forEach(pg => out.addPage(pg)); }
+    const u = URL.createObjectURL(new Blob([await out.save()], { type: "application/pdf" })); if ($("rprint")) $("rprint").href = u;
+  }).catch(() => { if ($("rprint")) $("rprint").textContent = "Open return form (PDF)"; });
 }
 $("retbtn").onclick = openRets;
-$("retx").onclick = () => { $("retov").classList.remove("on"); if (!$("ov").classList.contains("on")) document.body.style.overflow = ""; };
+$("retx").onclick = () => $("retov").classList.remove("on");
 $("retbody").addEventListener("click", e => {
   if (e.target.id === "rnew") { RFORM = { step: "request" }; renderRetForm(); return; }
   if (e.target.id === "rback") { RFORM = null; renderRets(); return; }
   if (e.target.id === "rcancel") { retSubmit("cancel"); return; }
   const g = e.target.closest("[data-rgo]"); if (g) { RFORM = { step: g.dataset.rgo, plate: g.dataset.rp }; renderRetForm(); return; }
-  const l = e.target.closest("[data-rletter]"); if (l) { retLetter(l.dataset.rletter); return; }
+  const o = e.target.closest("[data-rout]"); if (o && RFORM) { RFORM.outcome = o.dataset.rout; const n = $("rnote") ? $("rnote").value : ""; renderRetForm(); if ($("rnote")) $("rnote").value = n; return; }
   const ch = e.target.closest("[data-rk] button"); if (ch && RFORM) { RFORM[ch.parentNode.dataset.rk] = ch.dataset.v; ch.parentNode.querySelectorAll("button").forEach(b => b.classList.toggle("on", b === ch)); }
 });
+$("retbody").addEventListener("change", e => { const t = e.target.closest("[data-rt]"); if (t && RFORM) RFORM.ticks[t.dataset.rt] = t.checked; });
 document.addEventListener("submit", e => { if (e.target.id === "rform") { e.preventDefault(); retSubmit(); } });
 function retCardHtml(c) {                                          // section in the car card
   const r = retOf(c.plate);
   if (r) return `<div class="vsec"><h4>Return to consignor</h4>${retCard(r, true)}</div>`;
-  if (isInt() && !/^(sold|returned|booked)/i.test(c.remark || "")) return `<div class="vsec"><h4>Return to consignor</h4><button class="btn" data-rhold="${esc(c.plate)}">Hold for return</button></div>`;
+  if (isInt() && !/^(sold|returned|booked)/i.test(c.remark || "")) return `<div class="vsec"><h4>Return to consignor</h4><button class="btn" data-rhold="${esc(c.plate)}">&#8617; Hold for return</button></div>`;
   return "";
 }
 $("vbody").addEventListener("click", e => {
   const h = e.target.closest("[data-rhold]"); if (h) { openRets(); RFORM = { step: "request", plate: h.dataset.rhold }; setTimeout(renderRetForm, 0); return; }
-  const g = e.target.closest("[data-rgo]"); if (g) { $("retov").classList.add("on"); RFORM = { step: g.dataset.rgo, plate: g.dataset.rp }; renderRetForm(); return; }
-  const l = e.target.closest("[data-rletter]"); if (l) retLetter(l.dataset.rletter);
+  const g = e.target.closest("[data-rgo]"); if (g) { $("retov").classList.add("on"); RFORM = { step: g.dataset.rgo, plate: g.dataset.rp }; renderRetForm(); }
 });
 // ---------- price review: status in the card + "Mark reviewed" (writes to the Price Review Log tab) ----------
 const curPrices = c => ["Car-In Price", "UCD Price", "Retail Selling Price"].map(h => c.x && XI[h] !== undefined && typeof c.x[XI[h]] === "number" ? c.x[XI[h]] : "");
@@ -1086,12 +1158,12 @@ $("vbody").addEventListener("submit", e => {
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 $("sumbtn").onclick = () => {
   const t = new Date(), opts = []; for (let i = 0; i < 12; i++) { const d = new Date(t.getFullYear(), t.getMonth() - i, 1); opts.push([d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"), MONTHS[d.getMonth()] + " " + d.getFullYear()]); }
-  fill("summ", opts); $("sumov").classList.add("on"); document.body.style.overflow = "hidden";
+  fill("summ", opts); $("sumov").classList.add("on");
   if (!DATA.past) { $("sumbody").innerHTML = '<div class="card">' + LD("Loading sold & returned data...") + '</div>'; DATA.past = lsGet("past"); load("past"); }
   renderSummary();
 };
 $("summ").onchange = () => renderSummary();
-const closeSum = () => { $("sumov").classList.remove("on"); document.body.style.overflow = ""; };
+const closeSum = () => $("sumov").classList.remove("on");
 $("sumx").onclick = closeSum;
 let SUMTXT = "";
 // management summary (internal): built on the phone from data already loaded (stock + sold/returned + orders/invoices); no money figures
@@ -1240,7 +1312,7 @@ function openDoc(c, n) {
 }
 $("wa").onclick = () => { window.open("https://wa.me/?text=" + encodeURIComponent(tgText(CUR)), "_blank"); };
 $("sh").onclick = () => { navigator.share({ text: tgText(CUR) }).catch(() => {}); };
-const closeCar = () => { $("ov").classList.remove("on"); document.body.style.overflow = ""; };
+const closeCar = () => $("ov").classList.remove("on");
 document.addEventListener("keydown", e => { if (e.key === "Escape" && $("keyov").classList.contains("on")) { closeKeys(); return; }
   if (e.key === "Escape") { if ($("docov").classList.contains("on")) { closeDoc(); return; } if ($("sumov").classList.contains("on")) { closeSum(); return; } closeCar(); closePin(); } });
 $("ov").addEventListener("click", e => { if (e.target === $("ov")) closeCar(); });
@@ -1271,7 +1343,10 @@ document.addEventListener("click", e => {
   if (r) { const el = $(r.dataset.sel); el.value = el.value === r.dataset.val ? "" : r.dataset.val; renderPanels(); renderTable(); }
 });
 ["fStatus","fPrice","fBody","fBrand","fFuel","fPhase","sort"].forEach(id => $(id).addEventListener("change", () => { if (id === "fStatus") renderKpis(); renderPanels(); renderTable(); }));
-$("q").addEventListener("input", renderTable);
+let QCOMP = false;
+$("q").addEventListener("compositionstart", () => QCOMP = true);
+$("q").addEventListener("compositionend", () => { QCOMP = false; renderTable(); });
+$("q").addEventListener("input", () => { if (!QCOMP) renderTable(); });
 
 // ---------- loading: show the copy saved on this phone instantly, then refresh from the sheet ----------
 const LS = { stock: "caricarz_stock_v1", stockfull: "caricarz_stockfull_v1", past: "caricarz_past_v1", pastpub: "caricarz_pastpub_v1" };
@@ -1297,7 +1372,7 @@ function load(view) {
     fetching[view] = false; d.view = view;
     if (view === "stock" && !d.full && KUSER && KUSER.role === "internal" && !pinGet()) { kRoleCheck(true); }
     if (view === "stock" && pinGet() && !d.full) {        // passcode changed / wrong: drop back to the normal view
-      pinSet(""); lsClearAll(); location.reload(); return;           // old passcode: forget it, fall back to this phone's role (or dealer view)
+      pinSet(""); lsClearAll(); reloadPage(); return;           // old passcode: forget it, fall back to this phone's role (or dealer view)
     }
     if (MODE === view) note(""); if (!d.dealer) lsSet(view, d); d._fresh = true; init(d);
   };
@@ -1371,7 +1446,7 @@ const submitPin = () => {
 };
 const doLock = () => { pinSet(""); lsClearInternal();                  // Internal role: Lock = sign out of this phone
   if (KUSER && KUSER.role === "internal") { KUSER = null; try { localStorage.removeItem("caricarz_keyuser"); } catch (e) {} lsClearAll(); }
-  location.reload(); };
+  reloadPage(); };
 // ---------- in-app guide: staff guide for everyone, internal guide only when unlocked ----------
 const gstep = (n, title, text, demo) => `<div class="gs"><div class="gn">${n}</div><div class="gc"><b>${title}</b><div class="gt">${text}</div>${demo ? `<div class="gd">${demo}</div>` : ""}</div></div>`;
 const GUIDE_STAFF = [
@@ -1387,7 +1462,7 @@ const GUIDE_STAFF = [
     `<span class="pasthit" style="cursor:default">1 returned to owner: ABC1234 &rsaquo;</span>`),
   gstep(6, "Take a key", "Tap Keys &rarr; Take. Choose what you take, pick a reason, snap one photo, Save. Handing a sold car to the buyer? Pick item <b>Delivery</b> (key + spare key, no return needed).",
     `<div class="kseg" style="max-width:330px"><button type="button" class="on">&#128663; Car key / VOC</button><button type="button">&#128477;&#65039; All keys</button><button type="button">&#129520; Equipment</button></div><div class="kphoto" style="margin-top:8px;padding:10px">&#128247; Photo required</div>`),
-  gstep(7, "Return it", "Your keys are at the top. Tap <b>Return</b> (or <b>Return all</b>, &times; to leave one out) and take a photo. Not back by <b>6:20pm</b>? It turns red and Telegram is told.",
+  gstep(7, "Return it", "Your keys are at the top. Tap <b>Return</b> (or <b>Return all</b>, &times; to leave one out) and take a photo. You return only your own keys; Fleet and Inventory can return for others. Not back by <b>6:20pm</b>? It turns red and Telegram is told.",
     `<div class="krow late" style="margin:0;border-radius:10px"><span class="kic">&#128273;</span><div class="km"><span class="kp">ABC1234</span> <span class="sub">Key &middot; Test drive</span></div><span class="btn" style="padding:6px 12px">Return</span></div>`)
 ].join("");
 const GUIDE_INTERNAL = `<div class="gtip">&#128274; Internal only. Don't share screenshots of this view with sales or customers.</div>` + [
@@ -1400,9 +1475,11 @@ const GUIDE_INTERNAL = `<div class="gtip">&#128274; Internal only. Don't share s
   gstep(4, "After a price change, do all in one go", "",
     `<div class="gflow"><span>Master</span>&rarr;<span>CariCarz / Carlist / Mudah / FB</span>&rarr;<span>My Promotion</span>&rarr;<span>Ads upgrade</span>&rarr;<span>Price tag</span></div>`),
   gstep(5, "Sold & Returned, Summary", "Full history with prices. <b>Summary</b> (top): this month vs last month, sales / tele sales, BDC / tele consign, stock health, returned, 6-month trend. Pick how Sold is counted (delivery, invoice or disbursement date); Copy gives the WhatsApp text.",
-    `<span class="sumbtn on" style="cursor:default">Summary</span>`),
-  gstep(6, "Staff, roles and equipment", "Add people in the <b>Staff</b> tab (name, PIN, Active, Role) and equipment in the <b>Assets</b> tab. Someone left? Set Active to <b>No</b>.",
-    `<table class="sumt st2"><tr><th>Role</th><th>Sees</th></tr><tr><td>Internal</td><td>Everything here</td></tr><tr><td>Sales</td><td>Stock, booking, aging, keys</td></tr><tr><td>(blank)</td><td>Dealer: cars + own keys</td></tr></table>`)
+    `<span class="hb" style="cursor:default"><i>&#128202;</i>Summary</span>`),
+  gstep(6, "Return a car to the consignor", "Open the car &rarr; <b>Hold for return</b>, or use <b>Returns</b> at the top. Each step needs a photo and posts to the Telegram Returns topic. Inventory ticks the checklist (from Master: key, spare key, VOC) and prints the forms. The last step: <b>Returned</b>, or <b>Keep as V.B.A.O</b> if the owner leaves it with us.",
+    `<div class="gflow"><span>Hold</span>&rarr;<span>Docs (Inventory)</span>&rarr;<span>PDI (Fleet)</span>&rarr;<span>Returned / V.B.A.O</span></div><div class="gcap">&#127873; RM200 reward: Private Consignment over 90 days (not V.B.A.O). The claim form prints with the return form.</div>`),
+  gstep(7, "Staff, roles and equipment", "Add people in the <b>Staff</b> tab (name, PIN, Active, Role) and equipment in the <b>Assets</b> tab. Someone left? Set Active to <b>No</b>.",
+    `<table class="sumt st2"><tr><th>Role</th><th>Sees</th></tr><tr><td>Internal</td><td>Everything here</td></tr><tr><td>Fleet</td><td>Sales view + Returns (PDI), key history, return keys for others</td></tr><tr><td>Sales</td><td>Stock, booking, aging, own keys</td></tr><tr><td>(blank)</td><td>Dealer: cars + own keys</td></tr></table>`)
 ].join("");
 let GTAB = "staff";
 function openGuide(tab) {
@@ -1418,7 +1495,7 @@ $("swno").onclick = () => $("swov").classList.remove("on");          // Switch u
 $("swov").addEventListener("click", e => { if (e.target === $("swov")) $("swov").classList.remove("on"); });
 $("swyes").onclick = () => { $("swov").classList.remove("on"); KUSER = null; KEYS = null; try { localStorage.removeItem("caricarz_keyuser"); } catch (err) {}
   if (pinGet()) { renderSignIn(); return; }                            // passcode device: internal view stays open; just a different Keys user
-  lsClearAll(); location.reload(); };                                  // otherwise start clean: the next person signs in
+  lsClearAll(); reloadPage(); };                                  // otherwise start clean: the next person signs in
 $("lockbtn").onclick = () => $("lockov").classList.add("on");     // always ask first: easy to tap by mistake
 $("lockno").onclick = () => $("lockov").classList.remove("on");
 $("lockov").addEventListener("click", e => { if (e.target === $("lockov")) $("lockov").classList.remove("on"); });
@@ -1441,9 +1518,33 @@ function kRoleCheck(force) {
   fetch(API_URL + "?" + new URLSearchParams({ act: "keyme", name: KUSER.name, pin: KUSER.pin }), { credentials: "omit", cache: "no-store" }).then(r => r.json()).then(d => {
     if (!d.ok) { if (!pinGet()) gate("Your name or PIN has changed. Please sign in again."); return; }
     if ((d.role || "sales") !== KUSER.role || force) { const changed = (d.role || "sales") !== KUSER.role; KUSER.role = d.role || "sales";
-      try { localStorage.setItem("caricarz_keyuser", JSON.stringify(KUSER)); } catch (e) {} if (changed) { lsClearAll(); location.reload(); } }
+      try { localStorage.setItem("caricarz_keyuser", JSON.stringify(KUSER)); } catch (e) {} if (changed) { lsClearAll(); reloadPage(); } }
   }).catch(() => {});
 }
+// ---------- pop-ups: page behind stays still; phone Back button closes the top pop-up (or steps back inside it) ----------
+const OVS = [...document.querySelectorAll(".ov")], OSTACK = [];
+let RELOADING = false;
+let HPUSH = 0, HSKIP = 0;
+const ovClose = o => ({ ov: closeCar, keyov: closeKeys, sumov: closeSum, docov: closeDoc, pinov: closePin }[o.id] || (() => o.classList.remove("on")))();
+const ovSubBack = o => {                                             // inside a pop-up: Back goes to the previous screen first
+  if (o.id === "keyov" && KFORM && KUSER) { KFORM = null; openKeys(); return true; }
+  if (o.id === "retov" && RFORM) { RFORM = null; renderRets(); return true; }
+  return false;
+};
+const ovSync = () => {
+  const open = OVS.filter(o => o.classList.contains("on"));
+  open.forEach(o => { if (OSTACK.indexOf(o) < 0) { OSTACK.push(o); history.pushState({ ov: OSTACK.length }, ""); HPUSH++; } });
+  for (let i = OSTACK.length - 1; i >= 0; i--) if (open.indexOf(OSTACK[i]) < 0) { OSTACK.splice(i, 1); if (HPUSH > OSTACK.length && !RELOADING) { HPUSH--; HSKIP++; history.back(); } }
+  document.documentElement.classList.toggle("noscroll", open.length > 0);
+};
+const ovMO = new MutationObserver(ovSync); OVS.forEach(o => ovMO.observe(o, { attributes: true, attributeFilter: ["class"] }));
+window.addEventListener("popstate", () => {
+  if (HSKIP) { HSKIP--; return; }
+  HPUSH = Math.max(0, HPUSH - 1);
+  const top = OSTACK[OSTACK.length - 1]; if (!top) return;
+  if (ovSubBack(top)) { history.pushState({ ov: OSTACK.length }, ""); HPUSH++; return; }
+  ovClose(top);
+});
 (function start() {
   setTimeout(() => kRoleCheck(), 2500);
   if (!pinGet() && KUSER && KUSER.role === "broker") { brokerMode(); return; }
