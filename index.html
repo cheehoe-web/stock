@@ -289,6 +289,7 @@
   .rkit{display:grid;gap:6px}
   .kform label.rchk{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-size:14px;cursor:pointer;background:#fff}
   .kform label.rchk:has(input:checked){border-color:#86efac;background:#f0fdf4}
+  .ropt{margin-left:auto;font-size:11px;font-weight:700;color:var(--mut);background:#f3f4f6;border-radius:999px;padding:2px 8px}
   .rchk input{width:20px;height:20px;margin:0;accent-color:var(--green);flex:0 0 auto}
   .rinfo{font-size:13px;background:#f3f4f6;border-radius:10px;padding:8px 12px;color:#374151}.rinfo.bad{background:#fef2f2;color:#b91c1c;font-weight:600}
   .rforms{position:relative;border-color:#bbf7d0;background:#f0fdf4;padding-right:46px}.rfx{position:absolute;top:10px;right:10px;width:30px;height:30px;font-size:16px}
@@ -1002,9 +1003,9 @@ function retKit(plate) {
   const c = ((DATA.stock && DATA.stock.cars) || []).find(x => pkey(x.plate) === pkey(plate)), i = (c && c.info) || {};
   const val = v => { const t = String(v == null ? "" : v).trim(); return /^(n\/?a|-)?$/i.test(t) ? "" : t; }, sp = val(i.spareKey), vo = val(i.voc);
   const items = ["Main key"], info = [];
-  if (!sp) items.push("Spare key (if any; not filled in Master)"); else if (/automall|^yes/i.test(sp)) items.push("Spare key");
+  if (!sp) items.push("Spare key (if any)"); else if (/automall|^yes/i.test(sp)) items.push("Spare key");
   else if (/owner/i.test(sp)) info.push("Spare key is with the owner"); else if (/^no/i.test(sp)) info.push("No spare key"); else items.push("Spare key (" + sp + ")");
-  if (!vo) items.push("VOC (if any; not filled in Master)"); else if (/ori|^yes/i.test(vo)) items.push("Original VOC");
+  if (!vo) items.push("VOC (if any)"); else if (/ori|^yes/i.test(vo)) items.push("Original VOC");
   else if (/copy/i.test(vo)) info.push("VOC: copy only, original not with us"); else if (/^no/i.test(vo)) info.push("No VOC with us"); else items.push("VOC (" + vo + ")");
   const out = KEYS ? KEYS.out.filter(r => pkey(r.plate) === pkey(plate)) : [];
   return { items, info, out };
@@ -1023,7 +1024,7 @@ function renderRetForm() {
     h += retCard(r, false).replace('class="rcard rdone"', 'class="rcard rmini"').replace(/<span class="pill b-grey">Returned<\/span>|<span class="pill b-amber">Returned, listed V.B.A.O<\/span>/, "");
     if (f.step === "docs") {
       const k = f.kit = f.kit || retKit(f.plate); f.ticks = f.ticks || {};
-      h += `<label>Checklist <span class="sub" style="font-weight:400">from Master: Spare Key / VOC</span></label><div class="rkit">${k.items.map((it, n) => `<label class="rchk"><input type="checkbox" data-rt="${n}" ${f.ticks[n] ? "checked" : ""}> ${esc(it)}</label>`).join("")}
+      h += `<label>Checklist <span class="sub" style="font-weight:400">from Master: Spare Key / VOC. "If any" = not filled in Master; tick only if it's there</span></label><div class="rkit">${k.items.map((it, n) => `<label class="rchk"><input type="checkbox" data-rt="${n}" ${f.ticks[n] ? "checked" : ""}> ${esc(it)}${/\(if any\)$/.test(it) ? '<span class="ropt">optional</span>' : ""}</label>`).join("")}
         ${k.info.map(x => `<div class="rinfo">&#8505;&#65039; ${esc(x)}</div>`).join("")}${k.out.map(o => `<div class="rinfo bad">&#9888;&#65039; ${esc(o.item)} is out with ${esc(o.by)} (${esc(o.reason)}). Get it back first.</div>`).join("")}</div>
         ${shot("the key set and documents")}
         <div class="sub">Saving makes the Vehicle Return Form${r.refund ? " and the RM200 reward claim form" : ""} and posts them to the Telegram Returns topic. Print them right after.</div>`; sub = "Documents ready";
@@ -1064,7 +1065,9 @@ function retSubmit(step) {
     if (body.reason === "Other" && !body.note) return err("Write a note for Other."); }
   else body.plate = f.plate;
   if ($("rnote") && body.step !== "request") body.note = $("rnote").value.trim();
-  if (body.step === "docs") { const k = f.kit; body.kit = k.items.map(x => x.replace(/ \(if any; not filled in Master\)$/, "")); body.info = k.info; body.kitDone = k.items.every((x, n) => f.ticks[n]);
+  if (body.step === "docs") { const k = f.kit, opt = x => / \(if any\)$/.test(x), name = x => x.replace(/ \(if any\)$/, "");
+    body.kit = k.items.filter((x, n) => f.ticks[n]).map(name); body.info = k.info.concat(k.items.filter((x, n) => opt(x) && !f.ticks[n]).map(x => "No " + name(x).replace(/^VOC$/, "VOC") + " (not in Master, none found)"));
+    body.kitDone = k.items.every((x, n) => f.ticks[n] || opt(x));
     if (!body.kitDone) return err("Tick every item on the checklist first."); }
   if (body.step === "handover") body.outcome = f.outcome === "vbao" ? "vbao" : "returned";
   if (["docs", "pdi", "handover"].indexOf(body.step) >= 0 && !f.photo) return err("Take a photo first.");
