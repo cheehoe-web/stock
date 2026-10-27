@@ -714,7 +714,7 @@ function openCar(i) {
   const row = (l, v, raw) => `<div><span>${l}</span>${raw ? v : `<b>${esc(v)}</b>`}</div>`;
   const days = c.days != null ? (MODE === "past" ? `<span class="days">${c.days} days in stock</span>` : `<span class="days ${c.days > 120 ? "old" : ""}">${c.days} days in stock</span>`) : "";
   const pr = c.pr || [], last = pr[pr.length - 1];
-  let h = c.photo ? `<a class="vimg" href="${esc(c.caricarz || c.photo)}" target="_blank" rel="noopener"><img src="${esc(c.photo)}" alt="" loading="lazy" onerror="this.parentNode.remove();document.querySelector('.vc').classList.remove('hasimg')"></a>` : "";
+  let h = c.photo ? `<div class="vimg"><img src="${esc(c.photo)}" alt="" loading="lazy" onerror="this.parentNode.remove();document.querySelector('.vc').classList.remove('hasimg')"></div>` : "";
   h += `<div class="vtop"><div><div class="vplate">${esc(c.plate)}${c.adId ? `<span class="adid">Ad ${esc(c.adId)}</span>` : ""}</div></div><button class="vx" id="cl" aria-label="Close">&times;</button></div>
     <div class="vmodel">${esc(c.model)}</div>
     <div class="vtags"><span class="pill b-${c.cls}">${esc(c.status)}</span>${c.phase ? `<span class="pill ${phaseCls(c.phase)}">${esc(c.phase)}</span>` : ""}${days}</div>
@@ -737,7 +737,7 @@ function openCar(i) {
   h += `<div class="vsec"><h4>Key &amp; VOC</h4><div class="vkey" id="vkey">${keyCardHtml(c)}</div></div>`;
   if (canRet()) h += retCardHtml(c);
   if (FULL && c.rv && c.rv.s) h += `<div class="vsec"><h4>Price review (every 10 days)</h4>${reviewHtml(c)}</div>`;
-  const links = [["CariCarz", c.caricarz], ["Carlist", c.carlist], ["Mudah", c.mudah], ["Facebook", c.fb]].filter(l => l[1]);
+  const links = [["CariCarz", c.caricarz], ["Carlist", c.carlist], ["Mudah", c.mudah], ["FB Marketplace", c.fb]].filter(l => l[1]);
   if (links.length) h += `<div class="vsec"><h4>Listings</h4><div class="vlinks">${links.map(l => `<a href="${esc(l[1])}" target="_blank" rel="noopener">${l[0]} &#8599;</a>`).join("")}</div></div>`;
   if (FULL && c.docs && c.docs.length) h += `<div class="vsec"><h4>Documents (internal)</h4><div class="vdocs">${c.docs.map((d, n) => `<button data-doc="${n}" title="${esc(d[1])}">&#128196; ${esc(d[0])}</button>`).join("")}</div></div>`;
   if (FULL && c.x) {
