@@ -615,7 +615,7 @@ function renderKpis() {
     ["c-red","AGING STOCK",n(c => c.aging),"Car Phase: Aging Stock","Push these first","aging"],
     ["c-red","VBAO EXPIRED",n(c => c.vexp),"V.B.A.O over 60 days","Delist or extend (Cl 2.4)","vexp"],
     ["c-purple","NEW ARRIVALS",n(c => c.fresh),"Car in, last 14 days","Since " + fmtDate(cutoff.getFullYear() + "-" + (cutoff.getMonth()+1) + "-" + cutoff.getDate()).slice(0,5),"fresh"]
-  ].concat(FULL ? [["c-red","PRICE REVIEW DUE",n(c => c.rdue),"Every " + 10 + " days, consign team","Overdue 5+ days: " + n(c => c.rdue && c.rv.o >= 5),"rdue"],
+  ].concat(FULL ? [["c-red","PRICE REVIEW DUE",n(c => c.rdue),"10 days after last revision","Overdue 5+ days: " + n(c => c.rdue && c.rv.o >= 5),"rdue"],
     ["c-amber","UPDATE MASTER PRICE",n(c => c.rupd),"Reviewed price not in Master","Car-in / UCD / RSP differ","rupd"]] : []);
   const cur = $("fStatus").value, cap = t => (t.charAt(0) + t.slice(1).toLowerCase()).replace(/v\.b\.a\.o/i, "V.B.A.O").replace(/vbao/i, "VBAO").replace("master", "Master");
   $("kpis").innerHTML = `<div class="kmain">${k.slice(0, 4).map(x => `<div class="card kt ${cur === x[5] ? "on" : ""}" data-status="${x[5]}"><div class="kl">${cap(x[1])}</div><div class="kn ${x[0]}">${x[2]}</div><div class="ks">${x[4]}</div></div>`).join("")}</div>
@@ -737,7 +737,7 @@ function openCar(i) {
   if ((FULL && c.bdc) || dates.length) h += `<div class="vsec"><h4>${FULL ? "Handled by" : "Dates"}</h4><div class="vlist">${FULL && c.bdc ? `<div><span class="vpic"><i>${esc(c.bdc.trim().charAt(0).toUpperCase())}</i></span><b style="margin-right:auto;align-self:center">${esc(c.bdc)}</b><span style="align-self:center">BDC PIC</span></div>` : ""}${dates.map(d => row(d[0], d[1])).join("")}</div></div>`;
   h += `<div class="vsec"><h4>Key &amp; VOC</h4><div class="vkey" id="vkey">${keyCardHtml(c)}</div></div>`;
   if (canRet()) h += retCardHtml(c);
-  if (FULL && c.rv && c.rv.s) h += `<div class="vsec"><h4>Price review (every 10 days)</h4>${reviewHtml(c)}</div>`;
+  if (FULL && c.rv && c.rv.s) h += `<div class="vsec"><h4>Price review (10 days after the last one)</h4>${reviewHtml(c)}</div>`;
   const links = [["CariCarz", c.caricarz], ["Carlist", c.carlist], ["Mudah", c.mudah], ["FB Marketplace", c.fb]].filter(l => l[1]);
   if (links.length) h += `<div class="vsec"><h4>Listings</h4><div class="vlinks">${links.map(l => `<a href="${esc(l[1])}" target="_blank" rel="noopener">${l[0]} &#8599;</a>`).join("")}</div></div>`;
   if (FULL && c.docs && c.docs.length) h += `<div class="vsec"><h4>Documents (internal)</h4><div class="vdocs">${c.docs.map((d, n) => `<button data-doc="${n}" title="${esc(d[1])}">&#128196; ${esc(d[0])}</button>`).join("")}</div></div>`;
@@ -1130,12 +1130,13 @@ function reviewHtml(c) {
   const r = c.rv, l = r.l, cur = curPrices(c);
   const pr = l && Array.isArray(l[2]) ? ["Car-in", "UCD", "RSP"].map((n, i) => l[2][i] !== "" && l[2][i] != null ? n + " RM " + rm(l[2][i]) : "").filter(Boolean).join(" &middot; ") : "";
   const who = l ? `Last: ${fmtDate(l[0])}${l[1] ? " by " + esc(l[1]) : ""}${pr ? " &middot; " + pr : ""}${l[3] ? "<br>" + esc(l[3]) : ""}` : "No review recorded yet";
-  const head = r.s === "due" ? `<b class="neg">DUE: day ${r.r} review${r.o ? ", " + r.o + " day" + (r.o === 1 ? "" : "s") + " overdue" : ""}</b>`
-    : r.s === "done" ? `<b class="yes">Done for day ${r.r}</b> &middot; next in ${r.n} day${r.n === 1 ? "" : "s"}` : `Next review in ${r.n} day${r.n === 1 ? "" : "s"}`;
+  const dd = n => n + " day" + (n === 1 ? "" : "s");
+  const head = r.s === "due" ? `<b class="neg">DUE: ${dd(r.r)} since ${r.f ? "listed" : "last revision"}${r.o ? " (" + dd(r.o) + " overdue)" : ""}</b>`
+    : r.s === "done" ? `<b class="yes">Revised ${r.r ? dd(r.r) + " ago" : "today"}</b> &middot; next due in ${dd(r.n)}` : `Next review due in ${dd(r.n)} <span class="sub">(can revise any time)</span>`;
   const upd = r.u ? `<div style="margin-top:6px"><span class="pill b-amber">Update price in Master</span> <span class="sub">Master now: Car-in ${rm(cur[0]) || "-"} &middot; UCD ${rm(cur[1]) || "-"} &middot; RSP ${rm(cur[2]) || "-"}</span></div>` : "";
   let name = ""; try { name = localStorage.getItem("caricarz_name") || ""; } catch (e) {}
   const inp = (id, ph, v) => `<label class="sub">${ph}<input id="${id}" inputmode="numeric" value="${v === "" ? "" : rm(v)}"></label>`;
-  return `<div class="vrev ${r.s}">${head}<div class="sub">${who}</div>${upd}${r.s === "due" || r.s === "done" ? `<button class="btn" id="rvopen" type="button">Mark reviewed</button>
+  return `<div class="vrev ${r.s}">${head}<div class="sub">${who}</div>${upd}${r.s ? `<button class="btn" id="rvopen" type="button">Mark reviewed</button>
     <form id="rvform" style="display:none">${inp("rvcin", "Car-in price (RM)", cur[0])}${inp("rvucd", "UCD price (RM)", cur[1])}${inp("rvrsp", "Retail selling price (RM)", cur[2])}
     <input id="rvnote" placeholder="Consignor reply / note"><input id="rvby" placeholder="Your name" value="${esc(name)}">
     <button class="btn pri" type="submit">Save review</button><div class="sub" id="rvmsg"></div></form>` : ""}</div>`;
@@ -1153,7 +1154,7 @@ $("vbody").addEventListener("submit", e => {
     if (!d || !d.ok) { $("rvmsg").textContent = (d && d.error === "locked") ? "Passcode changed. Lock and unlock again." : "Not saved: " + ((d && d.error) || "error"); return; }
     const t = new Date(), iso = t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0") + "-" + String(t.getDate()).padStart(2, "0");
     const cur = curPrices(c); c.rv.l = [iso, by, nums, note]; c.rv.u = nums.some((v, i) => v !== "" && v !== cur[i]) || undefined; c.rupd = !!c.rv.u;
-    if (c.rv.s === "due") { c.rv.s = "done"; delete c.rv.o; } c.rdue = false;
+    c.rv.s = "done"; c.rv.r = 0; c.rv.n = 10; delete c.rv.o; delete c.rv.f; c.rdue = false;   // revision restarts the 10-day clock
     lsSet("stock", DATA.stock); openCar(c._i); renderKpis(); renderTable();
   }).catch(() => { $("rvmsg").textContent = "Not saved. Check the connection and try again."; });
 });
@@ -1473,7 +1474,7 @@ const GUIDE_INTERNAL = `<div class="gtip">&#128274; Internal only. Don't share s
     `<div style="font-size:15px;font-weight:800">RM 68,800</div><div class="xline">In <b>58,000</b> &middot; UCD <b>62,000</b> &middot; Margin <b>6,800</b></div>`),
   gstep(2, "VOC and JomCheck", "Open a car and tap the document. It opens right in the page.",
     `<div class="vdocs"><button type="button">&#128196; VOC</button><button type="button">&#128196; JomCheck</button></div>`),
-  gstep(3, "Price review every 10 days", "Tap <b>Price review due</b>, open the car, then <b>Mark reviewed</b> with car-in, UCD and RSP.",
+  gstep(3, "Price review", "Revise any time: open the car &rarr; <b>Mark reviewed</b> with car-in, UCD and RSP. It turns <b>due</b> 10 days after the last revision (or after listing). Tap <b>Price review due</b> to see them.",
     `<span class="pill b-red">Review due</span> <span class="pill b-amber">Update price</span><div class="gcap">"Update price" = reviewed price not yet changed in Master</div>`),
   gstep(4, "After a price change, do all in one go", "",
     `<div class="gflow"><span>Master</span>&rarr;<span>CariCarz / Carlist / Mudah / FB</span>&rarr;<span>My Promotion</span>&rarr;<span>Ads upgrade</span>&rarr;<span>Price tag</span></div>`),
