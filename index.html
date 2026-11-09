@@ -433,7 +433,7 @@
   </div>
 
   <div class="card" id="landing"><div class="lk">&#128273;</div><h3 id="landt">Keys</h3>
-    <div class="sub" id="landmsg">Sign in with your name and PIN to take or return keys.</div>
+    <div class="sub" id="landmsg"></div>
     <button class="btn pri" id="landbtn" type="button">Sign in</button></div>
   <div class="note" id="note"></div>
   <div id="kpis"></div>
@@ -476,7 +476,7 @@
 
 <div class="ov" id="lockov"><div class="dlg cdlg">
   <div class="cic">&#128274;</div><h3>Lock the internal view?</h3>
-  <div class="sub">Cost, margin, VOC, Summary and Returns are hidden on this phone. The car list stays (dealer view). Sign in again with your name and PIN to unlock.</div>
+  <div class="sub">Hides cost, VOC, Summary and Returns on this phone.</div>
   <div class="btns"><button class="btn" id="lockno">Cancel</button><button class="btn red" id="lockyes">Lock</button></div>
 </div></div>
 <div class="ov" id="kcov" style="z-index:13"><div class="dlg cdlg">
@@ -486,7 +486,7 @@
 </div></div>
 <div class="ov" id="swov" style="z-index:13"><div class="dlg cdlg">
   <div class="cic">&#128100;</div><h3>Switch user?</h3>
-  <div class="sub" id="swmsg">You will be signed out of Keys on this phone and need a name and PIN to sign in again.</div>
+  <div class="sub" id="swmsg"></div>
   <div class="btns"><button class="btn" id="swno">Cancel</button><button class="btn red" id="swyes">Switch user</button></div>
 </div></div>
 <div class="ov" id="gov"><div class="dlg">
@@ -495,7 +495,7 @@
 </div></div>
 <div class="ov" id="pinov"><div class="dlg" style="max-width:340px">
   <h3 style="margin:0 0 6px">Internal view</h3>
-  <div class="sub" id="pinmsg" style="margin-bottom:12px">Enter the passcode to view sold and returned cars.</div>
+  <div class="sub" id="pinmsg" style="margin-bottom:12px"></div>
   <input type="password" id="pin" placeholder="Passcode" autocomplete="current-password" style="width:100%;margin-bottom:12px">
   <div class="btns"><button class="btn pri" id="pinok">Unlock</button><button class="btn" id="pincancel">Cancel</button></div>
 </div></div>
@@ -737,7 +737,7 @@ function openCar(i) {
   if ((FULL && c.bdc) || dates.length) h += `<div class="vsec"><h4>${FULL ? "Handled by" : "Dates"}</h4><div class="vlist">${FULL && c.bdc ? `<div><span class="vpic"><i>${esc(c.bdc.trim().charAt(0).toUpperCase())}</i></span><b style="margin-right:auto;align-self:center">${esc(c.bdc)}</b><span style="align-self:center">BDC PIC</span></div>` : ""}${dates.map(d => row(d[0], d[1])).join("")}</div></div>`;
   h += `<div class="vsec"><h4>Key &amp; VOC</h4><div class="vkey" id="vkey">${keyCardHtml(c)}</div></div>`;
   if (canRet()) h += retCardHtml(c);
-  if (FULL && c.rv && c.rv.s) h += `<div class="vsec"><h4>Price review (10 days after the last one)</h4>${reviewHtml(c)}</div>`;
+  if (FULL && c.rv && c.rv.s) h += `<div class="vsec"><h4>Price review</h4>${reviewHtml(c)}</div>`;
   const links = [["CariCarz", c.caricarz], ["Carlist", c.carlist], ["Mudah", c.mudah], ["FB Marketplace", c.fb]].filter(l => l[1]);
   if (links.length) h += `<div class="vsec"><h4>Listings</h4><div class="vlinks">${links.map(l => `<a href="${esc(l[1])}" target="_blank" rel="noopener">${l[0]} &#8599;</a>`).join("")}</div></div>`;
   if (FULL && c.docs && c.docs.length) h += `<div class="vsec"><h4>Documents (internal)</h4><div class="vdocs">${c.docs.map((d, n) => `<button data-doc="${n}" title="${esc(d[1])}">&#128196; ${esc(d[0])}</button>`).join("")}</div></div>`;
@@ -803,9 +803,8 @@ function openKeys(form) {
 }
 function renderSignIn() {
   $("kwho").textContent = "";
-  $("keybody").innerHTML = `<div class="kcard"><h3>${GATE ? "Sign in" : "Who are you?"}</h3><form class="kform" id="ksign"><label>Your name<input id="kname" autocomplete="username" placeholder="As in the Staff list"></label>
-    <label>Your PIN<input id="kpin" type="password" inputmode="numeric" autocomplete="current-password"></label><button class="btn pri" type="submit">Continue</button><div class="kmsg" id="kmsg"></div>
-    <div class="sub">This phone will remember you. Ask the Inventory Team for your PIN.</div></form></div>`;
+  $("keybody").innerHTML = `<div class="kcard"><h3>${GATE ? "Sign in" : "Who are you?"}</h3><form class="kform" id="ksign"><label>Your name<input id="kname" autocomplete="username"></label>
+    <label>Your PIN<input id="kpin" type="password" inputmode="numeric" autocomplete="current-password"></label><button class="btn pri" type="submit">Continue</button><div class="kmsg" id="kmsg"></div></form></div>`;
   setTimeout(() => $("kname").focus(), 50);
 }
 document.addEventListener("submit", e => {
@@ -823,7 +822,7 @@ document.addEventListener("submit", e => {
   if (e.target.id === "kform") { e.preventDefault(); submitKey(); }
 });
 document.addEventListener("click", e => {
-  if (e.target.id === "kswitch") { e.preventDefault(); $("swmsg").textContent = KUSER.name + " will be signed out of Keys on this phone. Signing in again needs a name and PIN."; $("swov").classList.add("on"); }
+  if (e.target.id === "kswitch") { e.preventDefault(); $("swmsg").textContent = "Signs out " + KUSER.name + " on this phone."; $("swov").classList.add("on"); }
   if (e.target.id === "ktake") { KFORM = { action: "Out", mode: "car", plates: [], assets: [], item: "Key" }; renderKeyForm(); }
   const md = e.target.closest("[data-kmode]"); if (md && KFORM) { KFORM.mode = md.dataset.kmode; KFORM.reason = ""; renderKeyForm(); }
   const as = e.target.closest("[data-kas]"); if (as && KFORM && !as.disabled) { const n = as.dataset.kas, i = KFORM.assets.indexOf(n);
@@ -863,10 +862,10 @@ function renderKeyList() {                                         // mine first
   const groups = {}, label = {}; out.forEach(r => { const n = r.by.trim(), k = n.toLowerCase() === me ? "~me" : n.toLowerCase(); if (!label[k] || label[k] === label[k].toLowerCase()) label[k] = n; (groups[k] = groups[k] || []).push(r); });
   const order = Object.keys(groups).sort((a, b) => a === "~me" ? -1 : b === "~me" ? 1 : groups[b].length - groups[a].length || a.localeCompare(b));
   const sec = k => { const g = groups[k], mine = k === "~me";
-    return `<div class="kgrp ${mine ? "mine" : ""}"><div class="kgh"><b>${mine ? "Mine" : esc(label[k])}</b> <span class="sub">${g.length} out</span>${g.length > 1 && (mine || canOthers()) ? `<button class="btn ${mine ? "pri" : ""}" data-kretg="${esc(k)}">Return all (${g.length})</button>` : ""}</div>${g.map(row).join("")}</div>`; };
+    return `<div class="kgrp ${mine ? "mine" : ""}"><div class="kgh"><b>${mine ? "Mine" : esc(label[k])}</b>${g.length > 1 && (mine || canOthers()) ? `<button class="btn ${mine ? "pri" : ""}" data-kretg="${esc(k)}">Return all (${g.length})</button>` : ""}</div>${g.map(row).join("")}</div>`; };
   $("keybody").innerHTML = `<button class="btn pri" id="ktake" style="width:100%;padding:14px;margin-bottom:12px">Take</button>
     <div class="kcard"><h3>Out now: ${out.length}${late ? ` <span class="neg">&middot; ${late} not returned by 6:20pm</span>` : ""}</h3>
-    ${out.length ? (groups["~me"] ? "" : '<div class="sub" style="margin-bottom:6px">You have nothing out.</div>') + order.map(sec).join("") : '<div class="sub">Everything is in.</div>'}</div>`;
+    ${out.length ? order.map(sec).join("") : '<div class="sub">Everything is in.</div>'}</div>`;
   KEYS_GROUPS = groups;
 }
 let KEYS_GROUPS = {};
@@ -881,17 +880,17 @@ function renderKeyForm() {
     const pick = [].concat(...types.map(t => map[t] || all)); rs = pick.length ? Array.from(new Set(pick.concat("Other"))) : all; if (rs.indexOf(f.reason) < 0) f.reason = ""; }
   if (allk) { rs = (KEYS && KEYS.allReasons) || ["Move parking", "Start engine", "Car wash", "Other"]; if (rs.indexOf(f.reason) < 0) f.reason = ""; }
   $("keybody").innerHTML = `<div class="kcard"><h3>${inn ? "Return" : "Take"}</h3><form class="kform" id="kform">
-    ${inn ? `<label>Returning (${f.keys.length})${f.keys.length > 1 ? ' <span class="sub" style="font-weight:400">tap &times; to leave one out</span>' : ""}</label><div class="kpls">${f.keys.map((k, i) => `<span class="kpl"><b>${esc(k.plate)}</b> ${esc(k.item)}${f.keys.length > 1 ? `<button type="button" data-kunret="${i}" aria-label="Not returning this">&times;</button>` : ""}</span>`).join("")}</div>`
+    ${inn ? `<label>Returning (${f.keys.length})</label><div class="kpls">${f.keys.map((k, i) => `<span class="kpl"><b>${esc(k.plate)}</b> ${esc(k.item)}${f.keys.length > 1 ? `<button type="button" data-kunret="${i}" aria-label="Not returning this">&times;</button>` : ""}</span>`).join("")}</div>`
       : `<div class="kseg"><button type="button" data-kmode="car" class="${eq || allk ? "" : "on"}">&#128663; Car key / VOC</button>${KEYS && KEYS.broker ? "" : `<button type="button" data-kmode="all" class="${allk ? "on" : ""}">&#128477;&#65039; All keys</button>`}<button type="button" data-kmode="eq" class="${eq ? "on" : ""}">&#129520; Equipment</button></div>` + (allk
-      ? `<div class="sub" style="margin:4px 0 2px">One record for the whole key box (move parking, start engine...). ${allOut ? `<b class="neg">Already out with ${esc(allOut.by)}.</b>` : ""}</div>` : eq
+      ? `<div class="sub" style="margin:4px 0 2px">${allOut ? `<b class="neg">Already out with ${esc(allOut.by)}.</b>` : ""}</div>` : eq
       ? `<label>Equipment (tap one or more)</label><div class="kchips">${assets.length ? assets.map(a => { const b = busy(a.name);
           return `<button type="button" data-kas="${esc(a.name)}" class="${f.assets.indexOf(a.name) >= 0 ? "on" : ""} ${b ? "kbusy" : ""}" ${b ? "disabled" : ""}>${esc(a.name)}${b ? " &middot; with " + esc(b.by) : ""}</button>`; }).join("")
-          : '<span class="sub">No equipment yet. Add rows to the Assets tab in the sheet.</span>'}</div>`
-      : `<label>Plates (add one or more)<input id="kplate" type="text" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done" placeholder="Type plate or model, tap to add"></label><div class="ksug" id="ksug"></div><div class="kpls" id="kpls"></div>
+          : '<span class="sub">No equipment in the Assets tab.</span>'}</div>`
+      : `<label>Plates<input id="kplate" type="text" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done" placeholder="Plate or model"></label><div class="ksug" id="ksug"></div><div class="kpls" id="kpls"></div>
     <label>Item</label>${chips("item", items, f.item)}`)}
-    ${dlv ? `<div class="sub" style="margin:2px 0 4px">&#128666; Sold car handed to the buyer: records <b>Key + Spare key</b> as gone with the car (not VOC). No return needed.</div>` : f.action === "Out" ? `<label>Reason</label>${chips("reason", rs, f.reason)}` : ""}
-    <label>Note<input id="knote" placeholder="${f.action === "Out" ? "Optional (required for Other)" : "Optional"}"></label>
-    <label>Photo (required)</label><div class="kphoto" id="kshot" role="button" tabindex="0">${kShotEmpty(inn ? "what you return" : eq ? "the equipment" : allk ? "the key box" : dlv ? "the keys being handed over" : "the key(s)")}</div><input type="file" id="kfile" accept="image/*" capture="environment" style="display:none">
+    ${dlv ? `` : f.action === "Out" ? `<label>Reason</label>${chips("reason", rs, f.reason)}` : ""}
+    <label>Note<input id="knote" placeholder="Optional"></label>
+    <label>Photo</label><div class="kphoto" id="kshot" role="button" tabindex="0">${kShotEmpty(inn ? "what you return" : eq ? "the equipment" : allk ? "the key box" : dlv ? "the keys being handed over" : "the key(s)")}</div><input type="file" id="kfile" accept="image/*" capture="environment" style="display:none">
     <button class="btn pri" type="submit" style="padding:12px">${inn ? "Save return" : dlv ? "Save delivery" : "Save, I'm taking " + (allk ? "all keys" : eq ? (f.assets.length > 1 ? f.assets.length + " items" : "it") : "it")}</button><div class="kmsg" id="kmsg"></div>
     <button class="btn" type="button" id="kback">Back to list</button></form></div>`;
   const cars = (DATA.stock && DATA.stock.cars) || [], norm = t => String(t).toUpperCase().replace(/\s+/g, "");
@@ -909,7 +908,7 @@ function renderKeyForm() {
     shrinkPhoto(file).then(url => { f.photo = url; kShotDone(url); }).catch(() => { $("kshot").classList.remove("has"); $("kshot").innerHTML = kShotEmpty("again: could not read that photo"); }); $("kfile").value = ""; };
 }
 const KCAM = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>';
-const kShotEmpty = what => `<div class="kcam">${KCAM}</div><div class="kct">Take photo</div><div>Tap to snap ${esc(what)}</div>`;
+const kShotEmpty = what => `<div class="kcam">${KCAM}</div><div class="kct">Take photo</div>`;
 function kShotDone(url) {
   $("kshot").classList.add("has");
   $("kshot").innerHTML = `<img src="${url}" alt="Photo taken"><div class="kok"><span>&#10003; Photo added</span><span class="kre">${KCAM.replace('stroke="#fff"', 'stroke="currentColor"')} Retake</span></div>`;
@@ -975,7 +974,7 @@ function retCard(r, open) {
   const btn = !open ? "" : nx === "docs" && who ? `<button class="btn pri" data-rgo="docs" data-rp="${esc(r.plate)}">Prepare documents</button>`
     : nx === "pdi" && (who || fleet) ? `<button class="btn pri" data-rgo="pdi" data-rp="${esc(r.plate)}">Mark PDI done</button>`
     : nx === "handover" && who ? `<button class="btn pri" data-rgo="handover" data-rp="${esc(r.plate)}">Finish return</button>` : "";
-  const waiting = open && nx && !btn ? `<div class="rwait">Waiting for <b>${RNEXT[nx][0]}</b>: ${RNEXT[nx][1]}</div>` : "";
+  const waiting = "";
   const links = [["Forms", r.forms, "&#128206;"], ["Docs photo", r.docsPhoto, "&#128247;"], ["PDI photo", r.pdiPhoto, "&#128247;"], [r.outcome === "V.B.A.O" ? "Photo" : "Handover photo", r.photo, "&#128247;"]]
     .filter(l => l[1]).map(l => `<a class="rlink" href="${esc(l[1])}" target="_blank" rel="noopener">${l[2]} ${l[0]}</a>`).join("");
   const tag = !open ? (r.outcome === "V.B.A.O" ? '<span class="pill b-amber">Returned, listed V.B.A.O</span>' : '<span class="pill b-grey">Returned</span>') : "";
@@ -1013,27 +1012,25 @@ function retKit(plate) {
 function renderRetForm() {
   const f = RFORM, r = retOf(f.plate) || {}, chips = (k, list) => `<div class="kchips" data-rk="${k}">${list.map(v => `<button type="button" data-v="${esc(v)}" class="${f[k] === v ? "on" : ""}">${esc(v)}</button>`).join("")}</div>`;
   const title = { request: "Hold for return", docs: "Prepare documents", pdi: "PDI done", handover: "Finish return" }[f.step];
-  const shot = what => `<label>Photo (required)</label><div class="kphoto" id="rshot" role="button" tabindex="0">${kShotEmpty(what)}</div><input type="file" id="rfile" accept="image/*" capture="environment" style="display:none">`;
+  const shot = what => `<label>Photo</label><div class="kphoto" id="rshot" role="button" tabindex="0">${kShotEmpty(what)}</div><input type="file" id="rfile" accept="image/*" capture="environment" style="display:none">`;
   let h = `<div class="kcard"><h3>${title}</h3><form class="kform" id="rform">`, sub = "Save";
   if (f.step === "request") {
     h += `<label>Plate<input id="rplate" type="text" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" value="${esc(f.plate || "")}" placeholder="Type plate"></label><div class="ksug" id="rsug"></div>
       <label>Reason</label>${chips("reason", ["Owner keep", "Sold outside", "Price too low", "Owner request", "Other"])}
-      <label>Note<input id="rnote" placeholder="Optional (required for Other)"></label>
+      <label>Note<input id="rnote" placeholder="Optional"></label>
       <label>Consignor collects on<input id="rcollect" type="date"></label>`; sub = "Save, hold for return";
   } else {
     h += retCard(r, false).replace('class="rcard rdone"', 'class="rcard rmini"').replace(/<span class="pill b-grey">Returned<\/span>|<span class="pill b-amber">Returned, listed V.B.A.O<\/span>/, "");
     if (f.step === "docs") {
       const k = f.kit = f.kit || retKit(f.plate); f.ticks = f.ticks || {};
-      h += `<label>Checklist <span class="sub" style="font-weight:400">from Master: Spare Key / VOC. "If any" = not filled in Master; tick only if it's there</span></label><div class="rkit">${k.items.map((it, n) => `<label class="rchk"><input type="checkbox" data-rt="${n}" ${f.ticks[n] ? "checked" : ""}> ${esc(it)}${/\(if any\)$/.test(it) ? '<span class="ropt">optional</span>' : ""}</label>`).join("")}
+      h += `<label>Checklist</label><div class="rkit">${k.items.map((it, n) => `<label class="rchk"><input type="checkbox" data-rt="${n}" ${f.ticks[n] ? "checked" : ""}> ${esc(it)}${/\(if any\)$/.test(it) ? '<span class="ropt">optional</span>' : ""}</label>`).join("")}
         ${k.info.map(x => `<div class="rinfo">&#8505;&#65039; ${esc(x)}</div>`).join("")}${k.out.map(o => `<div class="rinfo bad">&#9888;&#65039; ${esc(o.item)} is out with ${esc(o.by)} (${esc(o.reason)}). Get it back first.</div>`).join("")}</div>
-        ${shot("the key set and documents")}
-        <div class="sub">Saving makes the Vehicle Return Form${r.refund ? " and the RM200 reward claim form" : ""} and posts them to the Telegram Returns topic. Print them right after.</div>`; sub = "Documents ready";
+        ${shot("the key set and documents")}`; sub = "Documents ready";
     }
-    if (f.step === "pdi") { h += `<label>Note<input id="rnote" placeholder="Optional, e.g. tyre, battery"></label>${shot("the car after PDI")}`; sub = "PDI done"; }
+    if (f.step === "pdi") { h += `<label>Note<input id="rnote" placeholder="Optional"></label>${shot("the car after PDI")}`; sub = "PDI done"; }
     if (f.step === "handover") {
       const vb = f.outcome === "vbao";
       h += `<label>What happened?</label><div class="kseg rseg"><button type="button" data-rout="ret" class="${vb ? "" : "on"}">&#9989; Returned to consignor</button><button type="button" data-rout="vbao" class="${vb ? "on" : ""}">&#127968; Returned, list as V.B.A.O</button></div>
-        <div class="sub">${vb ? "Car and keys go back to the consignor, but the ad stays up as V.B.A.O. Master Remark becomes V.B.A.O and the Return Date is set" + (r.refund ? ". No RM200 reward (V.B.A.O)" : "") + "." : "Car and keys leave with the consignor. Master becomes Returned; keys still out are closed."}</div>
         <label>Note<input id="rnote" placeholder="Optional"></label>
         ${shot("the car with the consignor")}
         ${r.refund && !vb ? '<div class="rinfo">&#127873; RM200 reward: get the consignor to sign the reward claim form.</div>' : ""}`;
@@ -1092,7 +1089,7 @@ function pdfLib() {
 }
 function showForms(plate, pdfs) {
   const urls = pdfs.map(p => URL.createObjectURL(new Blob([b64u8(p.b64)], { type: "application/pdf" })));
-  $("retbody").insertAdjacentHTML("afterbegin", `<div class="kcard rforms" id="rforms"><b>&#128424;&#65039; Forms ready: ${esc(plate)}</b><div class="sub">Return form &times;2 (Carrealm + consignor)${pdfs.length > 1 ? " and reward claim form &times;1" : ""}. Also in the Telegram Returns topic.</div>
+  $("retbody").insertAdjacentHTML("afterbegin", `<div class="kcard rforms" id="rforms"><b>&#128424;&#65039; Forms ready: ${esc(plate)}</b>
     <div class="rbtns"><a class="btn pri" id="rprint" href="${urls[0]}" target="_blank" rel="noopener">${pdfs.length > 1 ? "Open all forms (1 PDF)" : "Open return form (PDF)"}</a></div>
     ${pdfs.length > 1 ? `<div class="rlinks">${pdfs.map((p, i) => `<a class="rlink" href="${urls[i]}" target="_blank" rel="noopener">&#128196; ${esc(p.name.replace(/\.pdf$/, "").replace(" " + plate, ""))}</a>`).join("")}</div>` : ""}<button class="vx rfx" id="rfx" aria-label="Close">&times;</button></div>`);
   $("rfx").onclick = () => { RPDF = null; $("rforms").remove(); };
@@ -1129,14 +1126,14 @@ const curPrices = c => ["Car-In Price", "UCD Price", "Retail Selling Price"].map
 function reviewHtml(c) {
   const r = c.rv, l = r.l, cur = curPrices(c);
   const pr = l && Array.isArray(l[2]) ? ["Car-in", "UCD", "RSP"].map((n, i) => l[2][i] !== "" && l[2][i] != null ? n + " RM " + rm(l[2][i]) : "").filter(Boolean).join(" &middot; ") : "";
-  const who = l ? `Last: ${fmtDate(l[0])}${l[1] ? " by " + esc(l[1]) : ""}${pr ? " &middot; " + pr : ""}${l[3] ? "<br>" + esc(l[3]) : ""}` : "No review recorded yet";
+  const who = l ? `Last: ${fmtDate(l[0])}${l[1] ? " by " + esc(l[1]) : ""}${pr ? " &middot; " + pr : ""}${l[3] ? "<br>" + esc(l[3]) : ""}` : "";
   const dd = n => n + " day" + (n === 1 ? "" : "s");
   const head = r.s === "due" ? `<b class="neg">DUE: ${dd(r.r)} since ${r.f ? "listed" : "last revision"}${r.o ? " (" + dd(r.o) + " overdue)" : ""}</b>`
-    : r.s === "done" ? `<b class="yes">Revised ${r.r ? dd(r.r) + " ago" : "today"}</b> &middot; next due in ${dd(r.n)}` : `Next review due in ${dd(r.n)} <span class="sub">(can revise any time)</span>`;
+    : r.s === "done" ? `<b class="yes">Revised ${r.r ? dd(r.r) + " ago" : "today"}</b> &middot; next due in ${dd(r.n)}` : `Next review due in ${dd(r.n)}`;
   const upd = r.u ? `<div style="margin-top:6px"><span class="pill b-amber">Update price in Master</span> <span class="sub">Master now: Car-in ${rm(cur[0]) || "-"} &middot; UCD ${rm(cur[1]) || "-"} &middot; RSP ${rm(cur[2]) || "-"}</span></div>` : "";
   let name = ""; try { name = localStorage.getItem("caricarz_name") || ""; } catch (e) {}
   const inp = (id, ph, v) => `<label class="sub">${ph}<input id="${id}" inputmode="numeric" value="${v === "" ? "" : rm(v)}"></label>`;
-  return `<div class="vrev ${r.s}">${head}<div class="sub">${who}</div>${upd}${r.s ? `<button class="btn" id="rvopen" type="button">Mark reviewed</button>
+  return `<div class="vrev ${r.s}">${head}${who ? `<div class="sub">${who}</div>` : ""}${upd}${r.s ? `<button class="btn" id="rvopen" type="button">Mark reviewed</button>
     <form id="rvform" style="display:none">${inp("rvcin", "Car-in price (RM)", cur[0])}${inp("rvucd", "UCD price (RM)", cur[1])}${inp("rvrsp", "Retail selling price (RM)", cur[2])}
     <input id="rvnote" placeholder="Consignor reply / note"><input id="rvby" placeholder="Your name" value="${esc(name)}">
     <button class="btn pri" type="submit">Save review</button><div class="sub" id="rvmsg"></div></form>` : ""}</div>`;
@@ -1417,7 +1414,7 @@ function gate(msg) {                                                 // signed o
 function landing(msg) {                                              // fallback when the server sends no cars at all
   GATE = true; document.body.classList.add("gated"); $("rows").innerHTML = ""; $("kpis").innerHTML = "";
   $("landt").textContent = "Keys"; $("landbtn").textContent = KUSER ? "Open Keys" : "Sign in";
-  $("landmsg").textContent = msg || (KUSER ? "Signed in as " + KUSER.name + ". Take or return keys here." : "Sign in with your name and PIN to take or return keys.");
+  $("landmsg").textContent = msg || "";
 }
 function brokerMode() {                                              // dealer view: sellable cars only (server strips status, aging, booking)
   GATE = false; DATA.past = null; lsClearAll(); MODE = "stock";
@@ -1435,7 +1432,7 @@ document.querySelector(".title").addEventListener("click", () => {
   if (taps >= 5) { taps = 0; if (!pinGet()) askPin(); }
 });
 function askPin(msg) {
-  $("pinmsg").textContent = msg || "Enter the passcode for the internal view.";
+  $("pinmsg").textContent = msg || "";
   $("pin").value = ""; $("pinov").classList.add("on"); setTimeout(() => $("pin").focus(), 50);
 }
 const closePin = () => $("pinov").classList.remove("on");
