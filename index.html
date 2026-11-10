@@ -339,6 +339,7 @@
   .kphoto .kok{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;font-size:13px;font-weight:700;color:#15803d}
   .kphoto .kre{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;padding:5px 10px;font-weight:700}
   .kphoto .kre svg{width:15px;height:15px}
+  .rgalw{margin-top:10px}.kbtns{display:inline-flex;gap:6px}
   .kseg{display:grid;grid-template-columns:1fr 1fr 1fr;background:#eef0f6;border-radius:10px;padding:3px}
   .kseg button{border:0;background:none;border-radius:8px;padding:9px 4px;font:inherit;font-weight:700;font-size:13px;color:var(--mut);cursor:pointer}
   .kseg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.1)}
@@ -1012,7 +1013,7 @@ function retKit(plate) {
 function renderRetForm() {
   const f = RFORM, r = retOf(f.plate) || {}, chips = (k, list) => `<div class="kchips" data-rk="${k}">${list.map(v => `<button type="button" data-v="${esc(v)}" class="${f[k] === v ? "on" : ""}">${esc(v)}</button>`).join("")}</div>`;
   const title = { request: "Hold for return", docs: "Prepare documents", pdi: "PDI done", handover: "Finish return" }[f.step];
-  const shot = what => `<label>Photo</label><div class="kphoto" id="rshot" role="button" tabindex="0">${kShotEmpty(what)}</div><input type="file" id="rfile" accept="image/*" capture="environment" style="display:none">`;
+  const shot = what => `<label>Photo</label><div class="kphoto" id="rshot" role="button" tabindex="0">${rShotEmpty()}</div><input type="file" id="rfile" accept="image/*" capture="environment" style="display:none"><input type="file" id="rgal" accept="image/*" style="display:none">`;
   let h = `<div class="kcard"><h3>${title}</h3><form class="kform" id="rform">`, sub = "Save";
   if (f.step === "request") {
     h += `<label>Plate<input id="rplate" type="text" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" value="${esc(f.plate || "")}" placeholder="Type plate"></label><div class="ksug" id="rsug"></div>
@@ -1047,12 +1048,15 @@ function renderRetForm() {
   }
   if ($("rshot")) {
     if (f.photo) rShotDone(f.photo);
-    $("rshot").onclick = () => $("rfile").click();
-    $("rfile").onchange = () => { const file = $("rfile").files[0]; if (!file) return; $("rshot").innerHTML = LD("Preparing photo...");
-      shrinkPhoto(file).then(u => { f.photo = u; rShotDone(u); }).catch(() => { $("rshot").innerHTML = kShotEmpty("again"); }); $("rfile").value = ""; };
+    $("rshot").onclick = e => $(e.target.closest("[data-gal]") ? "rgal" : "rfile").click();   // camera, or a photo taken earlier (weak signal)
+    const pick = inp => () => { const file = inp.files[0]; if (!file) return; $("rshot").innerHTML = LD("Preparing photo...");
+      shrinkPhoto(file).then(u => { f.photo = u; rShotDone(u); }).catch(() => { $("rshot").classList.remove("has"); $("rshot").innerHTML = rShotEmpty(); }); inp.value = ""; };
+    $("rfile").onchange = pick($("rfile")); $("rgal").onchange = pick($("rgal"));
   }
 }
-function rShotDone(u) { $("rshot").classList.add("has"); $("rshot").innerHTML = `<img src="${u}" alt=""><div class="kok"><span>&#10003; Photo added</span><span class="kre">${KCAM.replace('stroke="#fff"', 'stroke="currentColor"')} Retake</span></div>`; }
+const RGAL = '<span class="kre" data-gal><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></svg> Gallery</span>';
+const rShotEmpty = () => kShotEmpty("") + `<div class="rgalw">${RGAL}</div>`;
+function rShotDone(u) { $("rshot").classList.add("has"); $("rshot").innerHTML = `<img src="${u}" alt=""><div class="kok"><span>&#10003; Photo added</span><span class="kbtns"><span class="kre">${KCAM.replace('stroke="#fff"', 'stroke="currentColor"')} Retake</span>${RGAL}</span></div>`; }
 function retSubmit(step) {
   const f = RFORM, body = Object.assign({ kind: "ret", step: step || f.step, name: KUSER ? KUSER.name : "", pin: KUSER ? KUSER.pin : "", key: pinGet() });
   const err = t => { $("rmsg").textContent = t; };
