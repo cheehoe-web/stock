@@ -540,6 +540,7 @@ function classify(c) {
   c.inDt = parseIso(c.carIn); c.outDt = parseIso(c.outDate);       // days counted from first listing
   c.vexp = /vbao expired/i.test(c.phase || "");
   c.rdue = !!(c.rv && c.rv.s === "due"); c.rupd = !!(c.rv && c.rv.u && !(c.rv.l && c.rv.l[1] === "My Promotion"));   // My Promotion is written after Master, so it never means "update Master"
+  if (c.rupd) { const lr = c.rv.l && c.rv.l[2] && c.rv.l[2][2], mr = curPrices(c)[2]; if (lr && mr && mr < lr) c.rupd = false; }   // Master RSP already below the reviewed RSP: Master moved on, review is old
   if (c.rv && !c.rupd) delete c.rv.u;
   const xv = name => FULL && c.x && XI[name] !== undefined ? c.x[XI[name]] : "";
   c.xin = xv("Car-In Price"); c.xucd = xv("UCD Price"); c.xmar = xv("Est. Margin");
